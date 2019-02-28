@@ -222,6 +222,7 @@ namespace SAFE.NetworkDrive.Gateways.Events
         {
             ParentDirId = parentDirId;
             Name = name;
+            Content = content;
         }
 
         public string ParentDirId { get; }

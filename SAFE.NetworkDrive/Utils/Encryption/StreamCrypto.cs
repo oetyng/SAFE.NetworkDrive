@@ -46,7 +46,7 @@ namespace SAFE.NetworkDrive.Encryption
             if (IV == null || IV.Length <= 0)
                 throw new ArgumentNullException("IV");
 
-            var encyptedStream = new MemoryStream();
+            var encryptedResult = new MemoryStream();
 
             using (var aesAlg = new AesManaged())
             {
@@ -54,7 +54,7 @@ namespace SAFE.NetworkDrive.Encryption
                 aesAlg.IV = IV;
 
                 ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
-
+                var encyptedStream = new MemoryStream();
                 using (var csEncrypt = new CryptoStream(encyptedStream, encryptor, CryptoStreamMode.Write))
                 {
                     using (dataStream)
@@ -63,10 +63,12 @@ namespace SAFE.NetworkDrive.Encryption
                         while ((data = dataStream.ReadByte()) != -1)
                             csEncrypt.WriteByte((byte)data);
                     }
+                    encyptedStream.CopyTo(encryptedResult);
+                    encryptedResult.Seek(0, SeekOrigin.Begin);
                 }
             }
-            encyptedStream.Seek(0, SeekOrigin.Begin);
-            return encyptedStream;
+            
+            return encryptedResult;
         }
 
         //source: https://msdn.microsoft.com/de-de/library/system.security.cryptography.aes(v=vs.110).aspx

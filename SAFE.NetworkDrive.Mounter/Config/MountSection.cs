@@ -37,7 +37,7 @@ namespace SAFE.NetworkDrive.Mounter.Config
         public string LibPath { get; set; } = ".";
 
         [Range(1, 20)]
-        public int Threads { get; set; } = 5;
+        public int Threads { get; set; } = 1;//5;
 
         public IEnumerable<DriveElement> Drives { get; set; }
 

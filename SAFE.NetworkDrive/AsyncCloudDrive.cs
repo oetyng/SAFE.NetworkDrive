@@ -144,10 +144,11 @@ namespace SAFE.NetworkDrive
                 if (content.Length == 0)
                     return new ProxyFileInfoContract(name);
 
+                var fileSize = (FileSize)content.Length;
                 var gatewayContent = content.EncryptOrPass(_encryptionKey);
 
                 var result = _gateway.NewFileItemAsync(_rootName, parent.Id, name, gatewayContent, null).Result;
-                result.Size = (FileSize)content.Length;
+                result.Size = fileSize;
                 return result;
             }, nameof(NewFileItem), true);
         }
