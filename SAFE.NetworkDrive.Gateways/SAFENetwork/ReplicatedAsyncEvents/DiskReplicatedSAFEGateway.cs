@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Security.Authentication;
+using System.Threading;
 using System.Threading.Tasks;
 using Polly;
 using Polly.Retry;
@@ -57,6 +58,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncWAL
                     new NonIntrusiveDiskQueueWorker("../path", service.Upload),
                     _settingsPassPhrase);
                 _contextCache.Add(root, result = new SAFENetworkContext(transactor, new DriveReader(fileGateway)));
+                transactor.Start(CancellationToken.None);
             }
 
             return result;

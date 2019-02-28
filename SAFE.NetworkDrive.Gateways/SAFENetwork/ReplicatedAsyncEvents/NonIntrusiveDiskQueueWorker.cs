@@ -90,7 +90,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncWAL
                     using (var session = queue.OpenSession())
                     {
                         var data = session.Dequeue();
-                        if (data == null) return;
+                        if (data == null) continue;
                         if (await _onDequeued(data))
                             session.Flush();
                     }

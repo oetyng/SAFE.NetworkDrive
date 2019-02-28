@@ -54,8 +54,8 @@ namespace SAFE.NetworkDrive.Encryption
                 aesAlg.IV = IV;
 
                 ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
-                var encyptedStream = new MemoryStream();
-                using (var csEncrypt = new CryptoStream(encyptedStream, encryptor, CryptoStreamMode.Write))
+                using (var msEncrypt = new MemoryStream())
+                using (var csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
                 {
                     using (dataStream)
                     {
@@ -63,7 +63,9 @@ namespace SAFE.NetworkDrive.Encryption
                         while ((data = dataStream.ReadByte()) != -1)
                             csEncrypt.WriteByte((byte)data);
                     }
-                    encyptedStream.CopyTo(encryptedResult);
+                    csEncrypt.FlushFinalBlock();
+                    msEncrypt.Position = 0;
+                    msEncrypt.CopyTo(encryptedResult);
                     encryptedResult.Seek(0, SeekOrigin.Begin);
                 }
             }

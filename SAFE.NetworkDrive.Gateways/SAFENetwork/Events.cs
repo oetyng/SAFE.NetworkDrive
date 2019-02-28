@@ -23,9 +23,9 @@ namespace SAFE.NetworkDrive.Gateways.Events
         }
 
         [JsonRequired]
-        public byte[] ZipEncryptedData { get; }
+        public byte[] ZipEncryptedData { get; private set; }
         [JsonRequired]
-        public string AssemblyQualifiedName { get; }
+        public string AssemblyQualifiedName { get; private set; }
 
         public byte[] GetBytes()
         {

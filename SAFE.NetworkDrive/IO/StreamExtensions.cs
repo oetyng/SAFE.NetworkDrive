@@ -90,12 +90,20 @@ namespace SAFE.NetworkDrive.IO
 
         static Stream Process(Stream stream, string encryptionKey, CryptoStreamMode mode)
         {
+            if (stream.Length == 0)
+                return stream;
+
+            var copy = new MemoryStream();
+            stream.Position = 0;
+            stream.CopyTo(copy);
+            copy.Seek(0, SeekOrigin.Begin);
+
             switch (mode)
             {
                 case CryptoStreamMode.Write:
-                    return StreamCrypto.Encrypt(encryptionKey, stream);
+                    return StreamCrypto.Encrypt(encryptionKey, copy);
                 case CryptoStreamMode.Read:
-                    return StreamCrypto.Decrypt(encryptionKey, stream);
+                    return StreamCrypto.Decrypt(encryptionKey, copy);
                 default:
                     return stream;
             }

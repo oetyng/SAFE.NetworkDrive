@@ -193,7 +193,7 @@ namespace SAFE.NetworkDrive
                     fileItem = item as CloudFileNode;
                     if (fileItem != null)
                     {
-                        if (access.HasFlag(FileAccess.ReadData))
+                        if (access.HasFlag(FileAccess.ReadData) || access.HasFlag(FileAccess.GenericRead))
                             info.Context = new StreamContext(fileItem, FileAccess.ReadData);
                         else if (access.HasFlag(FileAccess.WriteData))
                             info.Context = new StreamContext(fileItem, FileAccess.WriteData);
