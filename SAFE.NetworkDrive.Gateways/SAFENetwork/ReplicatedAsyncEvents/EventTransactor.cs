@@ -47,5 +47,10 @@ namespace SAFE.NetworkDrive.Gateways.AsyncWAL
         {
             return new List<Event>();
         }
+
+        internal long ReadSequenceNr()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

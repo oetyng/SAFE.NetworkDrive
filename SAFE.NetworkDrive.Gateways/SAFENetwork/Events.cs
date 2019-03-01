@@ -114,19 +114,22 @@ namespace SAFE.NetworkDrive.Gateways.Events
 
     public abstract class Event
     {
-        protected Event()
+        protected Event(long sequenceNr)
         {
             Id = SequentialGuid.NewGuid();
             TimeStamp = DateTime.UtcNow;
+            SequenceNr = sequenceNr;
         }
 
         public Guid Id { get; private set; }
         public DateTime TimeStamp { get; private set; }
+        public long SequenceNr { get; private set; }
     }
 
     class FileContentCleared : Event
     {
-        public FileContentCleared(string fileId)
+        public FileContentCleared(long sequenceNr, string fileId)
+            : base(sequenceNr)
         {
             FileId = fileId;
         }
@@ -136,7 +139,8 @@ namespace SAFE.NetworkDrive.Gateways.Events
 
     class FileContentSet : Event
     {
-        public FileContentSet(string fileId, byte[] content)
+        public FileContentSet(long sequenceNr, string fileId, byte[] content)
+            : base(sequenceNr)
         {
             FileId = fileId;
             Content = content;
@@ -148,8 +152,9 @@ namespace SAFE.NetworkDrive.Gateways.Events
 
     class ItemCopied : Event
     {
-        public ItemCopied(string fileSystemId, FSType fSType, 
+        public ItemCopied(long sequenceNr, string fileSystemId, FSType fSType, 
             string copyName, string destDirId, bool recursive)
+            : base(sequenceNr)
         {
             FileSystemId = fileSystemId;
             FSType = fSType;
@@ -173,7 +178,8 @@ namespace SAFE.NetworkDrive.Gateways.Events
 
     class ItemMoved : Event
     {
-        public ItemMoved(string fileSystemId, FSType fSType, string moveName, string destDirId)
+        public ItemMoved(long sequenceNr, string fileSystemId, FSType fSType, string moveName, string destDirId)
+            : base(sequenceNr)
         {
             FileSystemId = fileSystemId;
             FSType = fSType;
@@ -189,7 +195,8 @@ namespace SAFE.NetworkDrive.Gateways.Events
 
     class DirectoryItemCreated : Event
     {
-        public DirectoryItemCreated(string parentDirId, string name)
+        public DirectoryItemCreated(long sequenceNr, string parentDirId, string name)
+            : base(sequenceNr)
         {
             ParentDirId = parentDirId;
             Name = name;
@@ -201,7 +208,8 @@ namespace SAFE.NetworkDrive.Gateways.Events
 
     class FileItemCreated : Event
     {
-        public FileItemCreated(string parentDirId, string name, byte[] content)
+        public FileItemCreated(long sequenceNr, string parentDirId, string name, byte[] content)
+            : base(sequenceNr)
         {
             ParentDirId = parentDirId;
             Name = name;
@@ -215,7 +223,8 @@ namespace SAFE.NetworkDrive.Gateways.Events
 
     class ItemRemoved : Event
     {
-        public ItemRemoved(string fileSystemId, FSType fSType, bool recursive)
+        public ItemRemoved(long sequenceNr, string fileSystemId, FSType fSType, bool recursive)
+            : base(sequenceNr)
         {
             FileSystemId = fileSystemId;
             FSType = fSType;
@@ -229,7 +238,8 @@ namespace SAFE.NetworkDrive.Gateways.Events
 
     class ItemRenamed : Event
     {
-        public ItemRenamed(string fileSystemId, FSType fSType, string newName)
+        public ItemRenamed(long sequenceNr, string fileSystemId, FSType fSType, string newName)
+            : base(sequenceNr)
         {
             FileSystemId = fileSystemId;
             FSType = fSType;
