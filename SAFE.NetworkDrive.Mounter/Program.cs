@@ -1,17 +1,4 @@
-﻿//using System;
-
-//namespace SAFE.NetworkDrive.Mounter
-//{
-//    class Program
-//    {
-//        static void Main(string[] args)
-//        {
-//            Console.WriteLine("Hello World!");
-//        }
-//    }
-//}
-
-/*
+﻿/*
 The MIT License(MIT)
 
 Copyright(c) 2015 IgorSoft
@@ -54,25 +41,7 @@ namespace SAFE.NetworkDrive.Mounter
 {
     internal sealed class Program
     {
-        static string _settingsPassPhrase;
-
         static ILogger _logger;
-
-        public sealed class ExportProvider
-        {
-            /// <summary>
-            /// Gets the passphrase used in the encryption of privacy sensitive gateway settings.
-            /// </summary>
-            /// <value>The settings encryption passphrase.</value>
-            public string SettingsPassPhrase => _settingsPassPhrase;
-
-            /// <summary>
-            /// Gets the logger.
-            /// </summary>
-            /// <value>The logger.</value>
-            public ILogger Logger => _logger;
-        }
-
         readonly IConfiguration _config;
 
         Program()
@@ -98,8 +67,14 @@ namespace SAFE.NetworkDrive.Mounter
         {
             try
             {
-                new Program().Mount("pwd123", new[] { "oetyng"}.ToList());
-                //new Program().ParseCommandLine(args);
+                if (args.Length > 0)
+                    new Program().ParseCommandLine(args);
+                else
+                {
+                    var console = new ConsoleApp();
+                    var user = console.GetUserConfig();
+                    new Program().Mount(user);
+                }
             }
             catch(Exception ex)
             {
@@ -146,10 +121,89 @@ namespace SAFE.NetworkDrive.Mounter
             return string.Join(".", versionComponents.Take(components).ToArray());
         }
 
-        CloudDriveFactory InitializeCloudDriveFactory(string libPath)
+        CloudDriveFactory GetCloudDriveFactory()
         {
             var factory = new CloudDriveFactory();
             return factory;
+        }
+
+        int Mount(UserConfig config)
+        {
+            try
+            {
+                using (var logFactory = new LogFactory())
+                {
+                    _logger = logFactory.GetCurrentClassLogger();
+                    var factory = GetCloudDriveFactory();
+                    using (var tokenSource = new CancellationTokenSource())
+                    {
+                        var tasks = new List<Task>();
+                        foreach (var driveConfig in config.Drives)
+                        {
+                            var drive = factory.CreateCloudDrive(
+                                driveConfig.Schema,
+                                config.UserName,
+                                driveConfig.Root,
+                                new CloudDriveParameters()
+                                {
+                                    ApiKey = driveConfig.Locator,
+                                    EncryptionKey = driveConfig.Secret,
+                                    Parameters = driveConfig.GetParameters()
+                                }
+                            );
+
+                            if (!drive.TryAuthenticate())
+                            {
+                                var displayRoot = drive.DisplayRoot;
+                                drive.Dispose();
+                                _logger.Warn($"Authentication failed for drive '{displayRoot}'");
+                                continue;
+                            }
+
+                            var operations = new CloudOperations(drive, _logger);
+
+                            // HACK: handle non-unique parameter set of DokanOperations.Mount() by explicitely specifying AllocationUnitSize and SectorSize
+                            tasks.Add(Task.Run(() => operations.Mount(driveConfig.Root, 
+                                DokanOptions.NetworkDrive | DokanOptions.MountManager | DokanOptions.CurrentSession, 
+                                threadCount: 5,//mountSection.Threads, 
+                                121, 
+                                TimeSpan.FromSeconds(driveConfig.Timeout != 0 ? driveConfig.Timeout : 20), 
+                                null, 512, 512), 
+                                tokenSource.Token));
+
+                            var driveInfo = new DriveInfo(driveConfig.Root);
+                            while (!driveInfo.IsReady)
+                                Thread.Sleep(10);
+                            _logger.Info($"Drive '{drive.DisplayRoot}' mounted successfully.");
+                        }
+
+                        Console.WriteLine("Press CTRL-BACKSPACE to clear log, any other key to unmount drives");
+                        while (true)
+                        {
+                            var keyInfo = Console.ReadKey(true);
+                            if (keyInfo.Modifiers.HasFlag(ConsoleModifiers.Control) && keyInfo.Key == ConsoleKey.Backspace)
+                                Console.Clear();
+                            else
+                                break;
+                        }
+
+                        tokenSource.Cancel();
+
+                        return 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"{ex.GetType().Name}: {ex.Message}");
+                return -1;
+            }
+            finally
+            {
+                foreach (var drive in config.Drives)
+                    Dokan.Unmount(drive.Root[0]);
+                //UIThread.Shutdown();
+            }
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
@@ -159,14 +213,12 @@ namespace SAFE.NetworkDrive.Mounter
             if (mountSection == null)
                 throw new ArgumentNullException("Mount configuration missing");// ConfigurationErrorsException("Mount configuration missing");
 
-            _settingsPassPhrase = passPhrase;
-
             try
             {
                 using (var logFactory = new LogFactory())
                 {
                     _logger = logFactory.GetCurrentClassLogger();
-                    var factory = InitializeCloudDriveFactory(mountSection.LibPath);
+                    var factory = GetCloudDriveFactory(); // mountSection.LibPath
                     using (var tokenSource = new CancellationTokenSource())
                     {
                         var tasks = new List<Task>();
@@ -239,7 +291,7 @@ namespace SAFE.NetworkDrive.Mounter
             if (mountSection == null)
                 throw new ArgumentNullException("Mount configuration missing");// ConfigurationErrorsException("Mount configuration missing");
 
-            var factory = InitializeCloudDriveFactory(mountSection.LibPath);
+            var factory = GetCloudDriveFactory(); // mountSection.LibPath
 
             try
             {

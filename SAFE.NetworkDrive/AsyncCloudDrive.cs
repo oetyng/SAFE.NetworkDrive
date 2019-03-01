@@ -97,8 +97,9 @@ namespace SAFE.NetworkDrive
                 source.Size = (FileSize)content.Length;
 
 //#if DEBUG
-//                CompositionInitializer.SatisfyImports(content = new TraceStream(nameof(GetContent), source.Name, content));
+//                content = new TraceStream(nameof(GetContent), source.Name, content);
 //#endif
+
                 return content;
             }, nameof(GetContent));
         }
@@ -110,7 +111,7 @@ namespace SAFE.NetworkDrive
                 target.Size = (FileSize)content.Length;
 
 //#if DEBUG
-//                CompositionInitializer.SatisfyImports(gatewayContent = new TraceStream(nameof(SetContent), target.Name, gatewayContent));
+//                gatewayContent = new TraceStream(nameof(SetContent), target.Name, gatewayContent);
 //#endif
                 FileSystemInfoLocator locator() => new FileSystemInfoLocator(target);
                 _gateway.SetContentAsync(_rootName, target.Id, gatewayContent, null, locator).Wait();
@@ -162,6 +163,6 @@ namespace SAFE.NetworkDrive
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Debugger Display")]
         [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-        private string DebuggerDisplay => $"{nameof(AsyncCloudDrive)} {DisplayRoot}".ToString(CultureInfo.CurrentCulture);
+        string DebuggerDisplay => $"{nameof(AsyncCloudDrive)} {DisplayRoot}".ToString(CultureInfo.CurrentCulture);
     }
 }

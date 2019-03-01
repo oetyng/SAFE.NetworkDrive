@@ -30,9 +30,9 @@ namespace SAFE.NetworkDrive.Gateways.Utils
             return JsonConvert.DeserializeObject<T>(json, SerializerSettings);
         }
 
-        public static object Parse(this string json, string assemblyQualifiedName)
+        public static object Parse(this string json, string typeName)
         {
-            var type = Type.GetType(assemblyQualifiedName);
+            var type = Type.GetType(typeName);
             return JsonConvert.DeserializeObject(json, type, SerializerSettings); // //JsonConvert.DefaultSettings = () => SerializerSettings;
         }
 

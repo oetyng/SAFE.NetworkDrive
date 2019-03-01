@@ -8,13 +8,13 @@ namespace SAFE.NetworkDrive.Gateways.AsyncWAL
 {
     class EventTransactor
     {
-        readonly DriveWriter _materializer;
+        readonly DriveWriter _driveWriter;
         readonly NonIntrusiveDiskQueueWorker _queueWorker;
         readonly string _password;
 
-        public EventTransactor(DriveWriter materializer, NonIntrusiveDiskQueueWorker synch, string password)
+        public EventTransactor(DriveWriter driveWriter, NonIntrusiveDiskQueueWorker synch, string password)
         {
-            _materializer = materializer;
+            _driveWriter = driveWriter;
             _queueWorker = synch;
             _password = password;
         }
@@ -35,7 +35,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncWAL
             {
                 var data = ZipEncryptedEvent.For(e, _password).GetBytes();
                 return _queueWorker.Enqueue<T>(data,
-                    onEnqueued: () => _materializer.Apply(e));
+                    onEnqueued: () => _driveWriter.Apply(e));
             }
             catch (Exception ex)
             {

@@ -6,7 +6,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Polly;
 using Polly.Retry;
+using SAFE.DataStore.Client;
+using SAFE.DataStore.Client.Auth;
 using SAFE.Filesystem.Interface.IO;
+using SAFE.NetworkDrive.Gateways.Utils;
 using SAFE.NetworkDrive.Interface;
 using SAFE.NetworkDrive.Interface.Composition;
 using SAFE.NetworkDrive.Interface.IO;
@@ -37,11 +40,11 @@ namespace SAFE.NetworkDrive.Gateways.AsyncWAL
 
         readonly IDictionary<RootName, SAFENetworkContext> _contextCache = new Dictionary<RootName, SAFENetworkContext>();
         //readonly AsyncRetryPolicy _retryPolicy = Policy.Handle<ServiceException>().WaitAndRetryAsync(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
-        readonly string _settingsPassPhrase;
+        readonly string _secretKey;
 
-        public DiskReplicatedSAFEGateway(string settingsPassPhrase)
+        public DiskReplicatedSAFEGateway(string secretKey)
         {
-            _settingsPassPhrase = settingsPassPhrase;
+            _secretKey = secretKey;
         }
 
         async Task<SAFENetworkContext> RequireContextAsync(RootName root, string apiKey = null)
@@ -51,17 +54,32 @@ namespace SAFE.NetworkDrive.Gateways.AsyncWAL
 
             if (!_contextCache.TryGetValue(root, out SAFENetworkContext result))
             {
+                var appInfo = new AppInfo
+                {
+                    Id = "safe.networkdrive",
+                    Name = "SAFE.NetworkDrive",
+                    Vendor = "oetyng"
+                };
+                var factory = new ClientFactory(new AppInfo());
+                var client = await factory.GetMockNetworkClient(Credentials(apiKey, _secretKey));
+                var db = await client.GetOrAddDataBaseAsync(root.Value);
+
                 var fileGateway = new File.FileGateway();
-                var service = new SAFENetworkEventService();
+                var service = new SAFENetworkEventService(db);
                 var transactor = new EventTransactor(
                     new DriveWriter(root, fileGateway),
-                    new NonIntrusiveDiskQueueWorker("../path", service.Upload),
-                    _settingsPassPhrase);
+                    new NonIntrusiveDiskQueueWorker("../nidqw", service.Upload),
+                    _secretKey);
                 _contextCache.Add(root, result = new SAFENetworkContext(transactor, new DriveReader(fileGateway)));
                 transactor.Start(CancellationToken.None);
             }
 
             return result;
+        }
+
+        Credentials Credentials(string locator, string secret)
+        {
+            return new Credentials(locator, secret);
         }
 
         //async Task<Item> ChunkedUploadAsync(ChunkedUploadProvider provider, IProgress<ProgressValue> progress)

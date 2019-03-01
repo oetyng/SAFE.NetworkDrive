@@ -16,16 +16,16 @@ namespace SAFE.NetworkDrive.Gateways.Events
         [JsonConstructor]
         ZipEncryptedEvent() { }
 
-        ZipEncryptedEvent(byte[] zipEncryptedData, string assemblyQualifiedName)
+        ZipEncryptedEvent(byte[] zipEncryptedData, string eventName)
         {
             ZipEncryptedData = zipEncryptedData;
-            AssemblyQualifiedName = assemblyQualifiedName;
+            EventName = eventName;
         }
 
         [JsonRequired]
         public byte[] ZipEncryptedData { get; private set; }
         [JsonRequired]
-        public string AssemblyQualifiedName { get; private set; }
+        public string EventName { get; private set; }
 
         public byte[] GetBytes()
         {
@@ -47,7 +47,7 @@ namespace SAFE.NetworkDrive.Gateways.Events
                 var decrypted = BytesCrypto.DecryptToBytes(secretKey, ZipEncryptedData);
                 var decompressed = decrypted.Decompress();
                 var json = Encoding.UTF8.GetString(decompressed);
-                _event = (Event)json.Parse(AssemblyQualifiedName);
+                _event = (Event)json.Parse(EventName);
             }
             return _event;
         }
@@ -55,7 +55,7 @@ namespace SAFE.NetworkDrive.Gateways.Events
         public static ZipEncryptedEvent For(Event e, string secretKey)
         {
             return new ZipEncryptedEvent(ZipEncrypt(e, secretKey), 
-                e.GetType().AssemblyQualifiedName);
+                e.GetType().Name);
         }
 
         static byte[] ZipEncrypt(Event e, string secretKey)
@@ -114,31 +114,14 @@ namespace SAFE.NetworkDrive.Gateways.Events
 
     public abstract class Event
     {
-        [NonSerialized]
-        byte[] _bytes;
-
         protected Event()
         {
             Id = SequentialGuid.NewGuid();
             TimeStamp = DateTime.UtcNow;
         }
 
-        public Guid Id { get; }
-        public DateTime TimeStamp { get; }
-        public int SequenceNumber { get; set; }
-
-        public byte[] GetBytes()
-        {
-            if (_bytes == null)
-                _bytes = Encoding.UTF8.GetBytes(this.Json());
-            return _bytes;
-        }
-
-        public static Event From(byte[] data, string clrType)
-        {
-            var json = Encoding.UTF8.GetString(data);
-            return (Event)json.Parse(clrType);
-        }
+        public Guid Id { get; private set; }
+        public DateTime TimeStamp { get; private set; }
     }
 
     class FileContentCleared : Event

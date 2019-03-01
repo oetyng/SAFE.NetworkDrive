@@ -1,14 +1,18 @@
 ﻿/*
 The MIT License(MIT)
+
 Copyright(c) 2015 IgorSoft
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
+
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
+
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -18,24 +22,30 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using SAFE.NetworkDrive.Gateways.AsyncWAL;
-using SAFE.NetworkDrive.Interface;
-using SAFE.NetworkDrive.Parameters;
+using System;
+using System.Collections.Generic;
 
-namespace SAFE.NetworkDrive
+namespace SAFE.NetworkDrive.Mounter.Config
 {
-    internal sealed class CloudDriveFactory
+    public static class DriveConfigExtensions
     {
-        internal ICloudDrive CreateCloudDrive(string schema, string userName, string root, CloudDriveParameters parameters)
+        public static IDictionary<string, string> GetParameters(this DriveConfig config)
         {
-            var rootName = new RootName(schema, userName, root);
-            var asyncGateway = new DiskReplicatedSAFEGateway(parameters.EncryptionKey);
-            return new AsyncCloudDrive(rootName, asyncGateway, parameters);
+            if (config == null)
+                throw new ArgumentNullException(nameof(config));
 
-            //var gateway = new Gateways.File.FileGateway();
-            //return new CloudDrive(rootName, gateway, parameters);
+            var parameters = config.Parameters;
+            if (string.IsNullOrEmpty(parameters))
+                return null;
 
-            //throw new KeyNotFoundException(string.Format(CultureInfo.CurrentCulture, "No gateway is registered for schema '{0}'", rootName.Schema));
+            var result = new Dictionary<string, string>();
+            foreach (var parameter in parameters.Split('|'))
+            {
+                var components = parameter.Split(new[] { '=' }, 2);
+                result.Add(components[0], components.Length == 2 ? components[1] : null);
+            }
+
+            return result;
         }
     }
 }
