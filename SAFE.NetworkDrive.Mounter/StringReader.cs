@@ -7,7 +7,7 @@ namespace SAFE.NetworkDrive.Mounter
         protected string GetSecretString(string type)
         {
             Console.WriteLine($"Please enter {type}:");
-            string pass = string.Empty;
+            string secret = string.Empty;
             do
             {
                 ConsoleKeyInfo key = Console.ReadKey(true);
@@ -15,15 +15,15 @@ namespace SAFE.NetworkDrive.Mounter
                 // Backspace Should Not Work
                 if (key.Key != ConsoleKey.Backspace && key.Key != ConsoleKey.Enter)
                 {
-                    pass += key.KeyChar;
+                    secret += key.KeyChar;
                     Console.Write("*");
                 }
                 else
                 {
-                    if (key.Key == ConsoleKey.Backspace && pass.Length > 0)
+                    if (key.Key == ConsoleKey.Backspace && secret.Length > 0)
                     {
-                        // pass = pass[0..^1]; // c# 8.0
-                        pass = pass.Substring(0, pass.Length - 1);
+                        // secret = secret[0..^1]; // c# 8.0
+                        secret = secret.Substring(0, secret.Length - 1);
                         Console.Write("\b \b");
                     }
                     else if (key.Key == ConsoleKey.Enter)
@@ -35,33 +35,29 @@ namespace SAFE.NetworkDrive.Mounter
             while (true);
 
             Console.WriteLine();
-            if (pass.Length > 5)
-                Console.WriteLine($"Oh lala, very strong {type}..!");
-            Console.WriteLine();
 
-            return pass;
+            return secret;
         }
 
         protected string GetString(string type)
         {
             Console.WriteLine($"Please enter {type}:");
-            string pass = string.Empty;
+            string val = string.Empty;
             do
             {
                 ConsoleKeyInfo key = Console.ReadKey(true);
 
-                // Backspace Should Not Work
                 if (key.Key != ConsoleKey.Backspace && key.Key != ConsoleKey.Enter)
                 {
-                    pass += key.KeyChar;
+                    val += key.KeyChar;
                     Console.Write(key.KeyChar);
                 }
                 else
                 {
-                    if (key.Key == ConsoleKey.Backspace && pass.Length > 0)
+                    if (key.Key == ConsoleKey.Backspace && val.Length > 0)
                     {
-                        // pass = pass[0..^1]; // c# 8.0
-                        pass = pass.Substring(0, pass.Length - 1);
+                        // val = val[0..^1]; // c# 8.0
+                        val = val.Substring(0, val.Length - 1);
                         Console.Write("\b \b");
                     }
                     else if (key.Key == ConsoleKey.Enter)
@@ -73,11 +69,8 @@ namespace SAFE.NetworkDrive.Mounter
             while (true);
 
             Console.WriteLine();
-            if (pass.Length > 5)
-                Console.WriteLine($"Oh lala, very strong {type}..!");
-            Console.WriteLine();
 
-            return pass;
+            return val;
         }
     }
 }

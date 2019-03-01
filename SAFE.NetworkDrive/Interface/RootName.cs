@@ -61,7 +61,8 @@ namespace SAFE.NetworkDrive.Interface
         /// Initializes a new instance of the <see cref="RootName"/> class from a formatted string.
         /// </summary>
         /// <param name="name">The formatted root name.</param>
-        public RootName(string name) : base(validationRegex.IsMatch, name)
+        public RootName(string name) 
+            : base(validationRegex.IsMatch, name)
         {
             var groups = validationRegex.Match(name).Groups;
             Schema = groups[nameof(Schema)].Value;

@@ -4,12 +4,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using DiskQueue;
 
-namespace SAFE.NetworkDrive.Gateways.AsyncWAL
+namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 {
     // Background job
     // Receives data to enqueue on disk
     // Continuously reads logs from disk queue and passes to handler function.
-    class NonIntrusiveDiskQueueWorker
+    class DiskQueueWorker
     {
         public const int MIN_DELAY_SECONDS = 8;
 
@@ -26,7 +26,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncWAL
         /// </summary>
         /// <param name="storagePath">Where logs will be stored on the machine.</param>
         /// <param name="onDequeued">Operation for handling dequeued logs.</param>
-        public NonIntrusiveDiskQueueWorker(string storagePath, Func<byte[], Task<bool>> onDequeued)
+        public DiskQueueWorker(string storagePath, Func<byte[], Task<bool>> onDequeued)
         {
             _mutex = new Mutex(true, storagePath, out bool firstCaller);
             if (!firstCaller)

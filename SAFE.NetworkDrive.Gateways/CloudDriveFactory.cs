@@ -18,7 +18,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using SAFE.NetworkDrive.Gateways.AsyncWAL;
+using SAFE.NetworkDrive.Gateways.AsyncEvents;
 using SAFE.NetworkDrive.Interface;
 using SAFE.NetworkDrive.Parameters;
 
@@ -34,8 +34,6 @@ namespace SAFE.NetworkDrive
 
             //var gateway = new Gateways.File.FileGateway();
             //return new CloudDrive(rootName, gateway, parameters);
-
-            //throw new KeyNotFoundException(string.Format(CultureInfo.CurrentCulture, "No gateway is registered for schema '{0}'", rootName.Schema));
         }
     }
 }

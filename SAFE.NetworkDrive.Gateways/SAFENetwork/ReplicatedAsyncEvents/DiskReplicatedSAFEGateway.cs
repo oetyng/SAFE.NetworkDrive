@@ -8,24 +8,16 @@ using Polly;
 using Polly.Retry;
 using SAFE.DataStore.Client;
 using SAFE.DataStore.Client.Auth;
-using SAFE.Filesystem.Interface.IO;
 using SAFE.NetworkDrive.Gateways.Utils;
 using SAFE.NetworkDrive.Interface;
 using SAFE.NetworkDrive.Interface.Composition;
 using SAFE.NetworkDrive.Interface.IO;
 
-namespace SAFE.NetworkDrive.Gateways.AsyncWAL
+namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 {
     [System.Diagnostics.DebuggerDisplay("{DebuggerDisplay(),nq}")]
     public sealed class DiskReplicatedSAFEGateway : IAsyncCloudGateway, IPersistGatewaySettings
     {
-        const string SCHEMA = "safenetwork";
-        const GatewayCapabilities CAPABILITIES = GatewayCapabilities.All;
-        const string RETRIES_EXHAUSTED = "Task failed too many times. See InnerException property for a list of Exceptions that occured.";
-
-        static readonly FileSize LargeFileThreshold = new FileSize("50MB");
-        static readonly FileSize MaxChunkSize = new FileSize("5MB");
-
         class SAFENetworkContext
         {
             public EventTransactor Writer { get; }
@@ -61,22 +53,32 @@ namespace SAFE.NetworkDrive.Gateways.AsyncWAL
                     Name = "SAFE.NetworkDrive",
                     Vendor = "oetyng"
                 };
-                var factory = new ClientFactory(new AppInfo());
-                var client = await factory.GetMockNetworkClient(Credentials(apiKey, _secretKey));
+                var factory = new ClientFactory(appInfo);
+
+                var client = await factory.GetMockNetworkClient(Credentials(apiKey, _secretKey), false);
                 var db = await client.GetOrAddDataBaseAsync(root.Value);
 
                 var fileGateway = new File.FileGateway();
                 var service = new SAFENetworkEventService(db);
+
+                var userFolder = PathScrambler.Obfuscate(root.UserName, _secretKey);
+                var rootFolder = PathScrambler.Obfuscate(root.Root, _secretKey);
+
                 var transactor = new EventTransactor(
                     new DriveWriter(root, fileGateway),
-                    new NonIntrusiveDiskQueueWorker("../nidqw", service.Upload),
-                    _secretKey);
+                    new DiskQueueWorker($"../sndr/{userFolder}/{rootFolder}", service.Upload), _secretKey);
                 _contextCache.Add(root, result = new SAFENetworkContext(transactor, new DriveReader(fileGateway)));
+
                 _sequenceNr = transactor.ReadSequenceNr();
                 transactor.Start(CancellationToken.None);
             }
 
             return result;
+        }
+
+        Task<IEnumerable<Events.Event>> GetNewEvents(SAFENetworkEventService service)
+        {
+            return service.LoadAsync(_secretKey);
         }
 
         Credentials Credentials(string locator, string secret)

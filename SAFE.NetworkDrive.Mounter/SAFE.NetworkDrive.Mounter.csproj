@@ -3,11 +3,26 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.2</TargetFramework>
+    <DefineConstants>TRACE;SAFE_APP_MOCK</DefineConstants>
     <LangVersion>latest</LangVersion>
+    <Platforms>AnyCPU;x64</Platforms>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="DokanNet" Version="1.1.2.1" />
+    <PackageReference Include="MaidSafe.SafeApp" Version="0.2.0" />
     <PackageReference Include="Microsoft.Extensions.CommandLineUtils" Version="1.1.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="2.2.0" />
@@ -19,6 +34,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SAFE.NetworkDrive.Gateways\SAFE.NetworkDrive.Gateways.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="SafeApp.MockAuthBindings">
+      <HintPath>..\..\..\..\.nuget\packages\maidsafe.safeapp\0.2.0\build\netcoreapp1.0\SafeApp.MockAuthBindings.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>

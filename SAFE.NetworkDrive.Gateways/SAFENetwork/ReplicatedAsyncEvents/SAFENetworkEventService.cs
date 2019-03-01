@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SAFE.NetworkDrive.Gateways.AsyncWAL
+namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 {
     class SAFENetworkEventService
     {
@@ -24,7 +24,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncWAL
         }
 
         // Event => json => bytes => compressed => Encrypted => byte[]
-        public async Task<IEnumerable<Event>> Load(string pwd)
+        public async Task<IEnumerable<Event>> LoadAsync(string pwd)
         {
             var data = await _db.GetAllAsync<byte[]>();
             var bag = new ConcurrentBag<Event>();

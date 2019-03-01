@@ -1,8 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
     <LangVersion>latest</LangVersion>
+    <Platforms>AnyCPU;x64</Platforms>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,7 +30,7 @@
 
   <ItemGroup>
     <Reference Include="SAFE.DataStore">
-      <HintPath>..\packages\SAFE.DataStore.Internal\netstandard2.0\SAFE.DataStore.dll</HintPath>
+      <HintPath>..\packages\SAFE.DataStore.Internal\netcoreapp2.2\SAFE.DataStore.dll</HintPath>
     </Reference>
   </ItemGroup>
 

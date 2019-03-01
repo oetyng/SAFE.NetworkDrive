@@ -4,15 +4,15 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace SAFE.NetworkDrive.Gateways.AsyncWAL
+namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 {
     class EventTransactor
     {
         readonly DriveWriter _driveWriter;
-        readonly NonIntrusiveDiskQueueWorker _queueWorker;
+        readonly DiskQueueWorker _queueWorker;
         readonly string _password;
 
-        public EventTransactor(DriveWriter driveWriter, NonIntrusiveDiskQueueWorker synch, string password)
+        public EventTransactor(DriveWriter driveWriter, DiskQueueWorker synch, string password)
         {
             _driveWriter = driveWriter;
             _queueWorker = synch;
@@ -43,14 +43,12 @@ namespace SAFE.NetworkDrive.Gateways.AsyncWAL
             }
         }
 
-        public List<Event> GetNetworkWAL(long fromVersion = 0)
-        {
-            return new List<Event>();
-        }
-
         internal long ReadSequenceNr()
         {
-            throw new NotImplementedException();
+            return 0L;
+            // fetch NetworkWAL (can be snapshot + all events since)
+            // recreate the filesystem locally - but encrypted
+            //RootName root)
         }
     }
 }

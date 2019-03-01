@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using SAFE.NetworkDrive.Encryption;
 using SAFE.NetworkDrive.Mounter.Config;
+using Scrambler = SAFE.NetworkDrive.Gateways.Utils.PathScrambler;
 using System.IO;
 
 namespace SAFE.NetworkDrive.Mounter
@@ -16,16 +17,39 @@ namespace SAFE.NetworkDrive.Mounter
 
         (string user, string pwd) GetLogin()
         {
-            var csReader = new UserReader();
-            return (csReader.GetUserName(), csReader.GetPassword());
+            var uReader = new UserReader();
+            return (uReader.GetUserName(), uReader.GetPassword());
         }
 
         UserConfig DecrypUserConfig(string username, string password)
         {
-            var encrUsr = StringCrypto.Encrypt(password, username);
-            var data = File.ReadAllBytes($"../snduc/{encrUsr}.dat");
+            var userFolder = Scrambler.Obfuscate(username, password);
+            var dirPath = "../sndc";
+            var filePath = $"{dirPath}/{userFolder}".ToLowerInvariant();
+            if (!File.Exists(filePath))
+            {
+                var config = CreateConfig(username);
+                var bytes = BytesCrypto.Encrypt(password, JsonConvert.SerializeObject(config));
+                if (!Directory.Exists(dirPath))
+                    Directory.CreateDirectory(dirPath);
+                File.WriteAllBytes(filePath, bytes);
+                return config;
+            }
+            var data = File.ReadAllBytes(filePath);
             var json = BytesCrypto.Decrypt(password, data);
             return JsonConvert.DeserializeObject<UserConfig>(json);
+        }
+
+        UserConfig CreateConfig(string username)
+        {
+            var dReader = new DriveConfigReader();
+            var config = new UserConfig
+            {
+                UserName = username,
+                Drives = dReader.ConfigureDrives(username)
+            };
+
+            return config;
         }
     }
 }
