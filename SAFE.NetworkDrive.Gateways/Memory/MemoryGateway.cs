@@ -1,15 +1,13 @@
-﻿using DokanMem;
-using SAFE.Filesystem.Interface.IO;
+﻿using SAFE.Filesystem.Interface.IO;
 using SAFE.NetworkDrive.Interface;
 using SAFE.NetworkDrive.Interface.Composition;
 using SAFE.NetworkDrive.Interface.IO;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-//using System.IO;
 using System.Linq;
 
-namespace SAFE.NetworkDrive.Gateways.File
+namespace SAFE.NetworkDrive.Gateways.Memory
 {
     [System.Diagnostics.DebuggerDisplay("{DebuggerDisplay(),nq}")]
     public sealed class MemoryGateway : ICloudGateway

@@ -2,7 +2,7 @@
 using System.IO;
 using System;
 
-namespace DokanMem
+namespace SAFE.NetworkDrive.Gateways.Memory
 {
     internal static class UtilityMethods
     {

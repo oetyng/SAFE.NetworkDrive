@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace DokanMem
+namespace SAFE.NetworkDrive.Gateways.Memory
 {
     /// <summary>
     /// Represents a file in memory, based on MemoryStreams

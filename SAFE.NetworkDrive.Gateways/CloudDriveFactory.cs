@@ -33,7 +33,7 @@ namespace SAFE.NetworkDrive
             //return new AsyncCloudDrive(rootName, asyncGateway, parameters);
 
             //var gateway = new Gateways.File.FileGateway();
-            var gateway = new Gateways.File.MemoryGateway();
+            var gateway = new Gateways.Memory.MemoryGateway();
             return new CloudDrive(rootName, gateway, parameters);
         }
     }

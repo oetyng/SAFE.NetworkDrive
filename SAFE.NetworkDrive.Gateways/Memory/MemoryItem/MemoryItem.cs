@@ -2,7 +2,7 @@
 using System.IO;
 using System.Linq;
 
-namespace DokanMem
+namespace SAFE.NetworkDrive.Gateways.Memory
 {
     /// <summary>
     /// Base class;

@@ -1,5 +1,5 @@
 ﻿
-namespace DokanMem
+namespace SAFE.NetworkDrive.Gateways.Memory
 {
     internal abstract class MemoryFile : MemoryItem
     {
