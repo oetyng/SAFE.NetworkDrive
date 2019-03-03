@@ -306,7 +306,7 @@ namespace SAFE.NetworkDrive
 
             var childItems = parent
                 .GetChildItems(_drive)
-                .Where(i => i.IsResolved)
+                //.Where(i => i.IsResolved)
                 .ToList();
 
             files = childItems.Any()

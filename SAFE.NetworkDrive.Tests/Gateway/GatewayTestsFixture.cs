@@ -82,7 +82,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
             {
                 switch (config.Schema)
                 {
-                    case "file":
+                    case "async":
                         AsyncGateways[config.Schema] = new Moq.Mock<IAsyncCloudGateway>().Object;
                         break;
                 }
@@ -98,6 +98,9 @@ namespace SAFE.NetworkDrive.Tests.Gateway
                 {
                     case "file":
                         Gateways[config.Schema] = new Gateways.File.FileGateway();
+                        break;
+                    case "memory":
+                        Gateways[config.Schema] = new Gateways.File.MemoryGateway();
                         break;
                 }
             }

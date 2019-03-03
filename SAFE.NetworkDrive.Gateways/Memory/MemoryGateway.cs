@@ -135,7 +135,7 @@ namespace SAFE.NetworkDrive.Gateways.File
         {
             var effectivePath = GetFullPath(_rootPath, fileId.Value);
             var directory = _root.GetFolderByPath(effectivePath.GetPathPart());
-            return directory.FetchFile(fileId.Value);
+            return directory.FetchFile(fileId.Value.GetFilenamePart());
         }
 
         // DONE
@@ -240,7 +240,7 @@ namespace SAFE.NetworkDrive.Gateways.File
             if (string.IsNullOrEmpty(_rootPath))
                 throw new InvalidOperationException($"{nameof(_rootPath)} not initialized".ToString(CultureInfo.CurrentCulture));
 
-            var effectivePath = GetFullPath(_rootPath, source.Value);
+            var effectiveSourcePath = GetFullPath(_rootPath, source.Value);
             var destinationPath = destination.Value;
             if (System.IO.Path.IsPathRooted(destinationPath))
                 destinationPath = destinationPath.Remove(0, System.IO.Path.GetPathRoot(destinationPath).Length);
@@ -252,7 +252,7 @@ namespace SAFE.NetworkDrive.Gateways.File
                 throw new System.IO.DirectoryNotFoundException($"Directory does not exist: {parentPath}");
 
             //var directory = new DirectoryInfo(effectivePath);
-            var directory = _root.GetFolderByPath(effectivePath);
+            var directory = _root.GetFolderByPath(effectiveSourcePath);
             if (directory.Exists())
             {
                 directory.MoveTo(newParent, moveName);
@@ -321,7 +321,8 @@ namespace SAFE.NetworkDrive.Gateways.File
             if (file.Exists())
                 throw new NotSupportedException(string.Format(CultureInfo.CurrentCulture, DUPLICATE_PATH, parent.Value));
 
-            var parentPath = parent.Value;
+            // var parentPath = parent.Value; 
+            var parentPath = GetFullPath(_rootPath, parent.Value);
             var parentDir = _root.GetFolderByPath(parentPath);
             file = MemoryFile.New(parentDir, name);
             
