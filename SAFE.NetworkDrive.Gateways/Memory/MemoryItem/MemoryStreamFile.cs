@@ -52,6 +52,7 @@ namespace DokanMem
             readStream.Seek(0, SeekOrigin.Begin);
             var memStream = new MemoryStream();
             readStream.CopyTo(memStream);
+            memStream.Seek(0, SeekOrigin.Begin);
             return memStream;
         }
 

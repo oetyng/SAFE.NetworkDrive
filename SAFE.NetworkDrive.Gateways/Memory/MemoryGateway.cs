@@ -195,7 +195,10 @@ namespace SAFE.NetworkDrive.Gateways.File
             {
                 var directoryCopy = _root.GetFolderByPath(effectiveCopyPath);
                 if (!directoryCopy.Exists())
+                {
                     _root.CreatePath(effectiveCopyPath);
+                    directoryCopy = _root.GetFolderByPath(effectiveCopyPath);
+                }
                 directory.CopyTo(directoryCopy, recurse);
                 return new DirectoryInfoContract(
                     GetRelativePath(_rootPath, directoryCopy.FullName),
@@ -409,6 +412,6 @@ namespace SAFE.NetworkDrive.Gateways.File
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Debugger Display")]
         [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-        string DebuggerDisplay() => $"{nameof(FileGateway)} rootPath='{_rootPath}'".ToString(CultureInfo.CurrentCulture);
+        string DebuggerDisplay() => $"{nameof(MemoryGateway)} rootPath='{_rootPath}'".ToString(CultureInfo.CurrentCulture);
     }
 }
