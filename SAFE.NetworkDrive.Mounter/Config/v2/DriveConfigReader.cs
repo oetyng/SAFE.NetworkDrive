@@ -7,6 +7,8 @@ namespace SAFE.NetworkDrive.Mounter.Config
 {
     class DriveConfigReader : StringReader
     {
+        public readonly bool IN_MEMORY = true;
+
         internal List<DriveConfig> ConfigureDrives(string username)
         {
             var drives = new List<DriveConfig>();
@@ -31,11 +33,17 @@ namespace SAFE.NetworkDrive.Mounter.Config
             var driveLetter = GetDriveLetter();
             var locator = csReader.GetLocator();
             var secret = csReader.GetSecret();
-            var userFolder = Scrambler.Obfuscate(username, secret);
-            var driveFolder = Scrambler.Obfuscate(driveLetter, secret);
-            var dirPath = $"../snd/{userFolder}/{driveFolder}".ToLowerInvariant();
-            if (!Directory.Exists(dirPath))
-                Directory.CreateDirectory(dirPath);
+
+            var dirPath = Path.DirectorySeparatorChar.ToString();
+            if (!IN_MEMORY)
+            {
+                var userFolder = Scrambler.Obfuscate(username, secret);
+                var driveFolder = Scrambler.Obfuscate(driveLetter, secret);
+                dirPath = $"../snd/{userFolder}/{driveFolder}".ToLowerInvariant();
+                if (!Directory.Exists(dirPath))
+                    Directory.CreateDirectory(dirPath);
+            }
+            
             return new DriveConfig
             {
                 Locator = locator,

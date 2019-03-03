@@ -37,20 +37,13 @@ namespace SAFE.NetworkDrive.Tests
     public sealed partial class AsyncCloudDriveTests
     {
         Fixture _fixture;
-
         const string _apiKey = "<MyApiKey>";
-
         const string _encryptionKey = "<MyEncryptionKey>";
-
-#pragma warning disable 649
         readonly IDictionary<string, string> _parameters;
-#pragma warning restore 649
 
         [ClassInitialize]
         public static void ClassInitialize(TestContext testContext)
-        {
-            ExportProvider.ResetComposition();
-        }
+        { }
 
         [TestInitialize]
         public void Initialize()

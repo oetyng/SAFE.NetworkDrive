@@ -1,23 +1,4 @@
-﻿/*
-The MIT License(MIT)
-Copyright(c) 2015 IgorSoft
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
-
+﻿using DokanMem;
 using SAFE.Filesystem.Interface.IO;
 using SAFE.NetworkDrive.Interface;
 using SAFE.NetworkDrive.Interface.Composition;
@@ -25,29 +6,26 @@ using SAFE.NetworkDrive.Interface.IO;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
+//using System.IO;
 using System.Linq;
 
 namespace SAFE.NetworkDrive.Gateways.File
 {
     [System.Diagnostics.DebuggerDisplay("{DebuggerDisplay(),nq}")]
-    public sealed class FileGateway : ICloudGateway
+    public sealed class MemoryGateway : ICloudGateway
     {
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1707:IdentifiersShouldNotContainUnderscores")]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", MessageId = "PARAMETER")]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", MessageId = "ROOT")]
-        public const string PARAMETER_ROOT = "root";
+        static readonly MemoryFolder _root = new MemoryFolder(null, string.Empty);
+        
 
+        public const string PARAMETER_ROOT = "root";
         const string PATH_NOT_FOUND = "Path '{0}' does not exist";
         const string DUPLICATE_PATH = "'{0}' is already present";
-
         string _rootPath;
 
-        public bool TryAuthenticate(RootName root, string apiKey, IDictionary<string, string> parameters)
-        {
-            return true;
-        }
+        public bool TryAuthenticate(RootName root, string apiKey, IDictionary<string, string> parameters) 
+            => true;
 
+        // DONE
         public DriveInfoContract GetDrive(RootName root, string apiKey, IDictionary<string, string> parameters)
         {
             if (root == null)
@@ -57,10 +35,25 @@ namespace SAFE.NetworkDrive.Gateways.File
             if (string.IsNullOrEmpty(_rootPath))
                 throw new ArgumentException($"{PARAMETER_ROOT} cannot be empty".ToString(CultureInfo.CurrentCulture));
 
-            var drive = new DriveInfo(Path.GetFullPath(_rootPath));
-            return new DriveInfoContract(root.Value, drive.AvailableFreeSpace, drive.TotalSize - drive.AvailableFreeSpace);
+            var drive = new MemDrive(_root);
+            return new DriveInfoContract(root.Value, 
+                drive.AvailableFreeSpace, 
+                drive.TotalSize - drive.AvailableFreeSpace);
         }
 
+        class MemDrive
+        {
+            readonly MemoryFolder _root;
+
+            public MemDrive(MemoryFolder root)
+            {
+                _root = root;
+            }
+            public long TotalSize => System.Diagnostics.Process.GetCurrentProcess().VirtualMemorySize64;// Environment.WorkingSet;
+            public long AvailableFreeSpace => long.MaxValue;//TotalSize - (long)_root.UsedSize;
+        }
+
+        // SEMI DONE
         public RootDirectoryInfoContract GetRoot(RootName root, string apiKey, IDictionary<string, string> parameters)
         {
             if (root == null)
@@ -68,25 +61,33 @@ namespace SAFE.NetworkDrive.Gateways.File
             if (string.IsNullOrEmpty(_rootPath))
                 throw new InvalidOperationException($"{nameof(_rootPath)} not initialized".ToString(CultureInfo.CurrentCulture));
 
-            var directory = new DirectoryInfo(Path.GetFullPath(_rootPath));
-            return new RootDirectoryInfoContract(Path.DirectorySeparatorChar.ToString(), directory.CreationTime, directory.LastWriteTime);
+            var id = System.IO.Path.DirectorySeparatorChar.ToString();
+
+            return new RootDirectoryInfoContract(id, _root.CreationTime, _root.LastWriteTime);
         }
 
-        private static string GetFullPath(string rootPath, string path)
+        // NOT DONE
+        static string GetFullPath(string rootPath, string path)
         {
-            if (Path.IsPathRooted(path))
-                path = path.Remove(0, Path.GetPathRoot(path).Length);
-            return Path.Combine(Path.GetFullPath(rootPath), path);
+            //if (System.IO.Path.IsPathRooted(path))
+            //    path = path.Remove(0, System.IO.Path.GetPathRoot(path).Length);
+            //return System.IO.Path.Combine(System.IO.Path.GetFullPath(rootPath), path);
+            if (System.IO.Path.IsPathRooted(path))
+                return path;
+            return System.IO.Path.Combine(rootPath, path);
         }
 
-        private static string GetRelativePath(string rootPath, string path)
+        // MAYBE DONE
+        static string GetRelativePath(string rootPath, string path)
         {
-            var fullRootPath = Path.GetFullPath(rootPath);
+            //var fullRootPath = System.IO.Path.GetFullPath(rootPath);
+            var fullRootPath = rootPath;
             if (path.StartsWith(fullRootPath, StringComparison.Ordinal))
                 path = path.Remove(0, fullRootPath.Length);
-            return path.TrimEnd(Path.DirectorySeparatorChar);
+            return path.TrimEnd(System.IO.Path.DirectorySeparatorChar);
         }
 
+        // DONE
         public IEnumerable<FileSystemInfoContract> GetChildItem(RootName root, DirectoryId parent)
         {
             if (root == null)
@@ -98,14 +99,16 @@ namespace SAFE.NetworkDrive.Gateways.File
 
             var effectivePath = GetFullPath(_rootPath, parent.Value);
 
-            var directory = new DirectoryInfo(effectivePath);
-            if (directory.Exists)
+            var directory = _root.GetFolderByPath(effectivePath);
+
+            if (directory.Exists())
                 return directory.EnumerateDirectories().Select(d => new DirectoryInfoContract(GetRelativePath(_rootPath, d.FullName), d.Name, d.CreationTime, d.LastWriteTime)).Cast<FileSystemInfoContract>().Concat(
-                    directory.EnumerateFiles().Select(f => new FileInfoContract(GetRelativePath(_rootPath, f.FullName), f.Name, f.CreationTime, f.LastWriteTime, (FileSize)f.Length, null)).Cast<FileSystemInfoContract>());
+                    directory.EnumerateFiles().Select(f => new FileInfoContract(GetRelativePath(_rootPath, f.FullName), f.Name, f.CreationTime, f.LastWriteTime, (FileSize)f.Size, null)).Cast<FileSystemInfoContract>());
             else
                 return Array.Empty<FileSystemInfoContract>();
         }
 
+        // DONE
         public void ClearContent(RootName root, FileId target)
         {
             if (root == null)
@@ -115,19 +118,28 @@ namespace SAFE.NetworkDrive.Gateways.File
             if (string.IsNullOrEmpty(_rootPath))
                 throw new InvalidOperationException($"{nameof(_rootPath)} not initialized".ToString(CultureInfo.CurrentCulture));
 
-            var effectivePath = GetFullPath(_rootPath, target.Value);
+            var file = GetFile(target);
 
-            var file = new FileInfo(effectivePath);
-            if (!file.Exists)
-                throw new FileNotFoundException(string.Empty, target.Value);
-
-            using (var stream = file.Open(FileMode.Truncate, FileAccess.Write))
-            {
-                stream.Flush();
-            }
+            file.Clear();
         }
 
-        public Stream GetContent(RootName root, FileId source)
+        MemoryFile GetFile(FileId fileId)
+        {
+            var file = TryGetFile(fileId);
+            if (!file.Exists())
+                throw new System.IO.FileNotFoundException(string.Empty, fileId.Value);
+            return file;
+        }
+
+        MemoryFile TryGetFile(FileId fileId)
+        {
+            var effectivePath = GetFullPath(_rootPath, fileId.Value);
+            var directory = _root.GetFolderByPath(effectivePath.GetPathPart());
+            return directory.FetchFile(fileId.Value);
+        }
+
+        // DONE
+        public System.IO.Stream GetContent(RootName root, FileId source)
         {
             if (root == null)
                 throw new ArgumentNullException(nameof(root));
@@ -136,16 +148,13 @@ namespace SAFE.NetworkDrive.Gateways.File
             if (string.IsNullOrEmpty(_rootPath))
                 throw new InvalidOperationException($"{nameof(_rootPath)} not initialized".ToString(CultureInfo.CurrentCulture));
 
-            var effectivePath = GetFullPath(_rootPath, source.Value);
-
-            var file = new FileInfo(effectivePath);
-            if (!file.Exists)
-                throw new FileNotFoundException(string.Empty, source.Value);
-
-            return new BufferedStream(file.OpenRead());
+            var file = GetFile(source);
+            
+            return new System.IO.BufferedStream(file.OpenRead());
         }
 
-        public void SetContent(RootName root, FileId target, Stream content, IProgress<ProgressValue> progress)
+        // MAYBE DONE
+        public void SetContent(RootName root, FileId target, System.IO.Stream content, IProgress<ProgressValue> progress)
         {
             if (root == null)
                 throw new ArgumentNullException(nameof(root));
@@ -156,33 +165,11 @@ namespace SAFE.NetworkDrive.Gateways.File
             if (string.IsNullOrEmpty(_rootPath))
                 throw new InvalidOperationException($"{nameof(_rootPath)} not initialized".ToString(CultureInfo.CurrentCulture));
 
-            var effectivePath = GetFullPath(_rootPath, target.Value);
-
-            var file = new FileInfo(effectivePath);
-            //using (var stream = file.OpenWrite()) {
-            //    content.CopyTo(stream);
-            //}
-
-            // HACK: Retry opening the FileStream once if an IOException with HResult == 0x80070020 is thrown.
-            //
-            var fileStream = default(FileStream);
-            try
-            {
-                fileStream = file.OpenWrite();
-            }
-            catch (IOException ex) when ((uint)ex.HResult == 0x80070020)
-            {
-                System.Threading.Thread.Sleep(1);
-            }
-
-            using (var stream = fileStream ?? file.OpenWrite())
-            {
-                content.CopyTo(stream);
-            }
-            //
-            // END HACK
+            var file = GetFile(target);
+            file.SetContent(content);
         }
 
+        // MAYBE DONE
         public FileSystemInfoContract CopyItem(RootName root, FileSystemId source, string copyName, DirectoryId destination, bool recurse)
         {
             if (root == null)
@@ -198,27 +185,48 @@ namespace SAFE.NetworkDrive.Gateways.File
 
             var effectivePath = GetFullPath(_rootPath, source.Value);
             var destinationPath = destination.Value;
-            if (Path.IsPathRooted(destinationPath))
-                destinationPath = destinationPath.Remove(0, Path.GetPathRoot(destinationPath).Length);
-            var effectiveCopyPath = GetFullPath(_rootPath, Path.Combine(destinationPath, copyName));
+            if (System.IO.Path.IsPathRooted(destinationPath))
+                destinationPath = destinationPath.Remove(0, System.IO.Path.GetPathRoot(destinationPath).Length);
+            var effectiveCopyPath = GetFullPath(_rootPath, System.IO.Path.Combine(destinationPath, copyName));
 
-            var directory = new DirectoryInfo(effectivePath);
-            if (directory.Exists)
+            //var directory = new DirectoryInfo(effectivePath);
+            var directory = _root.GetFolderByPath(effectivePath);
+            if (directory.Exists())
             {
-                var directoryCopy = directory.CopyTo(effectiveCopyPath, recurse);
-                return new DirectoryInfoContract(GetRelativePath(_rootPath, directoryCopy.FullName), directoryCopy.Name, directoryCopy.CreationTime, directoryCopy.LastWriteTime);
+                var directoryCopy = _root.GetFolderByPath(effectiveCopyPath);
+                if (!directoryCopy.Exists())
+                    _root.CreatePath(effectiveCopyPath);
+                directory.CopyTo(directoryCopy, recurse);
+                return new DirectoryInfoContract(
+                    GetRelativePath(_rootPath, directoryCopy.FullName),
+                    directoryCopy.Name, 
+                    directoryCopy.CreationTime, 
+                    directoryCopy.LastWriteTime);
             }
 
-            var file = new FileInfo(effectivePath);
-            if (file.Exists)
+            //var file = new FileInfo(effectivePath);
+            var file = TryGetFile(new FileId(source.Value));
+            if (file.Exists())
             {
-                var fileCopy = file.CopyTo(effectiveCopyPath);
-                return new FileInfoContract(GetRelativePath(_rootPath, fileCopy.FullName), fileCopy.Name, fileCopy.CreationTime, fileCopy.LastWriteTime, (FileSize)fileCopy.Length, null);
+                var parentFolderPath = effectiveCopyPath.GetPathPart();
+                var parentFolder = _root.GetFolderByPath(parentFolderPath); // destinationPath
+                if (!parentFolder.Exists())
+                {
+                    _root.CreatePath(parentFolderPath); // destinationPath
+                    parentFolder = _root.GetFolderByPath(parentFolderPath); // destinationPath
+                }
+                var fileCopy = file.CopyTo(parentFolder, copyName);
+                return new FileInfoContract(GetRelativePath(_rootPath, fileCopy.FullName), 
+                    fileCopy.Name, 
+                    fileCopy.CreationTime, 
+                    fileCopy.LastWriteTime, 
+                    (FileSize)fileCopy.Size, null);
             }
 
             throw new NotSupportedException(string.Format(CultureInfo.CurrentCulture, PATH_NOT_FOUND, source.Value));
         }
 
+        // DONE
         public FileSystemInfoContract MoveItem(RootName root, FileSystemId source, string moveName, DirectoryId destination)
         {
             if (root == null)
@@ -234,27 +242,41 @@ namespace SAFE.NetworkDrive.Gateways.File
 
             var effectivePath = GetFullPath(_rootPath, source.Value);
             var destinationPath = destination.Value;
-            if (Path.IsPathRooted(destinationPath))
-                destinationPath = destinationPath.Remove(0, Path.GetPathRoot(destinationPath).Length);
-            var effectiveMovePath = GetFullPath(_rootPath, Path.Combine(destinationPath, moveName));
+            if (System.IO.Path.IsPathRooted(destinationPath))
+                destinationPath = destinationPath.Remove(0, System.IO.Path.GetPathRoot(destinationPath).Length);
+            var effectiveMovePath = GetFullPath(_rootPath, System.IO.Path.Combine(destinationPath, moveName));
 
-            var directory = new DirectoryInfo(effectivePath);
-            if (directory.Exists)
+            var parentPath = effectiveMovePath.GetPathPart();
+            MemoryFolder newParent = _root.GetFolderByPath(parentPath);
+            if (!newParent.Exists())
+                throw new System.IO.DirectoryNotFoundException($"Directory does not exist: {parentPath}");
+
+            //var directory = new DirectoryInfo(effectivePath);
+            var directory = _root.GetFolderByPath(effectivePath);
+            if (directory.Exists())
             {
-                directory.MoveTo(effectiveMovePath);
-                return new DirectoryInfoContract(GetRelativePath(_rootPath, directory.FullName), directory.Name, directory.CreationTime, directory.LastWriteTime);
+                directory.MoveTo(newParent, moveName);
+                return new DirectoryInfoContract(GetRelativePath(_rootPath, directory.FullName), 
+                    directory.Name, 
+                    directory.CreationTime, 
+                    directory.LastWriteTime);
             }
 
-            var file = new FileInfo(effectivePath);
-            if (file.Exists)
+            var file = TryGetFile(new FileId(source.Value));
+            if (file.Exists())
             {
-                file.MoveTo(effectiveMovePath);
-                return new FileInfoContract(GetRelativePath(_rootPath, file.FullName), file.Name, file.CreationTime, file.LastWriteTime, (FileSize)file.Length, null);
+                file.MoveTo(newParent, moveName);
+                return new FileInfoContract(GetRelativePath(_rootPath, file.FullName), 
+                    file.Name, 
+                    file.CreationTime, 
+                    file.LastWriteTime, 
+                    (FileSize)file.Size, null);
             }
 
             throw new NotSupportedException(string.Format(CultureInfo.CurrentCulture, PATH_NOT_FOUND, source.Value));
         }
 
+        // DONE
         public DirectoryInfoContract NewDirectoryItem(RootName root, DirectoryId parent, string name)
         {
             if (root == null)
@@ -266,18 +288,25 @@ namespace SAFE.NetworkDrive.Gateways.File
             if (string.IsNullOrEmpty(_rootPath))
                 throw new InvalidOperationException($"{nameof(_rootPath)} not initialized".ToString(CultureInfo.CurrentCulture));
 
-            var effectivePath = GetFullPath(_rootPath, Path.Combine(parent.Value, name));
+            var effectivePath = GetFullPath(_rootPath, System.IO.Path.Combine(parent.Value, name));
 
-            var directory = new DirectoryInfo(effectivePath);
-            if (directory.Exists)
+            //var directory = new DirectoryInfo(effectivePath);
+            var directory = _root.GetFolderByPath(effectivePath);
+            if (directory.Exists())
                 throw new NotSupportedException(string.Format(CultureInfo.CurrentCulture, DUPLICATE_PATH, effectivePath));
 
-            directory.Create();
+            _root.CreatePath(effectivePath);
+            directory = _root.GetFolderByPath(effectivePath);
 
-            return new DirectoryInfoContract(GetRelativePath(_rootPath, directory.FullName), directory.Name, directory.CreationTime, directory.LastWriteTime);
+            return new DirectoryInfoContract(GetRelativePath(_rootPath, directory.FullName), 
+                directory.Name, 
+                directory.CreationTime, 
+                directory.LastWriteTime);
         }
 
-        public FileInfoContract NewFileItem(RootName root, DirectoryId parent, string name, Stream content, IProgress<ProgressValue> progress)
+        // DONE
+        public FileInfoContract NewFileItem(RootName root, DirectoryId parent, 
+            string name, System.IO.Stream content, IProgress<ProgressValue> progress)
         {
             if (root == null)
                 throw new ArgumentNullException(nameof(root));
@@ -288,22 +317,25 @@ namespace SAFE.NetworkDrive.Gateways.File
             if (string.IsNullOrEmpty(_rootPath))
                 throw new InvalidOperationException($"{nameof(_rootPath)} not initialized".ToString(CultureInfo.CurrentCulture));
 
-            var effectivePath = GetFullPath(_rootPath, Path.Combine(parent.Value, name));
-
-            var file = new FileInfo(effectivePath);
-            if (file.Exists)
+            var file = TryGetFile(new FileId(System.IO.Path.Combine(parent.Value, name)));
+            if (file.Exists())
                 throw new NotSupportedException(string.Format(CultureInfo.CurrentCulture, DUPLICATE_PATH, parent.Value));
 
-            using (var fileStream = file.Create())
-            {
-                if (content != null)
-                    content.CopyTo(fileStream);
-            }
+            var parentPath = parent.Value;
+            var parentDir = _root.GetFolderByPath(parentPath);
+            file = MemoryFile.New(parentDir, name);
+            
+            if (content != null)
+                content.CopyTo(file);
 
-            file.Refresh();
-            return new FileInfoContract(GetRelativePath(_rootPath, file.FullName), file.Name, file.CreationTime, file.LastWriteTime, (FileSize)file.Length, null);
+            return new FileInfoContract(GetRelativePath(_rootPath, file.FullName), 
+                file.Name, 
+                file.CreationTime, 
+                file.LastWriteTime, 
+                (FileSize)file.Size, null);
         }
 
+        // DONE
         public void RemoveItem(RootName root, FileSystemId target, bool recurse)
         {
             if (root == null)
@@ -315,23 +347,25 @@ namespace SAFE.NetworkDrive.Gateways.File
 
             var effectivePath = GetFullPath(_rootPath, target.Value);
 
-            var directory = new DirectoryInfo(effectivePath);
-            if (directory.Exists)
+            var directory = _root.GetFolderByPath(effectivePath);
+            if (directory.Exists())
             {
-                directory.Delete(recurse);
+                //directory.Delete(recurse);
+                directory.Parent.Children.Remove(directory);
                 return;
             }
 
-            var file = new FileInfo(effectivePath);
-            if (file.Exists)
+            var file = TryGetFile(new FileId(target.Value));
+            if (file.Exists())
             {
-                file.Delete();
+                file.Parent.Children.Remove(file);
                 return;
             }
 
             throw new NotSupportedException(string.Format(CultureInfo.CurrentCulture, PATH_NOT_FOUND, target.Value));
         }
 
+        // DONE
         public FileSystemInfoContract RenameItem(RootName root, FileSystemId target, string newName)
         {
             if (root == null)
@@ -344,20 +378,29 @@ namespace SAFE.NetworkDrive.Gateways.File
                 throw new InvalidOperationException($"{nameof(_rootPath)} not initialized".ToString(CultureInfo.CurrentCulture));
 
             var effectivePath = GetFullPath(_rootPath, target.Value);
-            var newPath = GetFullPath(_rootPath, Path.Combine(Path.GetDirectoryName(target.Value), newName));
+            var newPath = GetFullPath(_rootPath, System.IO.Path.Combine(System.IO.Path.GetDirectoryName(target.Value), newName));
 
-            var directory = new DirectoryInfo(effectivePath);
-            if (directory.Exists)
+            var destination = _root.GetFolderByPath(newPath.GetPathPart());
+
+            var directory = _root.GetFolderByPath(effectivePath);
+            if (directory.Exists())
             {
-                directory.MoveTo(newPath);
-                return new DirectoryInfoContract(GetRelativePath(_rootPath, directory.FullName), directory.Name, directory.CreationTime, directory.LastWriteTime);
+                directory.MoveTo(destination, newName);
+                return new DirectoryInfoContract(GetRelativePath(_rootPath, directory.FullName), 
+                    directory.Name, 
+                    directory.CreationTime, 
+                    directory.LastWriteTime);
             }
 
-            var file = new FileInfo(effectivePath);
-            if (file.Exists)
+            var file = TryGetFile(new FileId(target.Value));
+            if (file.Exists())
             {
-                file.MoveTo(newPath);
-                return new FileInfoContract(GetRelativePath(_rootPath, file.FullName), file.Name, file.CreationTime, file.LastWriteTime, (FileSize)file.Length, null);
+                file.MoveTo(destination, newName);
+                return new FileInfoContract(GetRelativePath(_rootPath, file.FullName), 
+                    file.Name, 
+                    file.CreationTime, 
+                    file.LastWriteTime, 
+                    (FileSize)file.Size, null);
             }
 
             throw new NotSupportedException(string.Format(CultureInfo.CurrentCulture, PATH_NOT_FOUND, target.Value));

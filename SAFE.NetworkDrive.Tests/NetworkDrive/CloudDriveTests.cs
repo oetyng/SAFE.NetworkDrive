@@ -37,17 +37,13 @@ namespace SAFE.NetworkDrive.Tests
     public sealed partial class CloudDriveTests
     {
         Fixture _fixture;
-
         const string _apiKey = "<MyApiKey>";
         const string _encryptionKey = "<MyEncryptionKey>";
-
         readonly IDictionary<string, string> _parameters;
 
         [ClassInitialize]
         public static void ClassInitialize(TestContext testContext)
-        {
-            ExportProvider.ResetComposition();
-        }
+        { }
 
         [TestInitialize]
         public void Initialize()

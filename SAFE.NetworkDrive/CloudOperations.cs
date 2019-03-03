@@ -193,7 +193,7 @@ namespace SAFE.NetworkDrive
                     fileItem = item as CloudFileNode;
                     if (fileItem != null)
                     {
-                        if (access.HasFlag(FileAccess.ReadData) || access.HasFlag(FileAccess.GenericRead))
+                        if (access.HasFlag(FileAccess.ReadData) || access.HasFlag(FileAccess.GenericRead) || access.HasFlag(FileAccess.ReadAttributes))
                             info.Context = new StreamContext(fileItem, FileAccess.ReadData);
                         else if (access.HasFlag(FileAccess.WriteData))
                             info.Context = new StreamContext(fileItem, FileAccess.WriteData);
@@ -239,16 +239,16 @@ namespace SAFE.NetworkDrive
                 case FileMode.Append:
                     return AsError(nameof(CreateFile), fileName, info, access, share, mode, options, attributes, DokanResult.NotImplemented);
                 case FileMode.Truncate:
-                    //fileItem = item as CloudFileNode;
-                    //if (fileItem == null)
-                    //    return AsDebug(nameof(CreateFile), fileName, info, access, share, mode, options, attributes, DokanResult.FileNotFound);
+                    fileItem = item as CloudFileNode;
+                    if (fileItem == null)
+                        return AsDebug(nameof(CreateFile), fileName, info, access, share, mode, options, attributes, DokanResult.FileNotFound);
 
-                    //fileItem.Truncate(drive);
+                    fileItem.Truncate(_drive);
 
-                    //info.Context = new StreamContext(fileItem, FileAccess.WriteData);
+                    info.Context = new StreamContext(fileItem, FileAccess.WriteData);
 
-                    //return AsTrace(nameof(CreateFile), fileName, info, access, share, mode, options, attributes, DokanResult.Success);
-                    return AsError(nameof(CreateFile), fileName, info, access, share, mode, options, attributes, DokanResult.NotImplemented);
+                    return AsTrace(nameof(CreateFile), fileName, info, access, share, mode, options, attributes, DokanResult.Success);
+                    //return AsError(nameof(CreateFile), fileName, info, access, share, mode, options, attributes, DokanResult.NotImplemented);
                 default:
                     return AsError(nameof(CreateFile), fileName, info, access, share, mode, options, attributes, DokanResult.NotImplemented);
             }
@@ -304,7 +304,11 @@ namespace SAFE.NetworkDrive
 
             var parent = GetItem(fileName) as CloudDirectoryNode;
 
-            var childItems = parent.GetChildItems(_drive).Where(i => i.IsResolved).ToList();
+            var childItems = parent
+                .GetChildItems(_drive)
+                .Where(i => i.IsResolved)
+                .ToList();
+
             files = childItems.Any()
                 ? childItems
                     .Where(i => Regex.IsMatch(i.Name, searchPattern.Contains('?') || searchPattern.Contains('*') ? searchPattern.Replace('?', '.').Replace("*", ".*") : "^" + searchPattern + "$"))
@@ -397,7 +401,7 @@ namespace SAFE.NetworkDrive
             volumeLabel = _drive.DisplayRoot;
             features = FileSystemFeatures.CaseSensitiveSearch | FileSystemFeatures.CasePreservedNames | FileSystemFeatures.UnicodeOnDisk |
                        FileSystemFeatures.PersistentAcls | FileSystemFeatures.SupportsRemoteStorage;
-            fileSystemName = nameof(DokanSAFEFS);
+            fileSystemName = "SAFE.NetworkDrive";
             maximumComponentLength = 256;
 
             return AsTrace(nameof(GetVolumeInformation), null, info, DokanResult.Success, $"out {volumeLabel}", $"out {features}", $"out {fileSystemName}".ToString(CultureInfo.CurrentCulture));

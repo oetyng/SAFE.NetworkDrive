@@ -33,12 +33,12 @@ namespace SAFE.NetworkDrive.Interface
         /// Initializes a new instance of the <see cref="ProxyFileInfoContract"/> class.
         /// </summary>
         /// <param name="name">The name.</param>
-        public ProxyFileInfoContract(string name) : base("PROXY", name)
-        {
-        }
+        public ProxyFileInfoContract(string name) 
+            : base("PROXY", name)
+        { }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Debugger Display")]
         [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-        private string DebuggerDisplay() => $"{nameof(ProxyFileInfoContract)} {Name}".ToString(CultureInfo.CurrentCulture);
+        string DebuggerDisplay() => $"{nameof(ProxyFileInfoContract)} {Name}".ToString(CultureInfo.CurrentCulture);
     }
 }

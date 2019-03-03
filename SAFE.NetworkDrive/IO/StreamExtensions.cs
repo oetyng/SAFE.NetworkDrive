@@ -65,31 +65,12 @@ namespace SAFE.NetworkDrive.IO
             return stream;
         }
 
-        //// DISABLED
-        //static Stream Process(Stream stream, string encryptionKey, CryptoStreamMode mode)
-        //{
-        //    //var buffer = new MemoryStream();
-
-        //    switch (mode)
-        //    {
-        //        case CryptoStreamMode.Write:
-        //            return stream;
-        //            //SharpAESCrypt.SharpAESCrypt.Encrypt(encryptionKey, stream, buffer);
-        //            //break;
-        //        case CryptoStreamMode.Read:
-        //            return stream;
-        //            //SharpAESCrypt.SharpAESCrypt.Decrypt(encryptionKey, stream, buffer);
-        //            //break;
-        //        default:
-        //            return stream;
-        //    }
-
-        //    //buffer.Seek(0, SeekOrigin.Begin);
-        //    //return buffer;
-        //}
-
         static Stream Process(Stream stream, string encryptionKey, CryptoStreamMode mode)
         {
+            // TEMP
+            return stream;
+            // TEMP
+
             if (stream.Length == 0)
                 return stream;
 

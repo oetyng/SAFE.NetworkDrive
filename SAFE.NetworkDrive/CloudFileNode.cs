@@ -30,14 +30,13 @@ namespace SAFE.NetworkDrive
     {
         public new FileInfoContract Contract => (FileInfoContract)base.Contract;
 
-        public CloudFileNode(FileInfoContract contract) : base(contract)
-        {
-        }
+        public CloudFileNode(FileInfoContract contract) 
+            : base(contract)
+        { }
 
         public override void SetParent(CloudDirectoryNode parent)
         {
             base.SetParent(parent);
-
             Contract.Directory = parent?.Contract;
         }
 
@@ -71,6 +70,6 @@ namespace SAFE.NetworkDrive
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Debugger Display")]
         [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-        private string DebuggerDisplay => $"{nameof(CloudFileNode)} {Name} Size={Contract.Size}".ToString(CultureInfo.CurrentCulture);
+        string DebuggerDisplay => $"{nameof(CloudFileNode)} {Name} Size={Contract.Size}".ToString(CultureInfo.CurrentCulture);
     }
 }

@@ -9,7 +9,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway.Config
     [System.Diagnostics.DebuggerDisplay("{DebuggerDisplay(),nq}")]
     public class GatewaySection
     {
-        public static string Name => "gateway";
+        public static string Name => "gateways";
 
         public string Schema { get; set; }
 

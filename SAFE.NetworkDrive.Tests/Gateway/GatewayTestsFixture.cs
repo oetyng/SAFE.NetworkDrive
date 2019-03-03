@@ -28,7 +28,6 @@ using System.Collections.Concurrent;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
-using LazyCache;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SAFE.NetworkDrive.Interface.Composition;
 using SAFE.NetworkDrive.Interface;
@@ -46,10 +45,10 @@ namespace SAFE.NetworkDrive.Tests.Gateway
     {
         static IConfiguration _config;
         static Dictionary<string, GatewaySection> _gatewaySections;
-        static readonly IAppCache _cache = new CachingService();
+        static readonly ConcurrentDictionary<string, byte[]> _cache = new ConcurrentDictionary<string, byte[]>();
 
-        public IList<ExportFactory<IAsyncCloudGateway, CloudGatewayMetadata>> AsyncGateways { get; set; }
-        public IList<ExportFactory<ICloudGateway, CloudGatewayMetadata>> Gateways { get; set; }
+        public Dictionary<string, IAsyncCloudGateway> AsyncGateways { get; } = new Dictionary<string, IAsyncCloudGateway>();
+        public Dictionary<string, ICloudGateway> Gateways { get; } = new Dictionary<string, ICloudGateway>();
         
         [AssemblyInitialize]
         public static void Initialize(TestContext context)
@@ -79,12 +78,30 @@ namespace SAFE.NetworkDrive.Tests.Gateway
 
         public IAsyncCloudGateway GetAsyncGateway(GatewaySection config)
         {
-            return AsyncGateways.Single(g => g.Metadata.CloudService == config.Schema).CreateExport().Value;
+            if (!AsyncGateways.ContainsKey(config.Schema))
+            {
+                switch (config.Schema)
+                {
+                    case "file":
+                        AsyncGateways[config.Schema] = new Moq.Mock<IAsyncCloudGateway>().Object;
+                        break;
+                }
+            }
+            return AsyncGateways[config.Schema];
         }
 
         public ICloudGateway GetGateway(GatewaySection config)
         {
-            return Gateways.Single(g => g.Metadata.CloudService == config.Schema).CreateExport().Value;
+            if (!Gateways.ContainsKey(config.Schema))
+            {
+                switch (config.Schema)
+                {
+                    case "file":
+                        Gateways[config.Schema] = new Gateways.File.FileGateway();
+                        break;
+                }
+            }
+            return Gateways[config.Schema];
         }
 
         public RootName GetRootName(GatewaySection config)
@@ -209,7 +226,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
             if (bytes == null)
                 throw new ArgumentNullException(nameof(bytes));
 
-            return _cache.GetOrAdd(bytes.ToString(), () => Enumerable.Range(0, (int)bytes).Select(i => (byte)(i % 251 + 1)).ToArray());
+            return _cache.GetOrAdd(bytes.ToString(), (s) => Enumerable.Range(0, (int)bytes).Select(i => (byte)(i % 251 + 1)).ToArray());
         }
     }
 }

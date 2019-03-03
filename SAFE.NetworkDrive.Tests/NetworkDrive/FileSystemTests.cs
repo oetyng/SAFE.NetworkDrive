@@ -83,7 +83,7 @@ namespace SAFE.NetworkDrive.Tests
 
             var result = sut.DriveFormat;
 
-            Assert.AreEqual(nameof(NetworkDrive.DokanSAFEFS), result);
+            Assert.AreEqual("SAFE.NetworkDrive", result);
 
             _fixture.Verify();
         }
