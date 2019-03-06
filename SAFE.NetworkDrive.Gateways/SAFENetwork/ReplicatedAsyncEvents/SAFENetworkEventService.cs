@@ -10,12 +10,10 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 {
     class SAFENetworkEventService
     {
-        IDatabase _db;
+        readonly IDatabase _db;
 
         public SAFENetworkEventService(IDatabase db)
-        {
-            _db = db;
-        }
+            => _db = db;
 
         public async Task<bool> Upload(byte[] zipEncryptedBytes)
         {

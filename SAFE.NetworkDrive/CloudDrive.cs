@@ -33,7 +33,6 @@ namespace SAFE.NetworkDrive
     internal class CloudDrive : CloudDriveBase, ICloudDrive
     {
         readonly ICloudGateway _gateway;
-
         readonly IDictionary<string, string> _parameters;
 
         public CloudDrive(RootName rootName, ICloudGateway gateway, CloudDriveParameters parameters) : base(rootName, parameters)
@@ -55,9 +54,7 @@ namespace SAFE.NetworkDrive
         }
 
         public bool TryAuthenticate()
-        {
-            return _gateway.TryAuthenticate(_rootName, _apiKey, _parameters);
-        }
+            => _gateway.TryAuthenticate(_rootName, _apiKey, _parameters);
 
         public RootDirectoryInfoContract GetRoot()
         {

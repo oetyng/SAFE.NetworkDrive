@@ -1,7 +1,6 @@
 ﻿
 using SAFE.NetworkDrive.Gateways.Events;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 
 namespace SAFE.NetworkDrive.Gateways.AsyncEvents
@@ -20,14 +19,10 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         }
 
         public void Start(CancellationToken cancellation)
-        {
-            _queueWorker.Start(cancellation);
-        }
+            => _queueWorker.Start(cancellation);
 
         public bool Transact(Event e)
-        {
-            return Transact<object>(e).Item1;
-        }
+            => Transact<object>(e).Item1;
 
         public (bool, T) Transact<T>(Event e)
         {

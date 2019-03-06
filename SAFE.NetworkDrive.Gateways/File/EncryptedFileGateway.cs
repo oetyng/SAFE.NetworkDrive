@@ -30,16 +30,9 @@ using System.Linq;
 
 namespace SAFE.NetworkDrive.Gateways.File
 {
-    //[ExportAsCloudGateway("File")]
-    //[ExportMetadata(nameof(CloudGatewayMetadata.CloudService), FileGateway.SCHEMA)]
-    //[ExportMetadata(nameof(CloudGatewayMetadata.Capabilities), FileGateway.CAPABILITIES)]
-    //[ExportMetadata(nameof(CloudGatewayMetadata.ApiAssembly), FileGateway.API)]
     [System.Diagnostics.DebuggerDisplay("{DebuggerDisplay(),nq}")]
     public sealed class EncryptedFileGateway : ICloudGateway
     {
-        //const string SCHEMA = "file";
-        //const GatewayCapabilities CAPABILITIES = GatewayCapabilities.All ^ GatewayCapabilities.ItemId;
-        //const string API = "mscorlib";
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1707:IdentifiersShouldNotContainUnderscores")]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", MessageId = "PARAMETER")]
@@ -51,10 +44,7 @@ namespace SAFE.NetworkDrive.Gateways.File
 
         string _rootPath;
 
-        public bool TryAuthenticate(RootName root, string apiKey, IDictionary<string, string> parameters)
-        {
-            return true;
-        }
+        public bool TryAuthenticate(RootName root, string apiKey, IDictionary<string, string> parameters) => true;
 
         public DriveInfoContract GetDrive(RootName root, string apiKey, IDictionary<string, string> parameters)
         {

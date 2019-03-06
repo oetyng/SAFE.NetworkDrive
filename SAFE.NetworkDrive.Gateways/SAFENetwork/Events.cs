@@ -101,9 +101,7 @@ namespace SAFE.NetworkDrive.Gateways.Events
         }
 
         public static StoredEvent From(string json)
-        {
-            return json.Parse<StoredEvent>();
-        }
+            => json.Parse<StoredEvent>();
 
         public static StoredEvent For(Event e)
         {

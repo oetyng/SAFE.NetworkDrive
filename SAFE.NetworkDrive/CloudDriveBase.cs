@@ -29,11 +29,8 @@ namespace SAFE.NetworkDrive
     internal abstract class CloudDriveBase : IDisposable
     {
         protected readonly RootName _rootName;
-
         protected readonly string _apiKey;
-
         protected readonly string _encryptionKey;
-
         protected DriveInfoContract _drive;
 
         SemaphoreSlim _semaphore = new SemaphoreSlim(1);
@@ -41,7 +38,6 @@ namespace SAFE.NetworkDrive
         public string DisplayRoot { get; }
 
         public long? Free => ExecuteInSemaphore(() => GetDrive().FreeSpace, $"get_{nameof(Free)}".ToString(CultureInfo.InvariantCulture));
-
         public long? Used => ExecuteInSemaphore(() => GetDrive().UsedSpace, $"get_{nameof(Used)}".ToString(CultureInfo.InvariantCulture));
 
         protected CloudDriveBase(RootName rootName, CloudDriveParameters parameters)

@@ -25,7 +25,6 @@ namespace SAFE.NetworkDrive
     internal interface IGatewayManager
     {
         bool TryGetAsyncCloudGatewayForSchema(string schema, out IAsyncCloudGateway gateway);
-
         bool TryGetCloudGatewayForSchema(string schema, out ICloudGateway gateway);
     }
 }

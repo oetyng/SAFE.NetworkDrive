@@ -43,10 +43,7 @@ namespace SAFE.NetworkDrive.Gateways.File
 
         string _rootPath;
 
-        public bool TryAuthenticate(RootName root, string apiKey, IDictionary<string, string> parameters)
-        {
-            return true;
-        }
+        public bool TryAuthenticate(RootName root, string apiKey, IDictionary<string, string> parameters) => true;
 
         public DriveInfoContract GetDrive(RootName root, string apiKey, IDictionary<string, string> parameters)
         {

@@ -95,28 +95,28 @@ namespace SAFE.NetworkDrive.IO
 
             [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Debugger Display")]
             [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-            private string DebuggerDisplay => $"{nameof(Block)}({Offset}, {Count})".ToString(CultureInfo.CurrentCulture);
+            string DebuggerDisplay => $"{nameof(Block)}({Offset}, {Count})".ToString(CultureInfo.CurrentCulture);
         }
 
-        private readonly List<Block> blocks = new List<Block>();
+        readonly List<Block> _blocks = new List<Block>();
 
-        private int capacity;
+        int _capacity;
 
-        public ReadOnlyCollection<Block> Blocks => new ReadOnlyCollection<Block>(blocks);
+        public ReadOnlyCollection<Block> Blocks => new ReadOnlyCollection<Block>(_blocks);
 
         public int Capacity
         {
-            get { return capacity; }
+            get => _capacity;
             set
             {
-                if (blocks.Any())
+                if (_blocks.Any())
                 {
-                    var assignedCapacity = blocks.Max(b => b.Offset + b.Count);
+                    var assignedCapacity = _blocks.Max(b => b.Offset + b.Count);
                     if (value < assignedCapacity)
                         throw new ArgumentOutOfRangeException($"{nameof(Capacity)} cannot be set below {assignedCapacity}.".ToString(CultureInfo.CurrentCulture));
                 }
 
-                capacity = value;
+                _capacity = value;
             }
         }
 
@@ -125,13 +125,11 @@ namespace SAFE.NetworkDrive.IO
             if (capacity <= 0)
                 throw new ArgumentOutOfRangeException(nameof(capacity), $"{nameof(capacity)} must be positive.".ToString(CultureInfo.CurrentCulture));
 
-            this.capacity = capacity;
+            _capacity = capacity;
         }
 
-        private int GetAvailableBytes(int index, int offset, int count)
-        {
-            return Math.Min(count, Math.Max(0, blocks[index].Count - (offset - blocks[index].Offset)));
-        }
+        int GetAvailableBytes(int index, int offset, int count)
+            => Math.Min(count, Math.Max(0, _blocks[index].Count - (offset - _blocks[index].Offset)));
 
         public int GetAvailableBytes(int offset, int count)
         {
@@ -144,7 +142,7 @@ namespace SAFE.NetworkDrive.IO
             if (count == 0)
                 return 0;
 
-            var index = blocks.BinarySearch(new Block(offset, count));
+            var index = _blocks.BinarySearch(new Block(offset, count));
 
             return index >= 0
                 ? GetAvailableBytes(index, offset, count)
@@ -162,18 +160,18 @@ namespace SAFE.NetworkDrive.IO
 
             var block = new Block(offset, count);
 
-            int index = blocks.BinarySearch(block), successorIndex = ~index;
+            int index = _blocks.BinarySearch(block), successorIndex = ~index;
 
-            if (index >= 0 || successorIndex > 0 && blocks[successorIndex - 1].Intersects(block) || successorIndex < blocks.Count && blocks[successorIndex].Intersects(block))
+            if (index >= 0 || successorIndex > 0 && _blocks[successorIndex - 1].Intersects(block) || successorIndex < _blocks.Count && _blocks[successorIndex].Intersects(block))
                 throw new InvalidOperationException($"{nameof(Block)}({offset}, {count}) intersects previous coverage.".ToString(CultureInfo.CurrentCulture));
 
-            var predecessor = successorIndex > 0 ? blocks[successorIndex - 1] : null;
-            var successor = successorIndex < blocks.Count ? blocks[successorIndex] : null;
+            var predecessor = successorIndex > 0 ? _blocks[successorIndex - 1] : null;
+            var successor = successorIndex < _blocks.Count ? _blocks[successorIndex] : null;
 
             if (predecessor?.TryMerge(block) ?? false)
             {
                 if (successor?.TryMerge(predecessor) ?? false)
-                    blocks.Remove(predecessor);
+                    _blocks.Remove(predecessor);
             }
             else if (successor?.TryMerge(block) ?? false)
             {
@@ -181,7 +179,7 @@ namespace SAFE.NetworkDrive.IO
             }
             else
             {
-                blocks.Insert(successorIndex, block);
+                _blocks.Insert(successorIndex, block);
             }
         }
 
@@ -189,6 +187,6 @@ namespace SAFE.NetworkDrive.IO
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Debugger Display")]
         [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-        private string DebuggerDisplay => $"{nameof(BlockMap)}[{Capacity}]: {string.Join(",", blocks.Select(b => $"({b.Offset}|{b.Count})".ToString(CultureInfo.InvariantCulture)))}".ToString(CultureInfo.CurrentCulture);
+        string DebuggerDisplay => $"{nameof(BlockMap)}[{Capacity}]: {string.Join(",", _blocks.Select(b => $"({b.Offset}|{b.Count})".ToString(CultureInfo.InvariantCulture)))}".ToString(CultureInfo.CurrentCulture);
     }
 }

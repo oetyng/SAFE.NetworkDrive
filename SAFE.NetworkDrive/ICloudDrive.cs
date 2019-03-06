@@ -28,30 +28,18 @@ namespace SAFE.NetworkDrive
     public interface ICloudDrive : IDisposable
     {
         string DisplayRoot { get; }
-
         long? Free { get; }
-
         long? Used { get; }
-
         IPersistGatewaySettings PersistSettings { get; }
-
         bool TryAuthenticate();
-
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate")]
         RootDirectoryInfoContract GetRoot();
-
         IEnumerable<FileSystemInfoContract> GetChildItem(DirectoryInfoContract parent);
-
         Stream GetContent(FileInfoContract source);
-
         void SetContent(FileInfoContract target, Stream content);
-
         FileSystemInfoContract MoveItem(FileSystemInfoContract source, string movePath, DirectoryInfoContract destination);
-
         DirectoryInfoContract NewDirectoryItem(DirectoryInfoContract parent, string name);
-
         FileInfoContract NewFileItem(DirectoryInfoContract parent, string name, Stream content);
-
         void RemoveItem(FileSystemInfoContract target, bool recurse);
     }
 }

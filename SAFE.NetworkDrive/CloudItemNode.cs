@@ -27,11 +27,8 @@ namespace SAFE.NetworkDrive
     internal abstract class CloudItemNode
     {
         public FileSystemInfoContract Contract { get; private set; }
-
         protected CloudDirectoryNode Parent { get; private set; }
-
         public string Name => Contract.Name;
-
         public bool IsResolved => !(Contract is ProxyFileInfoContract);
 
         protected CloudItemNode(FileSystemInfoContract contract)
@@ -66,9 +63,7 @@ namespace SAFE.NetworkDrive
         }
 
         public virtual void SetParent(CloudDirectoryNode parent)
-        {
-            Parent = parent;
-        }
+            => Parent = parent;
 
         public void Move(ICloudDrive drive, string newName, CloudDirectoryNode destinationDirectory)
         {

@@ -41,7 +41,6 @@ namespace SAFE.NetworkDrive
         public override void SetParent(CloudDirectoryNode parent)
         {
             base.SetParent(parent);
-
             Contract.Parent = parent?.Contract;
         }
 

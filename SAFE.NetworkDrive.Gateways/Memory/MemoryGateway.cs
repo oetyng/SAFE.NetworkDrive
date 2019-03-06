@@ -20,8 +20,7 @@ namespace SAFE.NetworkDrive.Gateways.Memory
         const string DUPLICATE_PATH = "'{0}' is already present";
         string _rootPath;
 
-        public bool TryAuthenticate(RootName root, string apiKey, IDictionary<string, string> parameters) 
-            => true;
+        public bool TryAuthenticate(RootName root, string apiKey, IDictionary<string, string> parameters) => true;
 
         // DONE
         public DriveInfoContract GetDrive(RootName root, string apiKey, IDictionary<string, string> parameters)

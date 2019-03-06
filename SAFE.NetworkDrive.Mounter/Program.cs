@@ -122,10 +122,7 @@ namespace SAFE.NetworkDrive.Mounter
         }
 
         CloudDriveFactory GetCloudDriveFactory()
-        {
-            var factory = new CloudDriveFactory();
-            return factory;
-        }
+            => new CloudDriveFactory();
 
         int Mount(UserConfig config)
         {
@@ -285,7 +282,7 @@ namespace SAFE.NetworkDrive.Mounter
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
-        private int Reset(IList<string> userNames)
+        int Reset(IList<string> userNames)
         {
             var mountSection = _config.GetSection(MountSection.Name).Get<MountSection>();
             if (mountSection == null)

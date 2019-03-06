@@ -36,9 +36,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         long _sequenceNr;
 
         public DiskReplicatedSAFEGateway(string secretKey)
-        {
-            _secretKey = secretKey;
-        }
+            => _secretKey = secretKey;
 
         async Task<SAFENetworkContext> RequireContextAsync(RootName root, string apiKey = null)
         {
@@ -77,14 +75,10 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         }
 
         Task<IEnumerable<Events.Event>> GetNewEvents(SAFENetworkEventService service)
-        {
-            return service.LoadAsync(_secretKey);
-        }
+            => service.LoadAsync(_secretKey);
 
         Credentials Credentials(string locator, string secret)
-        {
-            return new Credentials(locator, secret);
-        }
+            => new Credentials(locator, secret);
 
         //async Task<Item> ChunkedUploadAsync(ChunkedUploadProvider provider, IProgress<ProgressValue> progress)
         //{

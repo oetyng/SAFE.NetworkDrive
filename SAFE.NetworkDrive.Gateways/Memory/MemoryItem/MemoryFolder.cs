@@ -15,9 +15,7 @@ namespace SAFE.NetworkDrive.Gateways.Memory
 
         internal MemoryFolder(MemoryFolder parent, string name)
             : base(parent, name)
-        {
-            Attributes = FileAttributes.Directory;
-        }
+            => Attributes = FileAttributes.Directory;
 
         /// <summary>
         /// The MemoryFolder and MemoryFile item-collection

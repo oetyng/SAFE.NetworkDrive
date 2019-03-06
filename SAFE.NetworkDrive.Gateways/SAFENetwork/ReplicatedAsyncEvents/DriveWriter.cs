@@ -108,16 +108,10 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         }
 
         object Apply(DirectoryItemCreated e)
-        {
-            var item = _localState.NewDirectoryItem(_root, new DirectoryId(e.ParentDirId), e.Name);
-            return item;
-        }
+            => _localState.NewDirectoryItem(_root, new DirectoryId(e.ParentDirId), e.Name);
 
         object Apply(FileItemCreated e)
-        {
-            var item = _localState.NewFileItem(_root, new DirectoryId(e.ParentDirId), e.Name, new MemoryStream(e.Content), null);
-            return item;
-        }
+            => _localState.NewFileItem(_root, new DirectoryId(e.ParentDirId), e.Name, new MemoryStream(e.Content), null);
 
         object Apply(ItemRemoved e)
         {

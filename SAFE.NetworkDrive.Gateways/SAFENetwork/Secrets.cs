@@ -22,14 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-using System;
-
-namespace IgorSoft.CloudFS.Gateways.OneDrive
+namespace SAFE.NetworkDrive.Gateways
 {
     internal static class Secrets
     {
         public const string CLIENT_ID = "<Insert client ID here>";
-
         public const string CLIENT_SECRET = "<Insert client secret here>";
     }
 }

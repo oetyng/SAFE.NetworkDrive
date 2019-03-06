@@ -13,9 +13,7 @@ namespace SAFE.NetworkDrive.Gateways.Memory
         /// <param name="item">An MemoryItem</param>
         /// <returns>False if the item is "null", true otherwise</returns>
         internal static bool Exists(this MemoryItem item)
-        {
-            return item != null;
-        }
+            => item != null;
 
         internal static void CopyTo(this Stream content, MemoryFile file)
         {
@@ -34,9 +32,7 @@ namespace SAFE.NetworkDrive.Gateways.Memory
         /// <param name="sourcePath">the full sourcepath</param>
         /// <returns>a path to it's parent</returns>
         internal static string GetPathPart(this string sourcePath)
-        {
-            return sourcePath.Substring(0, sourcePath.LastIndexOf('\\'));
-        }
+            => sourcePath.Substring(0, sourcePath.LastIndexOf('\\'));
 
         /// <summary>
         /// Returns the filename-part of a string that contains a full path,
@@ -45,9 +41,7 @@ namespace SAFE.NetworkDrive.Gateways.Memory
         /// <param name="sourcePath">a folder or file, with a full path</param>
         /// <returns>The item's name, without the path</returns>
         internal static string GetFilenamePart(this string sourcePath)
-        {
-            return sourcePath.Substring(sourcePath.LastIndexOf('\\') + 1);
-        }
+            => sourcePath.Substring(sourcePath.LastIndexOf('\\') + 1);
 
         /// <summary>
         /// Used to retrieve the first available driveletter

@@ -19,8 +19,6 @@ namespace SAFE.NetworkDrive.Gateways.Utils
         }
 
         static bool IsEmpty(string value)
-        {
-            return string.IsNullOrEmpty(value) || string.IsNullOrWhiteSpace(value);
-        }
+            => string.IsNullOrEmpty(value) || string.IsNullOrWhiteSpace(value);
     }
 }

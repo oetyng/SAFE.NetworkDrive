@@ -6,6 +6,7 @@ namespace SAFE.NetworkDrive.Gateways.Utils
     public static class Serializer
     {
         public static JsonSerializerSettings SerializerSettings;
+
         static Serializer()
         {
             SerializerSettings = new JsonSerializerSettings
@@ -25,20 +26,16 @@ namespace SAFE.NetworkDrive.Gateways.Utils
             JsonConvert.DefaultSettings = () => SerializerSettings;
         }
 
+        public static string Json(this object data)
+            => JsonConvert.SerializeObject(data, SerializerSettings);
+
         public static T Parse<T>(this string json)
-        {
-            return JsonConvert.DeserializeObject<T>(json, SerializerSettings);
-        }
+            => JsonConvert.DeserializeObject<T>(json, SerializerSettings);
 
         public static object Parse(this string json, string typeName)
         {
             var type = Type.GetType(typeName);
             return JsonConvert.DeserializeObject(json, type, SerializerSettings); // //JsonConvert.DefaultSettings = () => SerializerSettings;
-        }
-
-        public static string Json(this object data)
-        {
-            return JsonConvert.SerializeObject(data, SerializerSettings);
         }
     }
 }

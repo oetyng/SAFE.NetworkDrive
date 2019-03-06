@@ -92,12 +92,10 @@ namespace SAFE.NetworkDrive.Interface
         /// <param name="name">The name.</param>
         protected FileInfoContract(string id, string name) 
             : base(new FileId(id), name, DateTimeOffset.FromFileTime(0), DateTimeOffset.FromFileTime(0))
-        {
-            Size = FileSize.Empty;
-        }
+            => Size = FileSize.Empty;
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Debugger Display")]
         [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-        private string DebuggerDisplay() => $"{nameof(FileInfoContract)} {Id} ({Name}) [{Size}]".ToString(CultureInfo.CurrentCulture);
+        string DebuggerDisplay() => $"{nameof(FileInfoContract)} {Id} ({Name}) [{Size}]".ToString(CultureInfo.CurrentCulture);
     }
 }

@@ -28,9 +28,9 @@ namespace SAFE.NetworkDrive.IO
     [System.Diagnostics.DebuggerDisplay("{DebuggerDisplay,nq}")]
     public class GatherStream : MemoryStream
     {
-        private readonly BlockMap assignedBlocks;
+        readonly BlockMap _assignedBlocks;
 
-        private readonly TimeSpan timeout;
+        readonly TimeSpan _timeout;
 
         public override bool CanWrite => false;
 
@@ -38,24 +38,21 @@ namespace SAFE.NetworkDrive.IO
         {
             get
             {
-                lock (assignedBlocks)
+                lock (_assignedBlocks)
                 {
-                    return assignedBlocks.Capacity;
+                    return _assignedBlocks.Capacity;
                 }
             }
-            set
-            {
-                throw new NotSupportedException();
-            }
+            set => throw new NotSupportedException();
         }
 
         public override long Length
         {
             get
             {
-                lock (assignedBlocks)
+                lock (_assignedBlocks)
                 {
-                    return assignedBlocks.Capacity;
+                    return _assignedBlocks.Capacity;
                 }
             }
         }
@@ -64,17 +61,17 @@ namespace SAFE.NetworkDrive.IO
         {
             get
             {
-                lock (assignedBlocks)
+                lock (_assignedBlocks)
                 {
                     return base.Position;
                 }
             }
             set
             {
-                lock (assignedBlocks)
+                lock (_assignedBlocks)
                 {
                     base.Position = value;
-                    Monitor.Pulse(assignedBlocks);
+                    Monitor.Pulse(_assignedBlocks);
                 }
             }
         }
@@ -86,48 +83,44 @@ namespace SAFE.NetworkDrive.IO
             if (buffer.Length != assignedBlocks.Capacity)
                 throw new ArgumentException($"{nameof(assignedBlocks)} capacity does not match {nameof(buffer)} length".ToString(CultureInfo.CurrentCulture));
 
-            this.assignedBlocks = assignedBlocks;
-            this.timeout = timeout;
+            _assignedBlocks = assignedBlocks;
+            _timeout = timeout;
         }
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            lock (assignedBlocks)
+            lock (_assignedBlocks)
             {
                 do
                 {
-                    var bytes = assignedBlocks.GetAvailableBytes((int)base.Position, count);
+                    var bytes = _assignedBlocks.GetAvailableBytes((int)base.Position, count);
                     var read = base.Read(buffer, offset, bytes);
                     if (read > 0 || base.Position == Capacity)
                         return read;
-                    if (!Monitor.Wait(assignedBlocks, timeout))
-                        throw new TimeoutException($"{nameof(Read)} exceeded timeout {timeout}".ToString(CultureInfo.CurrentCulture));
+                    if (!Monitor.Wait(_assignedBlocks, _timeout))
+                        throw new TimeoutException($"{nameof(Read)} exceeded timeout {_timeout}".ToString(CultureInfo.CurrentCulture));
                 } while (true);
             }
         }
 
         public override long Seek(long offset, SeekOrigin loc)
         {
-            lock (assignedBlocks)
+            lock (_assignedBlocks)
             {
                 var position = base.Seek(offset, loc);
-                Monitor.Pulse(assignedBlocks);
+                Monitor.Pulse(_assignedBlocks);
                 return position;
             }
         }
 
         public override void SetLength(long value)
-        {
-            throw new NotSupportedException();
-        }
+            => throw new NotSupportedException();
 
         public override void Write(byte[] buffer, int offset, int count)
-        {
-            throw new NotSupportedException();
-        }
+            => throw new NotSupportedException();
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Debugger Display")]
         [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-        private string DebuggerDisplay => $"{nameof(GatherStream)}[{Capacity}] {nameof(Length)} = {base.Length}, {nameof(Position)} = {base.Position}".ToString(CultureInfo.CurrentCulture);
+        string DebuggerDisplay => $"{nameof(GatherStream)}[{Capacity}] {nameof(Length)} = {base.Length}, {nameof(Position)} = {base.Position}".ToString(CultureInfo.CurrentCulture);
     }
 }
