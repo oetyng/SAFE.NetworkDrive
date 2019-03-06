@@ -4,7 +4,7 @@ using SAFE.NetworkDrive.Gateways.Utils;
 using System;
 using System.Text;
 
-namespace SAFE.NetworkDrive.Gateways.Events
+namespace SAFE.NetworkDrive.Gateways.Obsolete.Events
 {
     public class ZipEncryptedEvent
     {

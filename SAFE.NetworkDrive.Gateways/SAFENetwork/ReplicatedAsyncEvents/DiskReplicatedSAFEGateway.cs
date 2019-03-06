@@ -6,12 +6,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using Polly;
 using Polly.Retry;
-using SAFE.DataStore.Client;
-using SAFE.DataStore.Client.Auth;
+using SAFE.Data.Client;
+using SAFE.AppendOnlyDb.Factories;
+using SAFE.NetworkDrive.Replication.Events;
 using SAFE.NetworkDrive.Gateways.Utils;
 using SAFE.NetworkDrive.Interface;
 using SAFE.NetworkDrive.Interface.Composition;
 using SAFE.NetworkDrive.Interface.IO;
+using SAFE.Data.Client.Auth;
+using SAFE.AppendOnlyDb;
 
 namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 {
@@ -45,37 +48,44 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 
             if (!_contextCache.TryGetValue(root, out SAFENetworkContext result))
             {
+                _sequenceNr = -1;   // read from local db
+                                   // fetch NetworkWAL (can be snapshot + all events since)
+                                   // recreate the filesystem locally in memory
+
                 var appInfo = new AppInfo
                 {
                     Id = "safe.networkdrive",
                     Name = "SAFE.NetworkDrive",
                     Vendor = "oetyng"
                 };
-                var factory = new ClientFactory(appInfo);
+                SAFEClient.SetFactory(async (sess, app, db) => (object)await StreamDbFactory.CreateForApp(sess, app, db));
+                var factory = new ClientFactory(appInfo, (session, appId) => new SAFEClient(session, appId));
 
                 var client = await factory.GetMockNetworkClient(Credentials(apiKey, _secretKey), false);
-                var db = await client.GetOrAddDataBaseAsync(root.Value);
+                var db = await client.GetOrAddDbAsync<IStreamDb>(root.Value);
+                var stream = await db.GetOrAddStreamAsync(root.Root);
 
-                var fileGateway = new File.FileGateway();
-                var service = new SAFENetworkEventService(db);
+                var memoryGateway = new Memory.MemoryGateway();
+                var service = new SAFENetworkEventService(stream.Value, _secretKey);
+                var driveWriter = new DriveWriter(root, memoryGateway);
+
+                var newEvents = service.LoadAsync((ulong)_sequenceNr); // load new events from network
+                await foreach (var e in newEvents)
+                    driveWriter.Apply(e); // apply to local state
 
                 var userFolder = PathScrambler.Obfuscate(root.UserName, _secretKey);
                 var rootFolder = PathScrambler.Obfuscate(root.Root, _secretKey);
 
                 var transactor = new EventTransactor(
-                    new DriveWriter(root, fileGateway),
+                    driveWriter,
                     new DiskQueueWorker($"../sndr/{userFolder}/{rootFolder}", service.Upload), _secretKey);
-                _contextCache.Add(root, result = new SAFENetworkContext(transactor, new DriveReader(fileGateway)));
+                _contextCache.Add(root, result = new SAFENetworkContext(transactor, new DriveReader(memoryGateway)));
 
-                _sequenceNr = transactor.ReadSequenceNr();
                 transactor.Start(CancellationToken.None);
             }
 
             return result;
         }
-
-        Task<IEnumerable<Events.Event>> GetNewEvents(SAFENetworkEventService service)
-            => service.LoadAsync(_secretKey);
 
         Credentials Credentials(string locator, string secret)
             => new Credentials(locator, secret);
@@ -147,7 +157,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         {
             var context = await RequireContextAsync(root);
             var sequenceNr = Interlocked.Increment(ref _sequenceNr);
-            var e = new Events.FileContentCleared(sequenceNr, target.Value);
+            var e = new FileContentCleared(sequenceNr, target.Value);
             return context.Writer.Transact(e);
         }
 
@@ -156,7 +166,9 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         {
             var context = await RequireContextAsync(root);
             var sequenceNr = Interlocked.Increment(ref _sequenceNr);
-            var e = new Events.FileContentSet(sequenceNr, target.Value, ReadFully(content));
+            // store content to local db, get a content id
+            var contentId = Guid.NewGuid();
+            var e = new FileContentSet(sequenceNr, target.Value, contentId); // ReadFully(content)
             return context.Writer.Transact(e);
         }
 
@@ -173,9 +185,9 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
             string copyName, DirectoryId destination, bool recurse)
         {
             var context = await RequireContextAsync(root);
-            var fsType = source is DirectoryId ? Events.FSType.Directory : Events.FSType.File;
+            var fsType = source is DirectoryId ? FSType.Directory : FSType.File;
             var sequenceNr = Interlocked.Increment(ref _sequenceNr);
-            var e = new Events.ItemCopied(sequenceNr, source.Value, fsType, copyName, destination.Value, recurse);
+            var e = new ItemCopied(sequenceNr, source.Value, fsType, copyName, destination.Value, recurse);
             var info = context.Writer.Transact<FileSystemInfoContract>(e);
             return info.Item2;
         }
@@ -184,9 +196,9 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
             string moveName, DirectoryId destination, Func<FileSystemInfoLocator> locatorResolver)
         {
             var context = await RequireContextAsync(root);
-            var fsType = source is DirectoryId ? Events.FSType.Directory : Events.FSType.File;
+            var fsType = source is DirectoryId ? FSType.Directory : FSType.File;
             var sequenceNr = Interlocked.Increment(ref _sequenceNr);
-            var e = new Events.ItemMoved(sequenceNr, source.Value, fsType, moveName, destination.Value);
+            var e = new ItemMoved(sequenceNr, source.Value, fsType, moveName, destination.Value);
             var info = context.Writer.Transact<FileSystemInfoContract>(e);
             return info.Item2;
         }
@@ -196,7 +208,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         {
             var context = await RequireContextAsync(root);
             var sequenceNr = Interlocked.Increment(ref _sequenceNr);
-            var e = new Events.DirectoryItemCreated(sequenceNr, parent.Value, name);
+            var e = new DirectoryItemCreated(sequenceNr, parent.Value, name);
             var info = context.Writer.Transact<DirectoryInfoContract>(e);
             return info.Item2;
         }
@@ -206,7 +218,9 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         {
             var context = await RequireContextAsync(root);
             var sequenceNr = Interlocked.Increment(ref _sequenceNr);
-            var e = new Events.FileItemCreated(sequenceNr, parent.Value, name, ReadFully(content));
+            // store content to local db, get a content id
+            var contentId = Guid.NewGuid();
+            var e = new FileItemCreated(sequenceNr, parent.Value, name, contentId); // ReadFully(content)
             var info = context.Writer.Transact<FileInfoContract>(e);
             return info.Item2;
         }
@@ -214,9 +228,9 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         public async Task<bool> RemoveItemAsync(RootName root, FileSystemId target, bool recurse)
         {
             var context = await RequireContextAsync(root);
-            var fsType = target is DirectoryId ? Events.FSType.Directory : Events.FSType.File;
+            var fsType = target is DirectoryId ? FSType.Directory : FSType.File;
             var sequenceNr = Interlocked.Increment(ref _sequenceNr);
-            var e = new Events.ItemRemoved(sequenceNr, target.Value, fsType, recurse);
+            var e = new ItemRemoved(sequenceNr, target.Value, fsType, recurse);
             return context.Writer.Transact(e);
         }
 
@@ -224,9 +238,9 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
             string newName, Func<FileSystemInfoLocator> locatorResolver)
         {
             var context = await RequireContextAsync(root);
-            var fsType = target is DirectoryId ? Events.FSType.Directory : Events.FSType.File;
+            var fsType = target is DirectoryId ? FSType.Directory : FSType.File;
             var sequenceNr = Interlocked.Increment(ref _sequenceNr);
-            var e = new Events.ItemRenamed(sequenceNr, target.Value, fsType, newName);
+            var e = new ItemRenamed(sequenceNr, target.Value, fsType, newName);
             var info = context.Writer.Transact<FileSystemInfoContract>(e);
             return info.Item2;
         }

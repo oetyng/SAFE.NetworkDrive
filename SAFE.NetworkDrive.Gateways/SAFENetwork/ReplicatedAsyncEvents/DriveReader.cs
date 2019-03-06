@@ -1,4 +1,4 @@
-﻿using SAFE.NetworkDrive.Gateways.File;
+﻿using SAFE.NetworkDrive.Gateways.Memory;
 using SAFE.NetworkDrive.Interface;
 using System.Collections.Generic;
 using System.IO;
@@ -7,9 +7,9 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 {
     class DriveReader
     {
-        readonly FileGateway _fileGateway;
+        readonly MemoryGateway _fileGateway;
 
-        public DriveReader(FileGateway fileGateway)
+        public DriveReader(MemoryGateway fileGateway)
             => _fileGateway = fileGateway;
 
         public DriveInfoContract GetDrive(RootName root, string apiKey, IDictionary<string, string> parameters)

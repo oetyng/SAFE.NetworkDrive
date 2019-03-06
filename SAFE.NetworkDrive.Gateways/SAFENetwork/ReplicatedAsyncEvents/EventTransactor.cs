@@ -1,5 +1,5 @@
 ﻿
-using SAFE.NetworkDrive.Gateways.Events;
+using SAFE.NetworkDrive.Replication.Events;
 using System;
 using System.Threading;
 
@@ -36,14 +36,6 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
             {
                 return (false, default);
             }
-        }
-
-        internal long ReadSequenceNr()
-        {
-            return 0L;
-            // fetch NetworkWAL (can be snapshot + all events since)
-            // recreate the filesystem locally - but encrypted
-            //RootName root)
         }
     }
 }

@@ -1,5 +1,5 @@
-﻿using SAFE.NetworkDrive.Gateways.Events;
-using SAFE.NetworkDrive.Gateways.File;
+﻿using SAFE.NetworkDrive.Replication.Events;
+using SAFE.NetworkDrive.Gateways.Memory;
 using SAFE.NetworkDrive.Interface;
 using System;
 using System.Collections.Concurrent;
@@ -13,15 +13,15 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
     class DriveWriter
     {
         readonly RootName _root;
-        readonly FileGateway _localState;
+        readonly MemoryGateway _localState;
         readonly ConcurrentDictionary<Type, Func<Event, object>> _apply = new ConcurrentDictionary<Type, Func<Event, object>>();
         readonly object _lockObj = new object();
         long _sequenceNr;
 
-        public DriveWriter(RootName root,  FileGateway fileGateway)
+        public DriveWriter(RootName root, MemoryGateway memGateway)
         {
             _root = root;
-            _localState = fileGateway;
+            _localState = memGateway;
             var applyMethods = GetAllMethods(this.GetType())
                 .Where(m => m.Name == "Apply");
             foreach (var m in applyMethods)
@@ -57,6 +57,12 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
             }
         }
 
+        Stream LoadContent(Guid contentId)
+        {
+            // if not exists in local db: get from network
+            return new MemoryStream(new byte[0]);
+        }
+
         object Apply(FileContentCleared e)
         {
             _localState.ClearContent(_root, new FileId(e.FileId));
@@ -65,7 +71,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 
         object Apply(FileContentSet e)
         {
-            _localState.SetContent(_root, new FileId(e.FileId), new MemoryStream(e.Content), null);
+            _localState.SetContent(_root, new FileId(e.FileId), LoadContent(e.ContentId), null);
             return new object();
         }
 
@@ -111,7 +117,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
             => _localState.NewDirectoryItem(_root, new DirectoryId(e.ParentDirId), e.Name);
 
         object Apply(FileItemCreated e)
-            => _localState.NewFileItem(_root, new DirectoryId(e.ParentDirId), e.Name, new MemoryStream(e.Content), null);
+            => _localState.NewFileItem(_root, new DirectoryId(e.ParentDirId), e.Name, LoadContent(e.ContentId), null);
 
         object Apply(ItemRemoved e)
         {

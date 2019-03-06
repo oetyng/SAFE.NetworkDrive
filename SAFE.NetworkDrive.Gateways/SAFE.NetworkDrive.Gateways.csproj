@@ -24,13 +24,21 @@
 
   <ItemGroup>
     <PackageReference Include="DiskQueue.NetStandard" Version="1.0.1" />
+    <PackageReference Include="MaidSafe.SafeApp" Version="0.2.0" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
     <PackageReference Include="Polly" Version="7.0.3" />
+    <PackageReference Include="System.Interactive.Async" Version="4.0.0-preview.1.build.745" />
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="SAFE.DataStore">
-      <HintPath>..\packages\SAFE.DataStore.Internal\netcoreapp2.2\SAFE.DataStore.dll</HintPath>
+    <Reference Include="SAFE.AppendOnlyDb">
+      <HintPath>..\packages\SAFE.AppendableData\SAFE.AppendOnlyDb\x64\Debug\netcoreapp3.0\SAFE.AppendOnlyDb.dll</HintPath>
+    </Reference>
+    <Reference Include="SAFE.Data.Common">
+      <HintPath>..\packages\SAFE.AppendableData\SAFE.AppendOnlyDb\x64\Debug\netcoreapp3.0\SAFE.Data.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="SAFE.DataClient">
+      <HintPath>..\packages\SAFE.AppendableData\SAFE.Data.Client\x64\Debug\netstandard2.0\SAFE.DataClient.dll</HintPath>
     </Reference>
   </ItemGroup>
 
