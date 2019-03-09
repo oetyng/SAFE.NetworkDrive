@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using DiskQueue;
+using SAFE.NetworkDrive.Replication.Events;
 
 namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 {
@@ -11,29 +12,56 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
     // Continuously reads logs from disk queue and passes to handler function.
     class DiskQueueWorker
     {
-        public const int MIN_DELAY_SECONDS = 8;
+        public const int MIN_DELAY_SECONDS = 3;
 
         static bool _isRunning;
-        readonly Mutex _mutex;
-        readonly string _storagePath;
-        readonly Func<byte[], Task<bool>> _onDequeued;
+        static Mutex _mutex;
+        readonly Stopwatch _sw = new Stopwatch();
+        readonly Func<WALContent, Task<bool>> _onDequeued;
         readonly TimeSpan _minWorkDelay = TimeSpan.FromSeconds(MIN_DELAY_SECONDS);
         TimeSpan _currentWorkDelay = TimeSpan.FromSeconds(MIN_DELAY_SECONDS);
-        Stopwatch _sw = new Stopwatch();
 
         /// <summary>
         /// Only one instance per machine can be created.
         /// </summary>
         /// <param name="storagePath">Where logs will be stored on the machine.</param>
         /// <param name="onDequeued">Operation for handling dequeued logs.</param>
-        public DiskQueueWorker(string storagePath, Func<byte[], Task<bool>> onDequeued)
+        public DiskQueueWorker(Func<WALContent, Task<bool>> onDequeued)
         {
-            _mutex = new Mutex(true, storagePath, out bool firstCaller);
+            if (_mutex != null)
+                throw new ApplicationException("Only one instance of log synch can be running.");
+            _mutex = new Mutex(true, nameof(DiskQueueWorker), out bool firstCaller);
             if (!firstCaller)
                 throw new ApplicationException("Only one instance of log synch can be running.");
             _onDequeued = onDequeued;
-            _storagePath = storagePath;
             _sw.Start();
+        }
+
+        public static bool AnyInQueue()
+        {
+            using (var db = new SqlNado.SQLiteDatabase("content.db"))
+            {
+                if (!db.TableExists<WALContent>())
+                    db.SynchronizeSchema<WALContent>();
+                return db.Query<WALContent>()
+                    .Where(c => !c.Persisted)
+                    .Take(1)
+                    .FirstOrDefault() != null;
+            }
+        }
+
+        public static long GetVersion()
+        {
+            using (var db = new SqlNado.SQLiteDatabase("content.db"))
+            {
+                var data = db.Query<WALContent>()
+                    .OrderBy(c => c.SequenceNr)
+                    .Take(1)
+                    .FirstOrDefault();
+                if (data == null)
+                    return -1;
+                return (long)data.SequenceNr;
+            }
         }
 
         /// <summary>
@@ -45,24 +73,23 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         /// Operation to be performed within the enqueue transaction.
         /// If "onEnqueued" fails, the transaction is rolled back.
         /// </param>
-        public (bool, T) Enqueue<T>(byte[] data, Func<(bool, object)> onEnqueued)
+        public (bool, T) Enqueue<T>(WALContent data, Func<(bool, object)> onEnqueued)
         {
-            try
+            _sw.Reset();
+
+            using (var db = new SqlNado.SQLiteDatabase("content.db"))
             {
-                _sw.Reset();
-                using (var queue = PersistentQueue.WaitFor(_storagePath, TimeSpan.FromSeconds(30)))
-                using (var session = queue.OpenSession())
+                try
                 {
-                    session.Enqueue(data);
+                    db.BeginTransaction();
+                    db.Save(data);
                     var res = onEnqueued();
-                    if (res.Item1)
-                        session.Flush();
+                    if (res.Item1) db.Commit();
+                    else db.Rollback();
                     return (res.Item1, (T)res.Item2);
                 }
-            }
-            finally
-            {
-                _sw.Restart();
+                catch { db.Rollback(); throw; }
+                finally { _sw.Restart(); }
             }
         }
 
@@ -82,27 +109,29 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 
             while (!cancellation.IsCancellationRequested)
             {
-                if (await EnqueueingIsActive())
-                    continue;
                 try
                 {
-                    using (var queue = PersistentQueue.WaitFor(_storagePath, TimeSpan.FromSeconds(30)))
-                    using (var session = queue.OpenSession())
+                    if (await EnqueueingIsActive())
+                        continue;
+                    using (var db = new SqlNado.SQLiteDatabase("content.db"))
                     {
-                        var data = session.Dequeue();
-                        if (data == null) continue;
-                        if (await _onDequeued(data))
-                            session.Flush();
+                        var data = db.Query<WALContent>()
+                            .Where(c => !c.Persisted)
+                            .OrderBy(c => c.SequenceNr)
+                            .Take(1)
+                            .FirstOrDefault();
+                        if (data == null)
+                            Delay();
+                        else if (await _onDequeued(data))
+                        {
+                            data.Persisted = true;
+                            db.RunTransaction(() => db.Save(data));
+                        }
                     }
                 }
-                //catch (RetryException)
-                //{
-                //    Thread.Sleep(1000);
-                //    continue;
-                //}
                 catch
                 {
-                    throw;
+                    // 
                 }
             }
         }
@@ -122,5 +151,8 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                 _currentWorkDelay = new TimeSpan(_currentWorkDelay.Ticks / 2); // synch again in half previous wait time
             return false; // enqueueing is not active
         }
+
+        void Delay()
+            => _currentWorkDelay = new TimeSpan(_currentWorkDelay.Ticks * 2);
     }
 }

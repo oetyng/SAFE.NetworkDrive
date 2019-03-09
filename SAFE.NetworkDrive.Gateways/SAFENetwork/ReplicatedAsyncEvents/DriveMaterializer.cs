@@ -7,26 +7,29 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
+using SAFE.AppendOnlyDb.Utils;
 
 namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 {
-    class DriveWriter
+    class DriveMaterializer
     {
         readonly RootName _root;
         readonly MemoryReplicatedSAFEGateway _localState;
-        readonly ConcurrentDictionary<Type, Func<LocalEvent, object>> _apply;
-        readonly object _lockObj = new object();
+        readonly ConcurrentDictionary<Type, Func<NetworkEvent, object>> _apply;
+        readonly AsyncDuplicateLock _asyncLock = new AsyncDuplicateLock();
         ulong? _sequenceNr;
+        public ulong? SequenceNr => _sequenceNr;
 
-        public DriveWriter(RootName root, MemoryReplicatedSAFEGateway gateway)
+        public DriveMaterializer(RootName root, MemoryReplicatedSAFEGateway memGateway)
         {
             _root = root;
-            _localState = gateway;
-            _apply = new ConcurrentDictionary<Type, Func<LocalEvent, object>>();
+            _localState = memGateway;
+            _apply = new ConcurrentDictionary<Type, Func<NetworkEvent, object>>();
             var applyMethods = GetAllMethods(this.GetType())
                 .Where(m => m.Name == "Apply");
             foreach (var m in applyMethods)
-                _apply[m.GetParameters().First().ParameterType] = new Func<LocalEvent, object>((e) => m.Invoke(this, new object[] { e }));
+                _apply[m.GetParameters().First().ParameterType] = new Func<NetworkEvent, object>((e) => m.Invoke(this, new object[] { e }));
         }
 
         IEnumerable<MethodInfo> GetAllMethods(Type t) // recursive
@@ -38,48 +41,58 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
             return t.GetMethods(flags).Concat(GetAllMethods(t.BaseType));
         }
 
-        public (bool, object) Apply(LocalEvent e)
+        public async Task<bool> Materialize(IAsyncEnumerable<NetworkEvent> events)
         {
-            object obj;
             try
             {
-                lock (_lockObj)
+                using (var sync = await _asyncLock.LockAsync($"{_root.Value}_{nameof(DriveMaterializer)}"))
                 {
-                    if (!IsValidSequence(e.SequenceNr))
-                        return (false, null);
-                    obj = _apply[e.GetType()](e);
-                    _sequenceNr = e.SequenceNr;
-                    return (true, obj);
+                    await foreach (var e in events)
+                    {
+                        if (_sequenceNr != e.SequenceNr - 1)
+                            return false;
+                        _apply[e.GetType()](e);
+                        _sequenceNr = e.SequenceNr;
+                    }
+                    return true;
                 }
             }
-            catch { return (false, null); }
+            catch (Exception e) when (e.StackTrace.Contains("IAsyncEnumerable")) { return true; } // NB: SHOULD RETURN FALSE
+            catch { return false; }
         }
 
-        bool IsValidSequence(ulong sequenceNr)
+        object Apply(NetworkFileItemCreated e)
         {
-            if (!_sequenceNr.HasValue && sequenceNr != 0)
-                return false;
-            else if (_sequenceNr.HasValue && _sequenceNr != sequenceNr - 1)
-                return false;
-            return true;
+            var locator = new NetworkContentLocator
+            {
+                ContentId = e.SequenceNr,
+                IsMap = e.IsMap,
+                MapOrContent = e.MapOrContent
+            };
+            var stream = new MemoryStream(locator.GetBytes());
+            return _localState.NewFileItem(_root, new DirectoryId(e.ParentDirId), e.Name, stream, null);
         }
 
-        object Apply(LocalFileItemCreated e)
-            => _localState.NewFileItem(_root, new DirectoryId(e.ParentDirId), e.Name, new MemoryStream(e.Content), null);
-
-        object Apply(LocalFileContentSet e)
+        object Apply(NetworkFileContentSet e)
         {
-            _localState.SetContent(_root, new FileId(e.FileId), new MemoryStream(e.Content), null);
+            var locator = new NetworkContentLocator
+            {
+                ContentId = e.SequenceNr,
+                IsMap = e.IsMap,
+                MapOrContent = e.MapOrContent
+            };
+            var stream = new MemoryStream(locator.GetBytes());
+            _localState.SetContent(_root, new FileId(e.FileId), stream, null);
             return new object();
         }
 
-        object Apply(LocalFileContentCleared e)
+        object Apply(NetworkFileContentCleared e)
         {
             _localState.ClearContent(_root, new FileId(e.FileId));
             return new object();
         }
 
-        object Apply(LocalItemCopied e)
+        object Apply(NetworkItemCopied e)
         {
             FileSystemId fileSystemId;
             switch (e.FSType)
@@ -98,7 +111,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
             return item;
         }
 
-        object Apply(LocalItemMoved e)
+        object Apply(NetworkItemMoved e)
         {
             FileSystemId fileSystemId;
             switch (e.FSType)
@@ -117,10 +130,10 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
             return item;
         }
 
-        object Apply(LocalDirectoryItemCreated e)
+        object Apply(NetworkDirectoryItemCreated e)
             => _localState.NewDirectoryItem(_root, new DirectoryId(e.ParentDirId), e.Name);
 
-        object Apply(LocalItemRemoved e)
+        object Apply(NetworkItemRemoved e)
         {
             FileSystemId fileSystemId;
             switch (e.FSType)
@@ -138,7 +151,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
             return new object();
         }
 
-        object Apply(LocalItemRenamed e)
+        object Apply(NetworkItemRenamed e)
         {
             FileSystemId fileSystemId;
             switch (e.FSType)

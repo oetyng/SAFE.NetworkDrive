@@ -6,80 +6,78 @@ using System.Text;
 
 namespace SAFE.NetworkDrive.Replication.Events
 {
-    public abstract class Event
+    public abstract class LocalEvent
     {
-        protected Event(long sequenceNr)
+        protected LocalEvent(ulong sequenceNr)
         {
             TimeStamp = DateTime.UtcNow;
             SequenceNr = sequenceNr;
         }
 
         public DateTime TimeStamp { get; private set; }
-        public long SequenceNr { get; private set; }
+        public ulong SequenceNr { get; private set; }
+        public abstract NetworkEvent ToNetworkEvent();
     }
 
-    public class WALContentLocator
+    public class WALContent
     {
-        public Guid ContentId { get; }
-        public Guid[] ChunkIds { get; }
+        [SqlNado.SQLiteColumn(IsPrimaryKey = true)]
+        public ulong SequenceNr { get; set; } // Serves as EventId and ContentId
+        public byte[] EncryptedContent { get; set; }
+        public bool Persisted { get; set; }
     }
 
-    public class NetworkContentLocator
+    class LocalFileContentSet : LocalEvent
     {
-        public Guid ContentId { get; }
-        public DataType TargetType { get; } // MD (AD) / ImD
-        public byte[] AddressOrMap { get; } // XOR address or datamap (can be nested map)
-        public string MdKey { get; } // null if ImD
-    }
-
-    public enum DataType
-    {
-        MD, // (AD)
-        ID
-    }
-
-    class FileContentSet : Event
-    {
-        public FileContentSet(long sequenceNr, string fileId, Guid contentId)
+        public LocalFileContentSet(ulong sequenceNr, string fileId, byte[] content)
             : base(sequenceNr)
         {
             FileId = fileId;
-            ContentId = contentId;
+            Content = content;
         }
 
         public string FileId { get; }
-        public Guid ContentId { get; }
+        public byte[] Content { get; }
+
+        public override NetworkEvent ToNetworkEvent()
+            => throw new NotImplementedException();
     }
 
-    class FileItemCreated : Event
+    class LocalFileItemCreated : LocalEvent
     {
-        public FileItemCreated(long sequenceNr, string parentDirId, string name, Guid contentId)
+        public LocalFileItemCreated(ulong sequenceNr, string parentDirId, string name, byte[] content)
             : base(sequenceNr)
         {
             ParentDirId = parentDirId;
             Name = name;
-            ContentId = contentId;
+            Content = content;
         }
 
         public string ParentDirId { get; }
         public string Name { get; }
-        public Guid ContentId { get; }
+        public byte[] Content { get; }
+
+        public override NetworkEvent ToNetworkEvent()
+            => throw new NotImplementedException();
     }
 
-    class FileContentCleared : Event
+    class LocalFileContentCleared : LocalEvent
     {
-        public FileContentCleared(long sequenceNr, string fileId)
+        public LocalFileContentCleared(ulong sequenceNr, string fileId)
             : base(sequenceNr)
         {
             FileId = fileId;
         }
 
         public string FileId { get; }
+
+        public override NetworkEvent ToNetworkEvent()
+            => new NetworkFileContentCleared(SequenceNr, FileId);
     }
 
-    class ItemCopied : Event
+    class LocalItemCopied : LocalEvent
     {
-        public ItemCopied(long sequenceNr, string fileSystemId, FSType fSType, 
+        public LocalItemCopied(ulong sequenceNr, string fileSystemId, FSType fSType, 
             string copyName, string destDirId, bool recursive)
             : base(sequenceNr)
         {
@@ -95,6 +93,9 @@ namespace SAFE.NetworkDrive.Replication.Events
         public string CopyName { get; }
         public string DestDirId { get; }
         public bool Recursive { get; }
+
+        public override NetworkEvent ToNetworkEvent()
+            => new NetworkItemCopied(SequenceNr, FileSystemId, FSType, CopyName, DestDirId, Recursive);
     }
     
     public enum FSType
@@ -103,9 +104,9 @@ namespace SAFE.NetworkDrive.Replication.Events
         Directory
     }
 
-    class ItemMoved : Event
+    class LocalItemMoved : LocalEvent
     {
-        public ItemMoved(long sequenceNr, string fileSystemId, FSType fSType, string moveName, string destDirId)
+        public LocalItemMoved(ulong sequenceNr, string fileSystemId, FSType fSType, string moveName, string destDirId)
             : base(sequenceNr)
         {
             FileSystemId = fileSystemId;
@@ -118,11 +119,14 @@ namespace SAFE.NetworkDrive.Replication.Events
         public FSType FSType { get; }
         public string MoveName { get; }
         public string DestDirId { get; }
+
+        public override NetworkEvent ToNetworkEvent()
+            => new NetworkItemMoved(SequenceNr, FileSystemId, FSType, MoveName, DestDirId);
     }
 
-    class DirectoryItemCreated : Event
+    class LocalDirectoryItemCreated : LocalEvent
     {
-        public DirectoryItemCreated(long sequenceNr, string parentDirId, string name)
+        public LocalDirectoryItemCreated(ulong sequenceNr, string parentDirId, string name)
             : base(sequenceNr)
         {
             ParentDirId = parentDirId;
@@ -131,11 +135,14 @@ namespace SAFE.NetworkDrive.Replication.Events
 
         public string ParentDirId { get; }
         public string Name { get; }
+
+        public override NetworkEvent ToNetworkEvent()
+            => new NetworkDirectoryItemCreated(SequenceNr, ParentDirId, Name);
     }
 
-    class ItemRemoved : Event
+    class LocalItemRemoved : LocalEvent
     {
-        public ItemRemoved(long sequenceNr, string fileSystemId, FSType fSType, bool recursive)
+        public LocalItemRemoved(ulong sequenceNr, string fileSystemId, FSType fSType, bool recursive)
             : base(sequenceNr)
         {
             FileSystemId = fileSystemId;
@@ -146,11 +153,14 @@ namespace SAFE.NetworkDrive.Replication.Events
         public string FileSystemId { get; }
         public FSType FSType { get; }
         public bool Recursive { get; }
+
+        public override NetworkEvent ToNetworkEvent()
+            => new NetworkItemRemoved(SequenceNr, FileSystemId, FSType, Recursive);
     }
 
-    class ItemRenamed : Event
+    class LocalItemRenamed : LocalEvent
     {
-        public ItemRenamed(long sequenceNr, string fileSystemId, FSType fSType, string newName)
+        public LocalItemRenamed(ulong sequenceNr, string fileSystemId, FSType fSType, string newName)
             : base(sequenceNr)
         {
             FileSystemId = fileSystemId;
@@ -161,6 +171,9 @@ namespace SAFE.NetworkDrive.Replication.Events
         public string FileSystemId { get; }
         public FSType FSType { get; }
         public string NewName { get; }
+
+        public override NetworkEvent ToNetworkEvent()
+            => new NetworkItemRenamed(SequenceNr, FileSystemId, FSType, NewName);
     }
 
 
@@ -169,7 +182,7 @@ namespace SAFE.NetworkDrive.Replication.Events
         [NonSerialized]
         byte[] _bytes;
         [NonSerialized]
-        Event _event;
+        LocalEvent _event;
 
         [JsonConstructor]
         ZipEncryptedEvent() { }
@@ -177,13 +190,13 @@ namespace SAFE.NetworkDrive.Replication.Events
         ZipEncryptedEvent(byte[] zipEncryptedData, string eventName)
         {
             ZipEncryptedData = zipEncryptedData;
-            EventName = eventName;
+            AssemblyQualifiedName = eventName;
         }
 
         [JsonRequired]
         public byte[] ZipEncryptedData { get; private set; }
         [JsonRequired]
-        public string EventName { get; private set; }
+        public string AssemblyQualifiedName { get; private set; }
 
         public byte[] GetBytes()
         {
@@ -198,75 +211,30 @@ namespace SAFE.NetworkDrive.Replication.Events
             return json.Parse<ZipEncryptedEvent>();
         }
 
-        public Event GetEvent(string secretKey)
+        public LocalEvent GetEvent(string secretKey)
         {
             if (_event == null)
             {
                 var decrypted = BytesCrypto.DecryptToBytes(secretKey, ZipEncryptedData);
                 var decompressed = decrypted.Decompress();
                 var json = Encoding.UTF8.GetString(decompressed);
-                _event = (Event)json.Parse(EventName);
+                _event = (LocalEvent)json.Parse(AssemblyQualifiedName);
             }
             return _event;
         }
 
-        public static ZipEncryptedEvent For(Event e, string secretKey)
+        public static ZipEncryptedEvent For(LocalEvent e, string secretKey)
         {
             return new ZipEncryptedEvent(ZipEncrypt(e, secretKey),
-                e.GetType().Name);
+                e.GetType().AssemblyQualifiedName);
         }
 
-        static byte[] ZipEncrypt(Event e, string secretKey)
+        static byte[] ZipEncrypt(LocalEvent e, string secretKey)
         {
             var bytes = Encoding.UTF8.GetBytes(e.Json());
             var compressed = bytes.Compress();
             var encrypted = BytesCrypto.EncryptFromBytes(secretKey, compressed);
             return encrypted;
-        }
-    }
-
-    public class StoredEvent
-    {
-        [NonSerialized]
-        byte[] _bytes;
-        [NonSerialized]
-        Event _event;
-
-        [JsonConstructor]
-        StoredEvent() { }
-
-        StoredEvent(string payload, string assemblyQualifiedName)
-        {
-            Payload = payload;
-            AssemblyQualifiedName = assemblyQualifiedName;
-        }
-
-        public string Payload { get; }
-        public string AssemblyQualifiedName { get; }
-
-        public Event GetEvent()
-        {
-            if (_event == null)
-                _event = (Event)Payload.Parse(AssemblyQualifiedName);
-            return _event;
-        }
-
-        public byte[] GetBytes()
-        {
-            if (_bytes == null)
-                _bytes = Encoding.UTF8.GetBytes(this.Json());
-            return _bytes;
-        }
-
-        public static StoredEvent From(string json)
-        {
-            return json.Parse<StoredEvent>();
-        }
-
-        public static StoredEvent For(Event e)
-        {
-            var json = JsonConvert.SerializeObject(e);
-            return new StoredEvent(json, e.GetType().AssemblyQualifiedName);
         }
     }
 }

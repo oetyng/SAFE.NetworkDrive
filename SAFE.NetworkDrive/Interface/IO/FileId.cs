@@ -34,11 +34,10 @@ namespace SAFE.NetworkDrive.Interface
         /// </summary>
         /// <param name="id">The unique identifier.</param>
         public FileId(string id) : base(id)
-        {
-        }
+        { }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Used for DebuggerDisplay")]
         [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-        private string DebuggerDisplay() => $"{nameof(FileId)} {Value}".ToString(CultureInfo.CurrentCulture);
+        string DebuggerDisplay() => $"{nameof(FileId)} {Value}".ToString(CultureInfo.CurrentCulture);
     }
 }

@@ -23,7 +23,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DiskQueue.NetStandard" Version="1.0.1" />
     <PackageReference Include="MaidSafe.SafeApp" Version="0.2.0" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
     <PackageReference Include="Polly" Version="7.0.3" />
@@ -32,14 +31,20 @@
 
   <ItemGroup>
     <Reference Include="SAFE.AppendOnlyDb">
-      <HintPath>..\packages\SAFE.AppendableData\SAFE.AppendOnlyDb\x64\Debug\netcoreapp3.0\SAFE.AppendOnlyDb.dll</HintPath>
+      <HintPath>..\packages\SAFE.AppendOnlyDb\SAFE.AppendOnlyDb\x64\Debug\netcoreapp3.0\SAFE.AppendOnlyDb.dll</HintPath>
+    </Reference>
+    <Reference Include="SAFE.AuthClient">
+      <HintPath>..\packages\SAFE.AppendOnlyDb\SAFE.AuthClient\SAFE.AuthClient.dll</HintPath>
     </Reference>
     <Reference Include="SAFE.Data.Common">
-      <HintPath>..\packages\SAFE.AppendableData\SAFE.AppendOnlyDb\x64\Debug\netcoreapp3.0\SAFE.Data.Common.dll</HintPath>
+      <HintPath>..\packages\SAFE.AppendOnlyDb\SAFE.AppendOnlyDb\x64\Debug\netcoreapp3.0\SAFE.Data.Common.dll</HintPath>
     </Reference>
-    <Reference Include="SAFE.DataClient">
-      <HintPath>..\packages\SAFE.AppendableData\SAFE.Data.Client\x64\Debug\netstandard2.0\SAFE.DataClient.dll</HintPath>
-    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Native\sqlite-dll-win64-x64-3270200\sqlite3.x64.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

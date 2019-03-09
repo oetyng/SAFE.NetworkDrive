@@ -1,6 +1,5 @@
 ﻿
 using SAFE.NetworkDrive.Replication.Events;
-using System;
 using System.Threading;
 
 namespace SAFE.NetworkDrive.Gateways.AsyncEvents
@@ -21,18 +20,19 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         public void Start(CancellationToken cancellation)
             => _queueWorker.Start(cancellation);
 
-        public bool Transact(Event e)
+        public bool Transact(LocalEvent e)
             => Transact<object>(e).Item1;
 
-        public (bool, T) Transact<T>(Event e)
+        public (bool, T) Transact<T>(LocalEvent e)
         {
             try
             {
                 var data = ZipEncryptedEvent.For(e, _password).GetBytes();
-                return _queueWorker.Enqueue<T>(data,
+                var locator = new WALContent { EncryptedContent = data, SequenceNr = e.SequenceNr };
+                return _queueWorker.Enqueue<T>(locator,
                     onEnqueued: () => _driveWriter.Apply(e));
             }
-            catch (Exception ex)
+            catch
             {
                 return (false, default);
             }

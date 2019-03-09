@@ -7,21 +7,21 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 {
     class DriveReader
     {
-        readonly MemoryGateway _fileGateway;
+        readonly MemoryReplicatedSAFEGateway _gateway;
 
-        public DriveReader(MemoryGateway fileGateway)
-            => _fileGateway = fileGateway;
+        public DriveReader(MemoryReplicatedSAFEGateway gateway)
+            => _gateway = gateway;
 
         public DriveInfoContract GetDrive(RootName root, string apiKey, IDictionary<string, string> parameters)
-            => _fileGateway.GetDrive(root, apiKey, parameters);
+            => _gateway.GetDrive(root, apiKey, parameters);
 
         public RootDirectoryInfoContract GetRoot(RootName root, string apiKey, IDictionary<string, string> parameters)
-            => _fileGateway.GetRoot(root, apiKey, parameters);
+            => _gateway.GetRoot(root, apiKey, parameters);
 
         public IEnumerable<FileSystemInfoContract> GetChildItem(RootName root, DirectoryId parent)
-            => _fileGateway.GetChildItem(root, parent);
+            => _gateway.GetChildItem(root, parent);
 
         public Stream GetContent(RootName root, FileId source)
-            => _fileGateway.GetContent(root, source);
+            => _gateway.GetContent(root, source);
     }
 }

@@ -29,12 +29,12 @@ namespace SAFE.NetworkDrive
         internal ICloudDrive CreateCloudDrive(string schema, string userName, string root, CloudDriveParameters parameters)
         {
             var rootName = new RootName(schema, userName, root);
-            //var asyncGateway = new DiskReplicatedSAFEGateway(parameters.EncryptionKey);
-            //return new AsyncCloudDrive(rootName, asyncGateway, parameters);
+            var asyncGateway = new DiskReplicatedSAFEGateway(parameters.EncryptionKey);
+            return new AsyncCloudDrive(rootName, asyncGateway, parameters);
 
             //var gateway = new Gateways.File.FileGateway();
-            var gateway = new Gateways.Memory.MemoryGateway();
-            return new CloudDrive(rootName, gateway, parameters);
+            //var gateway = new Gateways.Memory.MemoryGateway();
+            //return new CloudDrive(rootName, gateway, parameters);
         }
     }
 }

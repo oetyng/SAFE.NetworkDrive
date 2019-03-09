@@ -65,6 +65,16 @@ namespace SAFE.NetworkDrive.IO
             return stream;
         }
 
+        public static byte[] ReadFully(this Stream input)
+        {
+            using (var ms = new MemoryStream())
+            {
+                input.CopyTo(ms);
+                return ms.ToArray();
+            }
+        }
+
+
         static Stream Process(Stream stream, string encryptionKey, CryptoStreamMode mode)
         {
             // TEMP

@@ -35,14 +35,13 @@ namespace SAFE.NetworkDrive
     internal class AsyncCloudDrive : CloudDriveBase, ICloudDrive
     {
         readonly IAsyncCloudGateway _gateway;
-
         readonly IDictionary<string, string> _parameters;
 
         public AsyncCloudDrive(RootName rootName, IAsyncCloudGateway gateway, CloudDriveParameters parameters) 
             : base(rootName, parameters)
         {
-            this._gateway = gateway;
-            this._parameters = parameters.Parameters;
+            _gateway = gateway;
+            _parameters = parameters.Parameters;
         }
 
         public IPersistGatewaySettings PersistSettings => _gateway as IPersistGatewaySettings;
@@ -89,16 +88,12 @@ namespace SAFE.NetworkDrive
         public Stream GetContent(FileInfoContract source)
         {
             return ExecuteInSemaphore(() => {
-                var gatewayContent = _gateway.GetContentAsync(_rootName, source.Id).Result.ToSeekableStream();
-
-                var content = gatewayContent.DecryptOrPass(_encryptionKey);
-                if (content != gatewayContent)
-                    gatewayContent.Close();
+                var content = _gateway.GetContentAsync(_rootName, source.Id).Result.ToSeekableStream();
                 source.Size = (FileSize)content.Length;
 
-//#if DEBUG
-//                content = new TraceStream(nameof(GetContent), source.Name, content);
-//#endif
+                //#if DEBUG
+                // content = new TraceStream(nameof(GetContent), source.Name, content);
+                //#endif
 
                 return content;
             }, nameof(GetContent));
@@ -107,16 +102,13 @@ namespace SAFE.NetworkDrive
         public void SetContent(FileInfoContract target, Stream content)
         {
             ExecuteInSemaphore(() => {
-                var gatewayContent = content.EncryptOrPass(_encryptionKey);
                 target.Size = (FileSize)content.Length;
 
-//#if DEBUG
-//                gatewayContent = new TraceStream(nameof(SetContent), target.Name, gatewayContent);
-//#endif
+                //#if DEBUG
+                // content = new TraceStream(nameof(SetContent), target.Name, content);
+                //#endif
                 FileSystemInfoLocator locator() => new FileSystemInfoLocator(target);
-                _gateway.SetContentAsync(_rootName, target.Id, gatewayContent, null, locator).Wait();
-                if (content != gatewayContent)
-                    gatewayContent.Close();
+                _gateway.SetContentAsync(_rootName, target.Id, content, null, locator).Wait();
             }, nameof(SetContent), true);
         }
 
@@ -144,10 +136,7 @@ namespace SAFE.NetworkDrive
             return ExecuteInSemaphore(() => {
                 if (content.Length == 0)
                     return new ProxyFileInfoContract(name);
-
-                var gatewayContent = content.EncryptOrPass(_encryptionKey);
-
-                var result = _gateway.NewFileItemAsync(_rootName, parent.Id, name, gatewayContent, null).Result;
+                var result = _gateway.NewFileItemAsync(_rootName, parent.Id, name, content, null).Result;
                 result.Size = (FileSize)content.Length;
                 return result;
             }, nameof(NewFileItem), true);
