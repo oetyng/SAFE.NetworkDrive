@@ -123,6 +123,31 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                     // 
                 }
             }
+
+            Cleanup();
+        }
+
+        void Cleanup()
+        {
+            using (var db = new SqlNado.SQLiteDatabase("content.db"))
+            {
+                try
+                {
+                    var data = db.Query<WALContent>()
+                        .Where(c => c.Persisted)
+                        .ToList();
+                    if (data.Count > 0)
+                    {
+                        db.BeginTransaction();
+                        foreach (var entry in data)
+                            db.Delete(entry);
+                        db.Commit();
+                    }
+                    db.Vacuum();
+                }
+                catch
+                { }
+            }
         }
 
         // Only start synching if enqueueing has been inactive for MIN_DELAY_SECONDS

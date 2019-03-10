@@ -106,7 +106,8 @@ namespace SAFE.NetworkDrive.Mounter
                                     ApiKey = driveConfig.Locator,
                                     EncryptionKey = driveConfig.Secret,
                                     Parameters = driveConfig.GetParameters()
-                                }
+                                },
+                                tokenSource.Token
                             );
 
                             if (!drive.TryAuthenticate())

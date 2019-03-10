@@ -40,13 +40,17 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 
         //readonly AsyncRetryPolicy _retryPolicy = Policy.Handle<ServiceException>().WaitAndRetryAsync(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
         readonly IDictionary<RootName, SAFENetworkContext> _contextCache = new Dictionary<RootName, SAFENetworkContext>();
+        readonly CancellationToken _cancellation;
         readonly string _secretKey;
         SequenceNr _sequenceNr;
 
         IDictionary<string, string> _parameters;
-
-        public SAFENetworkGateway(string secretKey)
-            => _secretKey = secretKey;
+        
+        public SAFENetworkGateway(string secretKey, CancellationToken cancellation)
+        { 
+            _secretKey = secretKey;
+            _cancellation = cancellation;
+        }
 
         async Task<SAFENetworkContext> RequireContextAsync(RootName root, string apiKey = null)
         {
@@ -75,7 +79,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 
                 // We need to wait for all events in local WAL to have been persisted to network
                 // before we materialize new events from network.
-                transactor.Start(CancellationToken.None); // start uploading to network
+                transactor.Start(_cancellation); // start uploading to network
                 while (DiskWALTransactor.AnyInQueue()) // wait until queue is empty
                     await Task.Delay(500); // beware, this will - currently - spin eternally if there is an unresolved version conflict
 
