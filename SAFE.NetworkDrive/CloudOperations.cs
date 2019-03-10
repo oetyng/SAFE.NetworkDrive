@@ -204,9 +204,7 @@ namespace SAFE.NetworkDrive
                             return AsDebug(nameof(CreateFile), fileName, info, access, share, mode, options, attributes, DokanResult.NotImplemented);
                     }
                     else
-                    {
                         info.IsDirectory = item != null;
-                    }
 
                     if (item != null)
                         return AsTrace(nameof(CreateFile), fileName, info, access, share, mode, options, attributes, DokanResult.Success);
@@ -226,13 +224,10 @@ namespace SAFE.NetworkDrive
                         return AsDebug(nameof(CreateFile), fileName, info, access, share, mode, options, attributes, info.IsDirectory ? DokanResult.AlreadyExists : DokanResult.FileExists);
 
                     if (info.IsDirectory)
-                    {
                         parent.NewDirectoryItem(_drive, itemName);
-                    }
                     else
                     {
                         fileItem = parent.NewFileItem(_drive, itemName);
-
                         info.Context = new StreamContext(fileItem, FileAccess.WriteData);
                     }
                     return AsTrace(nameof(CreateFile), fileName, info, access, share, mode, options, attributes, DokanResult.Success);
@@ -244,7 +239,6 @@ namespace SAFE.NetworkDrive
                         return AsDebug(nameof(CreateFile), fileName, info, access, share, mode, options, attributes, DokanResult.FileNotFound);
 
                     fileItem.Truncate(_drive);
-
                     info.Context = new StreamContext(fileItem, FileAccess.WriteData);
 
                     return AsTrace(nameof(CreateFile), fileName, info, access, share, mode, options, attributes, DokanResult.Success);

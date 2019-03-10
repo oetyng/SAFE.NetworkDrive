@@ -21,7 +21,6 @@ namespace SAFE.NetworkDrive.Gateways.Memory
 
         public bool TryAuthenticate(RootName root, string apiKey, IDictionary<string, string> parameters) => true;
 
-        // DONE
         public DriveInfoContract GetDrive(RootName root, string apiKey, IDictionary<string, string> parameters)
         {
             if (root == null)
@@ -48,7 +47,6 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             public long AvailableFreeSpace => long.MaxValue;//TotalSize - (long)_root.UsedSize;
         }
 
-        // SEMI DONE
         public RootDirectoryInfoContract GetRoot(RootName root, string apiKey, IDictionary<string, string> parameters)
         {
             if (root == null)
@@ -61,7 +59,6 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             return new RootDirectoryInfoContract(id, _root.CreationTime, _root.LastWriteTime);
         }
 
-        // NOT DONE
         static string GetFullPath(string rootPath, string path)
         {
             if (System.IO.Path.IsPathRooted(path))
@@ -69,7 +66,6 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             return System.IO.Path.Combine(rootPath, path);
         }
 
-        // MAYBE DONE
         static string GetRelativePath(string rootPath, string path)
         {
             var fullRootPath = rootPath;
@@ -78,7 +74,6 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             return path.TrimEnd(System.IO.Path.DirectorySeparatorChar);
         }
 
-        // DONE
         public IEnumerable<FileSystemInfoContract> GetChildItem(RootName root, DirectoryId parent)
         {
             if (root == null)
@@ -112,7 +107,6 @@ namespace SAFE.NetworkDrive.Gateways.Memory
                 return Array.Empty<FileSystemInfoContract>();
         }
 
-        // DONE
         public void ClearContent(RootName root, FileId target)
         {
             if (root == null)
@@ -142,7 +136,6 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             return directory.FetchFile(fileId.Value.GetFilenamePart());
         }
 
-        // DONE
         public System.IO.Stream GetContent(RootName root, FileId source)
         {
             if (root == null)
@@ -157,7 +150,6 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             return new System.IO.BufferedStream(file.OpenRead());
         }
 
-        // MAYBE DONE
         public void SetContent(RootName root, FileId target, System.IO.Stream content, IProgress<ProgressValue> progress)
         {
             if (root == null)
@@ -173,7 +165,6 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             file.SetContent(content);
         }
 
-        // MAYBE DONE
         public FileSystemInfoContract CopyItem(RootName root, FileSystemId source, string copyName, DirectoryId destination, bool recurse)
         {
             if (root == null)
@@ -231,7 +222,6 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             throw new NotSupportedException(string.Format(CultureInfo.CurrentCulture, PATH_NOT_FOUND, source.Value));
         }
 
-        // DONE
         public FileSystemInfoContract MoveItem(RootName root, FileSystemId source, string moveName, DirectoryId destination)
         {
             if (root == null)
@@ -280,7 +270,6 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             throw new NotSupportedException(string.Format(CultureInfo.CurrentCulture, PATH_NOT_FOUND, source.Value));
         }
 
-        // DONE
         public DirectoryInfoContract NewDirectoryItem(RootName root, DirectoryId parent, string name)
         {
             if (root == null)
@@ -307,7 +296,6 @@ namespace SAFE.NetworkDrive.Gateways.Memory
                 directory.LastWriteTime);
         }
 
-        // DONE
         public FileInfoContract NewFileItem(RootName root, DirectoryId parent, 
             string name, System.IO.Stream content, IProgress<ProgressValue> progress)
         {
@@ -339,7 +327,6 @@ namespace SAFE.NetworkDrive.Gateways.Memory
                 (FileSize)file.Size, null);
         }
 
-        // DONE
         public void RemoveItem(RootName root, FileSystemId target, bool recurse)
         {
             if (root == null)
@@ -369,7 +356,6 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             throw new NotSupportedException(string.Format(CultureInfo.CurrentCulture, PATH_NOT_FOUND, target.Value));
         }
 
-        // DONE
         public FileSystemInfoContract RenameItem(RootName root, FileSystemId target, string newName)
         {
             if (root == null)

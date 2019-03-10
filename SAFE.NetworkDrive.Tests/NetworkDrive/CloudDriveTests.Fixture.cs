@@ -74,9 +74,9 @@ namespace SAFE.NetworkDrive.Tests
             }
 
             public CloudDrive Create(string apiKey, string encryptionKey)
-            {
-                return new CloudDrive(new RootName(SCHEMA, USER_NAME, MOUNT_POINT), _gateway.Object, new CloudDriveParameters() { ApiKey = apiKey, EncryptionKey = encryptionKey });
-            }
+                => new CloudDrive(new RootName(SCHEMA, USER_NAME, MOUNT_POINT), 
+                        _gateway.Object, 
+                        new CloudDriveParameters() { ApiKey = apiKey, EncryptionKey = encryptionKey });
 
             public void SetupTryAuthenticate(string apiKey, IDictionary<string, string> parameters)
             {
@@ -125,14 +125,8 @@ namespace SAFE.NetworkDrive.Tests
             {
                 // The first constructor does not expose the underlying stream. GetBuffer throws UnauthorizedAccessException.
                 var stream = new MemoryStream(content, 0, content.Length, false, publiclyVisible: true); // publiclyVisible: true to enable GetBuffer(), which returns the unsigned byte array from which the stream was created; otherwise, false.
-                if (!string.IsNullOrEmpty(encryptionKey))
-                {
-                    //var buffer = new MemoryStream();
-                    //SharpAESCrypt.SharpAESCrypt.Encrypt(encryptionKey, stream, buffer);
-                    //buffer.Seek(0, SeekOrigin.Begin);
-                    //stream = buffer;
-                    stream = Encryption.StreamCrypto.Encrypt(encryptionKey, stream);
-                }
+                //if (!string.IsNullOrEmpty(encryptionKey))
+                //    stream = Encryption.StreamCrypto.Encrypt(encryptionKey, stream);
                 if (!canSeek)
                     stream = new LinearReadMemoryStream(stream);
                 _gateway
@@ -143,15 +137,11 @@ namespace SAFE.NetworkDrive.Tests
             public void SetupSetContent(FileInfoContract target, byte[] content, string encryptionKey)
             {
                 Func<Stream, bool> checkContent = stream => {
-                    if (!string.IsNullOrEmpty(encryptionKey))
-                    {
-                        //var buffer = new MemoryStream();
-                        //SharpAESCrypt.SharpAESCrypt.Decrypt(encryptionKey, stream, buffer);
-                        //buffer.Seek(0, SeekOrigin.Begin);
-                        //return buffer.Contains(content);
-                        var buffer = Encryption.StreamCrypto.Decrypt(encryptionKey, stream);
-                        return buffer.Contains(content);
-                    }
+                    //if (!string.IsNullOrEmpty(encryptionKey))
+                    //{
+                    //    var buffer = Encryption.StreamCrypto.Decrypt(encryptionKey, stream);
+                    //    return buffer.Contains(content);
+                    //}
                     return stream.Contains(content);
                 };
                 _gateway
@@ -159,16 +149,12 @@ namespace SAFE.NetworkDrive.Tests
             }
 
             public void SetupMoveDirectoryOrFile(FileSystemInfoContract directoryOrFile, DirectoryInfoContract target)
-            {
-                SetupMoveItem(directoryOrFile, directoryOrFile.Name, target);
-            }
+                => SetupMoveItem(directoryOrFile, directoryOrFile.Name, target);
 
             public void SetupRenameDirectoryOrFile(FileSystemInfoContract directoryOrFile, string name)
-            {
-                SetupMoveItem(directoryOrFile, name, (directoryOrFile as DirectoryInfoContract)?.Parent ?? (directoryOrFile as FileInfoContract)?.Directory ?? null);
-            }
+                => SetupMoveItem(directoryOrFile, name, (directoryOrFile as DirectoryInfoContract)?.Parent ?? (directoryOrFile as FileInfoContract)?.Directory ?? null);
 
-            private void SetupMoveItem(FileSystemInfoContract directoryOrFile, string name, DirectoryInfoContract target)
+            void SetupMoveItem(FileSystemInfoContract directoryOrFile, string name, DirectoryInfoContract target)
             {
                 _gateway
                     .Setup(g => g.MoveItem(_rootName, directoryOrFile.Id, name, target.Id))
@@ -194,9 +180,7 @@ namespace SAFE.NetworkDrive.Tests
             {
                 Func<Stream, bool> checkContent = stream => {
                     //if (!string.IsNullOrEmpty(encryptionKey)) {
-                    //    var buffer = new MemoryStream();
-                    //    SharpAESCrypt.SharpAESCrypt.Decrypt(encryptionKey, stream, buffer);
-                    //    buffer.Seek(0, SeekOrigin.Begin);
+                    //    var buffer = Encryption.StreamCrypto.Decrypt(encryptionKey, stream);
                     //    return buffer.Contains(content);
                     //}
                     return stream.Contains(content);
@@ -212,10 +196,7 @@ namespace SAFE.NetworkDrive.Tests
                     .Setup(g => g.RemoveItem(_rootName, directoryOrFile.Id, recurse));
             }
 
-            public void VerifyAll()
-            {
-                _gateway.VerifyAll();
-            }
+            public void VerifyAll() => _gateway.VerifyAll();
         }
     }
 }

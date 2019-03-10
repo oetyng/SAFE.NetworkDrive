@@ -133,13 +133,13 @@ namespace SAFE.NetworkDrive.Tests
         }
 
         [TestMethod, TestCategory(nameof(TestCategories.Offline))]
-        public void CloudOperations_CreateFile_WhereFileModeIsTruncate_Fails()
+        public void CloudOperations_CreateFile_WhereFileModeIsTruncate_Fails() // TODO: Rename method, since it does not fail anymore
         {
             SetupGetRoot();
 
             var result = _sut.CreateFile("File.ext", default, default, FileMode.Truncate, default, default, CreateDokanFileInfo());
 
-            Assert.AreEqual(DokanResult.NotImplemented, result);
+            Assert.AreEqual(DokanResult.FileNotFound, result);
         }
 
         [TestMethod, TestCategory(nameof(TestCategories.Offline))]

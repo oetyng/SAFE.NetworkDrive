@@ -13,7 +13,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
     /// Receives WAL content to persist on disk.
     /// Continuously reads logs from disk queue and passes to handler function.
     /// </summary>
-    class DiskWAL
+    class DiskWALTransactor
     {
         public const int MIN_DELAY_SECONDS = 3;
 
@@ -29,11 +29,11 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         /// </summary>
         /// <param name="storagePath">Where logs will be stored on the machine.</param>
         /// <param name="onDequeued">Operation for handling dequeued logs.</param>
-        public DiskWAL(Func<WALContent, Task<bool>> onDequeued)
+        public DiskWALTransactor(Func<WALContent, Task<bool>> onDequeued)
         {
             if (_mutex != null)
                 throw new ApplicationException("Only one instance of log synch can be running.");
-            _mutex = new Mutex(true, nameof(DiskWAL), out bool firstCaller);
+            _mutex = new Mutex(true, nameof(DiskWALTransactor), out bool firstCaller);
             if (!firstCaller)
                 throw new ApplicationException("Only one instance of log synch can be running.");
             _onDequeued = onDequeued;

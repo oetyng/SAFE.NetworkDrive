@@ -13,18 +13,18 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
     class EventTransactor
     {
         readonly DriveWriter _driveWriter;
-        readonly DiskWAL _queueWorker;
+        readonly DiskWALTransactor _wal;
         readonly string _password;
 
-        public EventTransactor(DriveWriter driveWriter, DiskWAL synch, string password)
+        public EventTransactor(DriveWriter driveWriter, DiskWALTransactor wal, string password)
         {
             _driveWriter = driveWriter;
-            _queueWorker = synch;
+            _wal = wal;
             _password = password;
         }
 
         public void Start(CancellationToken cancellation)
-            => _queueWorker.StartDequeueing(cancellation);
+            => _wal.StartDequeueing(cancellation);
 
         public bool Transact(LocalEvent e)
             => Transact<object>(e).Item1;
@@ -34,9 +34,12 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
             try
             {
                 var data = ZipEncryptedEvent.For(e, _password).GetBytes();
-                var locator = new WALContent { EncryptedContent = data, SequenceNr = e.SequenceNr };
-                return _queueWorker.Enqueue<T>(locator,
-                    onEnqueued: () => _driveWriter.Apply(e));
+                var content = new WALContent
+                {
+                    EncryptedContent = data,
+                    SequenceNr = e.SequenceNr
+                };
+                return _wal.Enqueue<T>(content, onEnqueued: () => _driveWriter.Apply(e));
             }
             catch
             {

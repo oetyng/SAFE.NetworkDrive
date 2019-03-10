@@ -42,11 +42,10 @@ namespace SAFE.NetworkDrive.Tests
 {
     public sealed partial class FileSystemTests
     {
-        private static class NativeMethods
+        static class NativeMethods
         {
-            private const string KERNEL_32_DLL = "kernel32.dll";
-
-            private const string SHELL_32_DLL = "shell32.dll";
+            const string KERNEL_32_DLL = "kernel32.dll";
+            const string SHELL_32_DLL = "shell32.dll";
 
             [Flags]
             public enum DesiredAccess : uint
@@ -120,41 +119,39 @@ namespace SAFE.NetworkDrive.Tests
             }
 
             [DllImport(KERNEL_32_DLL, SetLastError = true, CharSet = CharSet.Unicode, ThrowOnUnmappableChar = true)]
-            private static extern SafeFileHandle CreateFile(string lpFileName, DesiredAccess dwDesiredAccess, ShareMode dwShareMode, IntPtr lpSecurityAttributes, CreationDisposition dwCreationDisposition, FlagsAndAttributes dwFlagsAndAttributes, IntPtr hTemplateFile);
+            static extern SafeFileHandle CreateFile(string lpFileName, DesiredAccess dwDesiredAccess, ShareMode dwShareMode, IntPtr lpSecurityAttributes, CreationDisposition dwCreationDisposition, FlagsAndAttributes dwFlagsAndAttributes, IntPtr hTemplateFile);
 
             [DllImport(KERNEL_32_DLL, SetLastError = true)]
             [return: MarshalAs(UnmanagedType.Bool)]
-            private static extern bool ReadFileEx(SafeFileHandle hFile, byte[] lpBuffer, int nNumberOfBytesToRead, ref NativeOverlapped lpOverlapped, FileIOCompletionRoutine lpCompletionRoutine);
+            static extern bool ReadFileEx(SafeFileHandle hFile, byte[] lpBuffer, int nNumberOfBytesToRead, ref NativeOverlapped lpOverlapped, FileIOCompletionRoutine lpCompletionRoutine);
 
             [DllImport(KERNEL_32_DLL, SetLastError = true)]
             [return: MarshalAs(UnmanagedType.Bool)]
-            private static extern bool SetEndOfFile(SafeFileHandle hFile);
+            static extern bool SetEndOfFile(SafeFileHandle hFile);
 
             [DllImport(KERNEL_32_DLL, SetLastError = true)]
-            private static extern int SetFilePointer(SafeFileHandle hFile, int lDistanceToMove, out int lpDistanceToMoveHigh, MoveMethod dwMoveMethod);
-
-            [DllImport(KERNEL_32_DLL, SetLastError = true)]
-            [return: MarshalAs(UnmanagedType.Bool)]
-            private static extern bool WriteFile(SafeFileHandle hFile, byte[] lpBuffer, int nNumberOfBytesToWrite, out int lpNumberOfBytesWritten, ref NativeOverlapped lpOverlapped);
+            static extern int SetFilePointer(SafeFileHandle hFile, int lDistanceToMove, out int lpDistanceToMoveHigh, MoveMethod dwMoveMethod);
 
             [DllImport(KERNEL_32_DLL, SetLastError = true)]
             [return: MarshalAs(UnmanagedType.Bool)]
-            private static extern bool WriteFileEx(SafeFileHandle hFile, byte[] lpBuffer, int nNumberOfBytesToWrite, ref NativeOverlapped lpOverlapped, FileIOCompletionRoutine lpCompletionRoutine);
+            static extern bool WriteFile(SafeFileHandle hFile, byte[] lpBuffer, int nNumberOfBytesToWrite, out int lpNumberOfBytesWritten, ref NativeOverlapped lpOverlapped);
 
-            private delegate void FileIOCompletionRoutine(int dwErrorCode, int dwNumberOfBytesTransfered, ref NativeOverlapped lpOverlapped);
+            [DllImport(KERNEL_32_DLL, SetLastError = true)]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            static extern bool WriteFileEx(SafeFileHandle hFile, byte[] lpBuffer, int nNumberOfBytesToWrite, ref NativeOverlapped lpOverlapped, FileIOCompletionRoutine lpCompletionRoutine);
+
+            delegate void FileIOCompletionRoutine(int dwErrorCode, int dwNumberOfBytesTransfered, ref NativeOverlapped lpOverlapped);
 
             [DebuggerDisplay("{DebuggerDisplay(),nq}")]
             internal class OverlappedChunk
             {
                 public byte[] Buffer { get; }
-
                 public int BytesTransferred { get; set; }
-
                 public int Win32Error { get; set; }
 
-                public OverlappedChunk(int count) : this(new byte[count])
-                {
-                }
+                public OverlappedChunk(int count) 
+                    : this(new byte[count])
+                { }
 
                 public OverlappedChunk(byte[] buffer)
                 {
@@ -164,7 +161,7 @@ namespace SAFE.NetworkDrive.Tests
                 }
 
                 [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Used for debugging only")]
-                private string DebuggerDisplay() => $"{nameof(OverlappedChunk)} Buffer={Buffer?.Length ?? -1} BytesTransferred={BytesTransferred}".ToString(CultureInfo.CurrentCulture);
+                string DebuggerDisplay() => $"{nameof(OverlappedChunk)} Buffer={Buffer?.Length ?? -1} BytesTransferred={BytesTransferred}".ToString(CultureInfo.CurrentCulture);
             }
 
             internal static int BufferSize(long bufferSize, long fileSize, int chunks) => (int)Math.Min(bufferSize, fileSize - chunks * bufferSize);
@@ -264,24 +261,22 @@ namespace SAFE.NetworkDrive.Tests
             }
         }
 
-        private class RetargetingInterceptor<TInterface> : IInterceptor
+        class RetargetingInterceptor<TInterface> : IInterceptor
         {
-            private TInterface invocationTarget;
+            TInterface _invocationTarget;
 
             public void RedirectInvocationsTo(TInterface invocationTarget)
-            {
-                this.invocationTarget = invocationTarget;
-            }
+                => _invocationTarget = invocationTarget;
 
             public void Intercept(Castle.DynamicProxy.IInvocation invocation)
             {
                 if (invocation == null)
                     throw new ArgumentNullException(nameof(invocation));
 
-                if (!object.Equals(invocation.InvocationTarget, invocationTarget)) {
+                if (!object.Equals(invocation.InvocationTarget, _invocationTarget)) {
                     var changeProxyTarget = (IChangeProxyTarget)invocation;
-                    changeProxyTarget.ChangeInvocationTarget(invocationTarget);
-                    changeProxyTarget.ChangeProxyTarget(invocationTarget);
+                    changeProxyTarget.ChangeInvocationTarget(_invocationTarget);
+                    changeProxyTarget.ChangeProxyTarget(_invocationTarget);
                 }
 
                 invocation.Proceed();
@@ -291,15 +286,11 @@ namespace SAFE.NetworkDrive.Tests
         internal class Fixture : IDisposable
         {
             public const string MOUNT_POINT = "Z:";
-
-            //public const string VOLUME_LABEL = "Dokan Volume";
-
+            public const string VOLUME_LABEL = "SAFENetwork";
             public const string SCHEMA = "mock";
-
             public const string USER_NAME = "oetyng";
 
             const long _freeSpace = 64 * 1 << 20;
-
             const long _usedSpace = 36 * 1 << 20;
 
             static readonly RootDirectoryInfoContract _rootDirectory = new RootDirectoryInfoContract(Path.DirectorySeparatorChar.ToString(), new DateTime(2016, 1, 1), new DateTime(2016, 1, 1))
@@ -308,15 +299,11 @@ namespace SAFE.NetworkDrive.Tests
             };
 
             readonly IDokanOperations _operations;
-
             readonly ILogger _logger;
-
             readonly RetargetingInterceptor<IDokanOperations> _interceptor = new RetargetingInterceptor<IDokanOperations>();
-
             readonly Thread _mounterThread;
 
             string _currentTestName;
-
             Mock<ICloudDrive> _drive;
 
             public FileSystemInfoContract[] RootDirectoryItems { get; } = new FileSystemInfoContract[] {
@@ -378,10 +365,8 @@ namespace SAFE.NetworkDrive.Tests
 
             public void Reset(string currentTestName)
             {
-                this._currentTestName = currentTestName;
-
+                _currentTestName = currentTestName;
                 _drive = new Mock<ICloudDrive>(MockBehavior.Strict);
-
                 _interceptor.RedirectInvocationsTo(new CloudOperations(_drive.Object, _logger));
 
                 foreach (var directory in RootDirectoryItems.OfType<DirectoryInfoContract>())
@@ -474,9 +459,7 @@ namespace SAFE.NetworkDrive.Tests
             }
 
             public FileInfoContract SetupNewFile(string parentId, string fileName)
-            {
-                return SetupNewFile(new DirectoryId(parentId), fileName);
-            }
+                => SetupNewFile(new DirectoryId(parentId), fileName);
 
             public FileInfoContract SetupNewFile(DirectoryId parentId, string fileName)
             {
@@ -534,14 +517,10 @@ namespace SAFE.NetworkDrive.Tests
             }
 
             public void SetupMoveDirectoryOrFile(FileSystemInfoContract directoryOrFile, DirectoryInfoContract target, Action callback = null)
-            {
-                SetupMoveItem(directoryOrFile, directoryOrFile.Name, target, callback);
-            }
+                => SetupMoveItem(directoryOrFile, directoryOrFile.Name, target, callback);
 
             public void SetupRenameDirectoryOrFile(FileSystemInfoContract directoryOrFile, string name)
-            {
-                SetupMoveItem(directoryOrFile, name, (directoryOrFile as DirectoryInfoContract)?.Parent ?? (directoryOrFile as FileInfoContract)?.Directory ?? null);
-            }
+                => SetupMoveItem(directoryOrFile, name, (directoryOrFile as DirectoryInfoContract)?.Parent ?? (directoryOrFile as FileInfoContract)?.Directory ?? null);
 
             private void SetupMoveItem(FileSystemInfoContract directoryOrFile, string name, DirectoryInfoContract target, Action callback = null)
             {
@@ -560,10 +539,7 @@ namespace SAFE.NetworkDrive.Tests
                     .Verifiable();
             }
 
-            public void Verify()
-            {
-                _drive.Verify();
-            }
+            public void Verify()=> _drive.Verify();
 
             public static int BufferSize(long bufferSize, long fileSize, int chunks) => (int)Math.Min(bufferSize, fileSize - chunks * bufferSize);
 

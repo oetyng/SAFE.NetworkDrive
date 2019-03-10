@@ -26,10 +26,10 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         ulong? _sequenceNr;
         public ulong? SequenceNr => _sequenceNr;
 
-        public DriveMaterializer(RootName root, SAFENetworkDriveCache memGateway)
+        public DriveMaterializer(RootName root, SAFENetworkDriveCache driveCache)
         {
             _root = root;
-            _localState = memGateway;
+            _localState = driveCache;
             _apply = new ConcurrentDictionary<Type, Func<NetworkEvent, object>>();
             var applyMethods = GetAllMethods(this.GetType())
                 .Where(m => m.Name == "Apply");
