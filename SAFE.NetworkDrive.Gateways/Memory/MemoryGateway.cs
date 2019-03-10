@@ -31,8 +31,8 @@ namespace SAFE.NetworkDrive.Gateways.Memory
                 throw new ArgumentException($"{PARAMETER_ROOT} cannot be empty".ToString(CultureInfo.CurrentCulture));
 
             var drive = new MemDrive(_root);
-            return new DriveInfoContract(root.Value, 
-                drive.AvailableFreeSpace, 
+            return new DriveInfoContract(root.Value,
+                drive.AvailableFreeSpace,
                 drive.TotalSize - drive.AvailableFreeSpace);
         }
 

@@ -34,8 +34,14 @@ namespace SAFE.NetworkDrive.Gateways.Utils
 
         public static object Parse(this string json, string typeName)
         {
-            var type = Type.GetType(typeName);
+            var type = Type.GetType(typeName, AssemblyResolver, null);
             return JsonConvert.DeserializeObject(json, type, SerializerSettings); // //JsonConvert.DefaultSettings = () => SerializerSettings;
+        }
+
+        static System.Reflection.Assembly AssemblyResolver(System.Reflection.AssemblyName assemblyName)
+        {
+            assemblyName.Version = null; // we don't want assembly version to impact readability of earlier data
+            return System.Reflection.Assembly.Load(assemblyName);
         }
     }
 }

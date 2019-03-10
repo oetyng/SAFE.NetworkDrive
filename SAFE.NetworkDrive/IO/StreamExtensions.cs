@@ -69,6 +69,7 @@ namespace SAFE.NetworkDrive.IO
         {
             using (var ms = new MemoryStream())
             {
+                input.Seek(0, SeekOrigin.Begin);
                 input.CopyTo(ms);
                 return ms.ToArray();
             }

@@ -14,14 +14,14 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
     {
         readonly RootName _root;
         readonly SAFENetworkDriveCache _localState;
+        readonly SequenceNr _sequenceNr;
         readonly ConcurrentDictionary<Type, Func<LocalEvent, object>> _apply;
-        readonly object _lockObj = new object();
-        ulong? _sequenceNr;
 
-        public DriveWriter(RootName root, SAFENetworkDriveCache gateway)
+        public DriveWriter(RootName root, SAFENetworkDriveCache gateway, SequenceNr sequenceNr)
         {
             _root = root;
             _localState = gateway;
+            _sequenceNr = sequenceNr;
             _apply = new ConcurrentDictionary<Type, Func<LocalEvent, object>>();
             var applyMethods = GetAllMethods(this.GetType())
                 .Where(m => m.Name == "Apply");
@@ -43,25 +43,16 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
             object obj;
             try
             {
-                lock (_lockObj)
+                using (var sync = _sequenceNr.Lock())
                 {
-                    if (!IsValidSequence(e.SequenceNr))
+                    if (!_sequenceNr.IsValidSequence(e.SequenceNr))
                         return (false, null);
                     obj = _apply[e.GetType()](e);
-                    _sequenceNr = e.SequenceNr;
+                    _sequenceNr.Set(e.SequenceNr);
                     return (true, obj);
                 }
             }
             catch { return (false, null); }
-        }
-
-        bool IsValidSequence(ulong sequenceNr)
-        {
-            if (!_sequenceNr.HasValue && sequenceNr != 0)
-                return false;
-            else if (_sequenceNr.HasValue && _sequenceNr != sequenceNr - 1)
-                return false;
-            return true;
         }
 
         object Apply(LocalFileItemCreated e)

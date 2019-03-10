@@ -20,16 +20,15 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
     class DriveMaterializer
     {
         readonly RootName _root;
-        readonly SAFENetworkDriveCache _localState;
+        readonly MemoryGateway _localState;
         readonly ConcurrentDictionary<Type, Func<NetworkEvent, object>> _apply;
-        readonly AsyncDuplicateLock _asyncLock = new AsyncDuplicateLock();
-        ulong? _sequenceNr;
-        public ulong? SequenceNr => _sequenceNr;
+        readonly SequenceNr _sequenceNr;
 
-        public DriveMaterializer(RootName root, SAFENetworkDriveCache driveCache)
+        public DriveMaterializer(RootName root, MemoryGateway localState, SequenceNr sequenceNr)
         {
             _root = root;
-            _localState = driveCache;
+            _localState = localState;
+            _sequenceNr = sequenceNr;
             _apply = new ConcurrentDictionary<Type, Func<NetworkEvent, object>>();
             var applyMethods = GetAllMethods(this.GetType())
                 .Where(m => m.Name == "Apply");
@@ -50,29 +49,20 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         {
             try
             {
-                using (var sync = await _asyncLock.LockAsync($"{_root.Value}_{nameof(DriveMaterializer)}"))
+                using (var sync = await _sequenceNr.LockAsync())
                 {
                     await foreach (var e in events)
                     {
-                        if (!IsValidSequence(e.SequenceNr))
+                        if (!_sequenceNr.IsValidSequence(e.SequenceNr))
                             return false;
                         _apply[e.GetType()](e);
-                        _sequenceNr = e.SequenceNr;
+                        _sequenceNr.Set(e.SequenceNr);
                     }
                     return true;
                 }
             }
             catch (Exception e) when (e.StackTrace.Contains("IAsyncEnumerable")) { return true; } // NB: SHOULD RETURN FALSE
             catch { return false; }
-        }
-
-        bool IsValidSequence(ulong sequenceNr)
-        {
-            if (!_sequenceNr.HasValue && sequenceNr != 0)
-                return false;
-            else if (_sequenceNr.HasValue && _sequenceNr != sequenceNr - 1)
-                return false;
-            return true;
         }
 
         object Apply(NetworkFileItemCreated e)

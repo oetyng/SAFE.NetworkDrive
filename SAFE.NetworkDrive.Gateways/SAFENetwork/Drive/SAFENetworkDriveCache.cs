@@ -15,55 +15,55 @@ namespace SAFE.NetworkDrive.Gateways.Memory
     public sealed class SAFENetworkDriveCache : ICloudGateway
     {
         readonly IImDStore _imdStore;
-        readonly MemoryGateway _gateway;
-        readonly ConcurrentDictionary<FileId, System.IO.Stream> _contentCache;
+        readonly MemoryGateway _localState;
+        readonly ConcurrentDictionary<FileId, byte[]> _contentCache;
 
-        public SAFENetworkDriveCache(IImDStore imdStore)
+        public SAFENetworkDriveCache(IImDStore imdStore, MemoryGateway localState)
         {
             _imdStore = imdStore;
-            _gateway = new MemoryGateway();
-            _contentCache = new ConcurrentDictionary<FileId, System.IO.Stream>();
+            _localState = localState;
+            _contentCache = new ConcurrentDictionary<FileId, byte[]>();
         }
 
         public bool TryAuthenticate(RootName root, string apiKey, IDictionary<string, string> parameters) => true;
 
         public DriveInfoContract GetDrive(RootName root, string apiKey, IDictionary<string, string> parameters)
-            => _gateway.GetDrive(root, apiKey, parameters);
+            => _localState.GetDrive(root, apiKey, parameters);
 
         public RootDirectoryInfoContract GetRoot(RootName root, string apiKey, IDictionary<string, string> parameters)
-            => _gateway.GetRoot(root, apiKey, parameters);
+            => _localState.GetRoot(root, apiKey, parameters);
 
         public IEnumerable<FileSystemInfoContract> GetChildItem(RootName root, DirectoryId parent)
-            => _gateway.GetChildItem(root, parent);
+            => _localState.GetChildItem(root, parent);
 
         public void ClearContent(RootName root, FileId target)
-            => _gateway.ClearContent(root, target);
+            => _localState.ClearContent(root, target);
 
         public System.IO.Stream GetContent(RootName root, FileId source)
         {
             if (!_contentCache.ContainsKey(source))
             {
-                var data = _gateway.GetContent(root, source);
+                var data = _localState.GetContent(root, source);
                 var evt = NetworkContentLocator.FromBytes(data.ReadFully());
                 var content = evt.MapOrContent;
                 if (evt.IsMap)
                     content = _imdStore.GetImDAsync(evt.MapOrContent).GetAwaiter().GetResult();
 
-                _contentCache[source] = new System.IO.MemoryStream(content);
+                _contentCache[source] = content;
             }
             
-            return new System.IO.BufferedStream(_contentCache[source]);
+            return new System.IO.BufferedStream(new System.IO.MemoryStream(_contentCache[source]));
         }
 
         public void SetContent(RootName root, FileId target, System.IO.Stream content, IProgress<ProgressValue> progress)
         {
-            _gateway.SetContent(root, target, content, progress);
-            _contentCache[target] = new System.IO.BufferedStream(content);
+            _localState.SetContent(root, target, content, progress);
+            _contentCache[target] = content.ReadFully();
         }
 
         public FileSystemInfoContract CopyItem(RootName root, FileSystemId source, string copyName, DirectoryId destination, bool recurse)
         {
-            var contract = _gateway.CopyItem(root, source, copyName, destination, recurse);
+            var contract = _localState.CopyItem(root, source, copyName, destination, recurse);
             var fileId = new FileId(source.Value);
             if (_contentCache.ContainsKey(fileId))
                 _contentCache[new FileId(contract.Id.Value)] = _contentCache[fileId];
@@ -72,26 +72,25 @@ namespace SAFE.NetworkDrive.Gateways.Memory
 
         public FileSystemInfoContract MoveItem(RootName root, FileSystemId source, string moveName, DirectoryId destination)
         {
-            var contract = _gateway.MoveItem(root, source, moveName, destination);
+            var contract = _localState.MoveItem(root, source, moveName, destination);
             TryReplace(source, contract.Id);
             return contract;
         }
 
         public DirectoryInfoContract NewDirectoryItem(RootName root, DirectoryId parent, string name)
-            => _gateway.NewDirectoryItem(root, parent, name);
+            => _localState.NewDirectoryItem(root, parent, name);
 
-        // TODO
         public FileInfoContract NewFileItem(RootName root, DirectoryId parent, 
             string name, System.IO.Stream content, IProgress<ProgressValue> progress)
         {
-            var contract = _gateway.NewFileItem(root, parent, name, content, progress);
-            _contentCache[contract.Id] = new System.IO.BufferedStream(content);
+            var contract = _localState.NewFileItem(root, parent, name, content, progress);
+            _contentCache[contract.Id] = content.ReadFully();
             return contract;
         }
 
         public void RemoveItem(RootName root, FileSystemId target, bool recurse)
         {
-            _gateway.RemoveItem(root, target, recurse);
+            _localState.RemoveItem(root, target, recurse);
             var fileId = new FileId(target.Value);
             if (_contentCache.ContainsKey(fileId))
                 _contentCache.Remove(fileId, out _);
@@ -99,7 +98,7 @@ namespace SAFE.NetworkDrive.Gateways.Memory
 
         public FileSystemInfoContract RenameItem(RootName root, FileSystemId target, string newName)
         {
-            var contract = _gateway.RenameItem(root, target, newName);
+            var contract = _localState.RenameItem(root, target, newName);
             TryReplace(target, contract.Id);
             return contract;
         }

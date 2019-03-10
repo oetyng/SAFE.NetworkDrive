@@ -41,7 +41,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         //readonly AsyncRetryPolicy _retryPolicy = Policy.Handle<ServiceException>().WaitAndRetryAsync(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
         readonly IDictionary<RootName, SAFENetworkContext> _contextCache = new Dictionary<RootName, SAFENetworkContext>();
         readonly string _secretKey;
-        long _sequenceNr = -1;
+        SequenceNr _sequenceNr;
 
         IDictionary<string, string> _parameters;
 
@@ -56,19 +56,22 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
             if (!_contextCache.TryGetValue(root, out SAFENetworkContext result))
             {
                 var (stream, store) = await DbFactory.GetDriveDbsAsync(root, apiKey, _secretKey);
-                var driveCache = new Memory.SAFENetworkDriveCache(store);
+                _sequenceNr = new SequenceNr();
+
+                var localState = new Memory.MemoryGateway();
+                var driveCache = new Memory.SAFENetworkDriveCache(store, localState);
                 var service = new SAFENetworkEventService(stream, store, _secretKey);
 
-                var materializer = new DriveMaterializer(root, driveCache);
+                var materializer = new DriveMaterializer(root, localState, _sequenceNr);
                 var conflictHandler = new VersionConflictHandler(service, materializer);
-                var driveWriter = new DriveWriter(root, driveCache);
+                var driveWriter = new DriveWriter(root, driveCache, _sequenceNr);
 
                 var transactor = new EventTransactor(
                     driveWriter,
                     new DiskWALTransactor(conflictHandler.Upload), _secretKey);
                 _contextCache.Add(root, result = new SAFENetworkContext(transactor, new DriveReader(driveCache)));
 
-                //var _ = driveCache.GetDrive(root, apiKey, );
+                var _ = driveCache.GetDrive(root, apiKey, _parameters);
 
                 // We need to wait for all events in local WAL to have been persisted to network
                 // before we materialize new events from network.
@@ -81,7 +84,6 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                 var isMaterialized = await materializer.Materialize(allEvents); // recreate the filesystem locally in memory
                 if (!isMaterialized)
                     throw new InvalidDataException("Could not materialize network filesystem!");
-                _sequenceNr = materializer.SequenceNr.HasValue ? (long)materializer.SequenceNr : -1;
             }
 
             return result;
@@ -91,6 +93,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         {
             try
             {
+                _parameters = parameters;
                 await RequireContextAsync(root, apiKey);
                 return true;
             }
@@ -151,20 +154,18 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         async Task<T> Transact<T>(RootName root, Func<ulong, LocalEvent> func)
         {
             var context = await RequireContextAsync(root);
-            var sequenceNr = (ulong)(_sequenceNr + 1);
-            var e = func(sequenceNr);
+            var e = func(_sequenceNr.Next);
             var info = context.Writer.Transact<T>(e);
-            if (info.Item1) Interlocked.Increment(ref _sequenceNr);
+            //if (info.Item1) _sequenceNr.Increment();
             return info.Item2;
         }
 
         async Task<bool> Transact(RootName root, Func<ulong, LocalEvent> func)
         {
             var context = await RequireContextAsync(root);
-            var sequenceNr = (ulong)(_sequenceNr + 1);
-            var e = func(sequenceNr);
+            var e = func(_sequenceNr.Next);
             var info = context.Writer.Transact(e);
-            if (info) Interlocked.Increment(ref _sequenceNr);
+            //if (info) _sequenceNr.Increment();
             return info;
         }
 

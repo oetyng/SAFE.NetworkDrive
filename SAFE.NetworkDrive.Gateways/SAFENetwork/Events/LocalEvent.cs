@@ -224,10 +224,7 @@ namespace SAFE.NetworkDrive.Replication.Events
         }
 
         public static ZipEncryptedEvent For(LocalEvent e, string secretKey)
-        {
-            return new ZipEncryptedEvent(ZipEncrypt(e, secretKey),
-                e.GetType().AssemblyQualifiedName);
-        }
+            => new ZipEncryptedEvent(ZipEncrypt(e, secretKey), e.GetType().AssemblyQualifiedName);
 
         static byte[] ZipEncrypt(LocalEvent e, string secretKey)
         {
