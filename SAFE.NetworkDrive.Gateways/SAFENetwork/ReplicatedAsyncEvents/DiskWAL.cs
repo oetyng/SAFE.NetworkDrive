@@ -7,10 +7,13 @@ using SAFE.NetworkDrive.Replication.Events;
 
 namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 {
-    // Background job
-    // Receives data to enqueue on disk
-    // Continuously reads logs from disk queue and passes to handler function.
-    class DiskQueueWorker
+    /// <summary>
+    /// Work Ahead Logs persisted on disk.
+    /// Background job, single instance (machine wide).
+    /// Receives WAL content to persist on disk.
+    /// Continuously reads logs from disk queue and passes to handler function.
+    /// </summary>
+    class DiskWAL
     {
         public const int MIN_DELAY_SECONDS = 3;
 
@@ -26,11 +29,11 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         /// </summary>
         /// <param name="storagePath">Where logs will be stored on the machine.</param>
         /// <param name="onDequeued">Operation for handling dequeued logs.</param>
-        public DiskQueueWorker(Func<WALContent, Task<bool>> onDequeued)
+        public DiskWAL(Func<WALContent, Task<bool>> onDequeued)
         {
             if (_mutex != null)
                 throw new ApplicationException("Only one instance of log synch can be running.");
-            _mutex = new Mutex(true, nameof(DiskQueueWorker), out bool firstCaller);
+            _mutex = new Mutex(true, nameof(DiskWAL), out bool firstCaller);
             if (!firstCaller)
                 throw new ApplicationException("Only one instance of log synch can be running.");
             _onDequeued = onDequeued;
@@ -47,20 +50,6 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                     .Where(c => !c.Persisted)
                     .Take(1)
                     .FirstOrDefault() != null;
-            }
-        }
-
-        public static long GetVersion()
-        {
-            using (var db = new SqlNado.SQLiteDatabase("content.db"))
-            {
-                var data = db.Query<WALContent>()
-                    .OrderBy(c => c.SequenceNr)
-                    .Take(1)
-                    .FirstOrDefault();
-                if (data == null)
-                    return -1;
-                return (long)data.SequenceNr;
             }
         }
 
@@ -93,12 +82,12 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
             }
         }
 
-        public void Start(CancellationToken cancellation)
+        public void StartDequeueing(CancellationToken cancellation)
         {
-            Task.Factory.StartNew(() => RunQueueSynch(cancellation), TaskCreationOptions.LongRunning);
+            Task.Factory.StartNew(() => RunDequeueing(cancellation), TaskCreationOptions.LongRunning);
         }
 
-        async Task RunQueueSynch(CancellationToken cancellation)
+        async Task RunDequeueing(CancellationToken cancellation)
         {
             lock (_mutex)
             {
@@ -120,8 +109,8 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                             .OrderBy(c => c.SequenceNr)
                             .Take(1)
                             .FirstOrDefault();
-                        if (data == null)
-                            Delay();
+                        if (data == null && HighSpeed())
+                            SetDelay(_currentWorkDelay.Ticks * 2);
                         else if (await _onDequeued(data))
                         {
                             data.Persisted = true;
@@ -148,11 +137,14 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                 return true; // enqueueing is active
             }
             if (_currentWorkDelay.Ticks > 0) // more than MIN_DELAY_SECONDS since last access
-                _currentWorkDelay = new TimeSpan(_currentWorkDelay.Ticks / 2); // synch again in half previous wait time
+                SetDelay(_currentWorkDelay.Ticks / 2); // synch again in half previous wait time
             return false; // enqueueing is not active
         }
 
-        void Delay()
-            => _currentWorkDelay = new TimeSpan(_currentWorkDelay.Ticks * 2);
+        void SetDelay(long ticks)
+            => _currentWorkDelay = new TimeSpan(ticks);
+
+        bool HighSpeed()
+            => _minWorkDelay.Ticks > _currentWorkDelay.Ticks;
     }
 }

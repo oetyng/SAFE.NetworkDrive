@@ -42,7 +42,7 @@ namespace SAFE.NetworkDrive
 
         protected CloudDriveBase(RootName rootName, CloudDriveParameters parameters)
         {
-            this._rootName = rootName;
+            _rootName = rootName;
             DisplayRoot = rootName.Value;
             if (parameters != null)
             {

@@ -35,7 +35,8 @@ namespace SAFE.NetworkDrive
         readonly ICloudGateway _gateway;
         readonly IDictionary<string, string> _parameters;
 
-        public CloudDrive(RootName rootName, ICloudGateway gateway, CloudDriveParameters parameters) : base(rootName, parameters)
+        public CloudDrive(RootName rootName, ICloudGateway gateway, CloudDriveParameters parameters) 
+            : base(rootName, parameters)
         {
             _gateway = gateway;
             _parameters = parameters.Parameters;

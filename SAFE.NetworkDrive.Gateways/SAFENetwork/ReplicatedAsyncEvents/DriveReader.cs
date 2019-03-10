@@ -7,9 +7,9 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 {
     class DriveReader
     {
-        readonly MemoryReplicatedSAFEGateway _gateway;
+        readonly SAFENetworkDriveCache _gateway;
 
-        public DriveReader(MemoryReplicatedSAFEGateway gateway)
+        public DriveReader(SAFENetworkDriveCache gateway)
             => _gateway = gateway;
 
         public DriveInfoContract GetDrive(RootName root, string apiKey, IDictionary<string, string> parameters)

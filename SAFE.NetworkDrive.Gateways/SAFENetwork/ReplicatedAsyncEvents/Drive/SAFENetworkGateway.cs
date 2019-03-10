@@ -6,10 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Polly;
 using Polly.Retry;
-using SAFE.AppendOnlyDb;
-using SAFE.AppendOnlyDb.Factories;
-using SAFE.Data.Client;
-using SAFE.Data.Client.Auth;
 using SAFE.NetworkDrive.IO;
 using SAFE.NetworkDrive.Interface;
 using SAFE.NetworkDrive.Interface.Composition;
@@ -18,8 +14,17 @@ using SAFE.NetworkDrive.Replication.Events;
 
 namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 {
+    /// <summary>
+    /// 1. Stores to an encrypted WAL on disk.
+    /// 2. Applies the requests to an in-memory file system.
+    /// 3. Background job decrypts and uploads events and file content from WAL (separately) to SAFENetwork.
+    /// On connect, downloads events from SAFENetwork (without the file contents)
+    /// and materializes the file system in memory (folder structure and file names etc.).
+    /// When file content is requested, it is downloaded and cached locally.
+    /// When file content is produced it is cached locally.
+    /// </summary>
     [System.Diagnostics.DebuggerDisplay("{DebuggerDisplay(),nq}")]
-    public sealed class DiskReplicatedSAFEGateway : IAsyncCloudGateway, IPersistGatewaySettings
+    public sealed class SAFENetworkGateway : IAsyncCloudGateway, IPersistGatewaySettings
     {
         class SAFENetworkContext
         {
@@ -36,9 +41,11 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         //readonly AsyncRetryPolicy _retryPolicy = Policy.Handle<ServiceException>().WaitAndRetryAsync(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
         readonly IDictionary<RootName, SAFENetworkContext> _contextCache = new Dictionary<RootName, SAFENetworkContext>();
         readonly string _secretKey;
-        long _sequenceNr;
+        long _sequenceNr = -1;
 
-        public DiskReplicatedSAFEGateway(string secretKey)
+        IDictionary<string, string> _parameters;
+
+        public SAFENetworkGateway(string secretKey)
             => _secretKey = secretKey;
 
         async Task<SAFENetworkContext> RequireContextAsync(RootName root, string apiKey = null)
@@ -48,53 +55,37 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 
             if (!_contextCache.TryGetValue(root, out SAFENetworkContext result))
             {
-                var appInfo = new AppInfo
-                {
-                    Id = "safe.networkdrive",
-                    Name = "SAFE.NetworkDrive",
-                    Vendor = "oetyng"
-                };
-                SAFEClient.SetFactory(async (sess, app, db) => (object)await StreamDbFactory.CreateForApp(sess, app, db));
-                var factory = new ClientFactory(appInfo, (session, appId) => new SAFEClient(session, appId));
+                var (stream, store) = await DbFactory.GetDriveDbsAsync(root, apiKey, _secretKey);
+                var driveCache = new Memory.SAFENetworkDriveCache(store);
+                var service = new SAFENetworkEventService(stream, store, _secretKey);
 
-                var client = await factory.GetMockNetworkClient(Credentials(apiKey, _secretKey));
-                var db = await client.GetOrAddDbAsync<IStreamDb>(root.Value);
-                var stream = await db.GetOrAddStreamAsync(root.Root);
-
-                var store = client.GetImDStore();
-                var replicatedGateway = new Memory.MemoryReplicatedSAFEGateway(store);
-                
-
-                var service = new SAFENetworkEventService(stream.Value, store, _secretKey);
-                var materializer = new DriveMaterializer(root, replicatedGateway);
+                var materializer = new DriveMaterializer(root, driveCache);
                 var conflictHandler = new VersionConflictHandler(service, materializer);
-
-                var driveWriter = new DriveWriter(root, replicatedGateway);
+                var driveWriter = new DriveWriter(root, driveCache);
 
                 var transactor = new EventTransactor(
                     driveWriter,
-                    new DiskQueueWorker(conflictHandler.Upload), _secretKey);
-                _contextCache.Add(root, result = new SAFENetworkContext(transactor, new DriveReader(replicatedGateway)));
+                    new DiskWAL(conflictHandler.Upload), _secretKey);
+                _contextCache.Add(root, result = new SAFENetworkContext(transactor, new DriveReader(driveCache)));
+
+                //var _ = driveCache.GetDrive(root, apiKey, );
 
                 // We need to wait for all events in local WAL to have been persisted to network
-                // before we materialize new events from network
+                // before we materialize new events from network.
                 transactor.Start(CancellationToken.None); // start uploading to network
-                while (DiskQueueWorker.AnyInQueue()) // wait until queue is empty
-                    await Task.Delay(500); // beware, this will spin eternally if there is an unresolved version conflict
+                while (DiskWAL.AnyInQueue()) // wait until queue is empty
+                    await Task.Delay(500); // beware, this will - currently - spin eternally if there is an unresolved version conflict
 
-                _sequenceNr = DiskQueueWorker.GetVersion(); // read version from local db
-                var readFrom = _sequenceNr > -1 ? (ulong)_sequenceNr : 0;
-                var newEvents = service.LoadAsync(readFrom); // load new events from network // (todo: can be snapshot + all events since)
-                var materialized = await materializer.Materialize(newEvents); // recreate the filesystem locally in memory
-                if (!materialized)
-                    throw new Exception();
+                // (todo: should load snapshot + all events since)
+                var allEvents = service.LoadAsync(fromVersion: 0); // load all events from network (since we don't store it locally)
+                var isMaterialized = await materializer.Materialize(allEvents); // recreate the filesystem locally in memory
+                if (!isMaterialized)
+                    throw new InvalidDataException("Could not materialize network filesystem!");
+                _sequenceNr = materializer.SequenceNr.HasValue ? (long)materializer.SequenceNr : -1;
             }
 
             return result;
         }
-
-        Credentials Credentials(string locator, string secret)
-            => new Credentials(locator, secret);
 
         public async Task<bool> TryAuthenticateAsync(RootName root, string apiKey, IDictionary<string, string> parameters)
         {
@@ -106,12 +97,10 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
             catch (AuthenticationException) { return false; }
         }
 
-        public async Task<DriveInfoContract> GetDriveAsync(RootName root, string apiKey, 
-            IDictionary<string, string> parameters)
+        public async Task<DriveInfoContract> GetDriveAsync(RootName root, string apiKey, IDictionary<string, string> parameters)
             => (await RequireContextAsync(root)).Reader.GetDrive(root, apiKey, parameters);
 
-        public async Task<RootDirectoryInfoContract> GetRootAsync(RootName root, string apiKey, 
-            IDictionary<string, string> parameters)
+        public async Task<RootDirectoryInfoContract> GetRootAsync(RootName root, string apiKey, IDictionary<string, string> parameters)
             => (await RequireContextAsync(root)).Reader.GetRoot(root, apiKey, parameters);
 
         public async Task<IEnumerable<FileSystemInfoContract>> GetChildItemAsync(RootName root, DirectoryId parent)
@@ -186,6 +175,6 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Debugger Display")]
         [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-        static string DebuggerDisplay() => nameof(DiskReplicatedSAFEGateway);
+        static string DebuggerDisplay() => nameof(SAFENetworkGateway);
     }
 }

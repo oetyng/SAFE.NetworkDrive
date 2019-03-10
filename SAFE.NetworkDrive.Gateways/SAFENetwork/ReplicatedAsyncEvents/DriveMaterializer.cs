@@ -12,16 +12,21 @@ using SAFE.AppendOnlyDb.Utils;
 
 namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 {
+    // Materializes an in-memory filesystem from 
+    // network events passed into the Materialize method.
+    // This will setup the entire folder and file structure
+    // but not download any content other than the minimal data
+    // that fits in the NetworkEvents. Instead, larger content is downloaded on demand.
     class DriveMaterializer
     {
         readonly RootName _root;
-        readonly MemoryReplicatedSAFEGateway _localState;
+        readonly SAFENetworkDriveCache _localState;
         readonly ConcurrentDictionary<Type, Func<NetworkEvent, object>> _apply;
         readonly AsyncDuplicateLock _asyncLock = new AsyncDuplicateLock();
         ulong? _sequenceNr;
         public ulong? SequenceNr => _sequenceNr;
 
-        public DriveMaterializer(RootName root, MemoryReplicatedSAFEGateway memGateway)
+        public DriveMaterializer(RootName root, SAFENetworkDriveCache memGateway)
         {
             _root = root;
             _localState = memGateway;
@@ -49,7 +54,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                 {
                     await foreach (var e in events)
                     {
-                        if (_sequenceNr != e.SequenceNr - 1)
+                        if (!IsValidSequence(e.SequenceNr))
                             return false;
                         _apply[e.GetType()](e);
                         _sequenceNr = e.SequenceNr;
@@ -59,6 +64,15 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
             }
             catch (Exception e) when (e.StackTrace.Contains("IAsyncEnumerable")) { return true; } // NB: SHOULD RETURN FALSE
             catch { return false; }
+        }
+
+        bool IsValidSequence(ulong sequenceNr)
+        {
+            if (!_sequenceNr.HasValue && sequenceNr != 0)
+                return false;
+            else if (_sequenceNr.HasValue && _sequenceNr != sequenceNr - 1)
+                return false;
+            return true;
         }
 
         object Apply(NetworkFileItemCreated e)

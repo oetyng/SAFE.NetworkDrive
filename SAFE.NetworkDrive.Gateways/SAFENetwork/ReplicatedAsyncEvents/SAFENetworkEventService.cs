@@ -34,9 +34,9 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         }
 
         // Event => json => bytes => compressed => Encrypted => byte[]
-        public IAsyncEnumerable<NetworkEvent> LoadAsync(ulong version)
+        public IAsyncEnumerable<NetworkEvent> LoadAsync(ulong fromVersion)
         {
-            var data = _stream.ReadForwardFromAsync(version);
+            var data = _stream.ReadForwardFromAsync(fromVersion);
             return data
                 .Select(c => c.Item2)
                 .Where(c => c != null)

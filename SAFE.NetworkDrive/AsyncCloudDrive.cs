@@ -64,9 +64,7 @@ namespace SAFE.NetworkDrive
         }
 
         public bool TryAuthenticate()
-        {
-            return _gateway.TryAuthenticateAsync(_rootName, _apiKey, _parameters).Result;
-        }
+            => _gateway.TryAuthenticateAsync(_rootName, _apiKey, _parameters).Result;
 
         public RootDirectoryInfoContract GetRoot()
         {

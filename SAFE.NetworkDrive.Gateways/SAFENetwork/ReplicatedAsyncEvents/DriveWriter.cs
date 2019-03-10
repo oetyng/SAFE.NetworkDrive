@@ -13,12 +13,12 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
     class DriveWriter
     {
         readonly RootName _root;
-        readonly MemoryReplicatedSAFEGateway _localState;
+        readonly SAFENetworkDriveCache _localState;
         readonly ConcurrentDictionary<Type, Func<LocalEvent, object>> _apply;
         readonly object _lockObj = new object();
         ulong? _sequenceNr;
 
-        public DriveWriter(RootName root, MemoryReplicatedSAFEGateway gateway)
+        public DriveWriter(RootName root, SAFENetworkDriveCache gateway)
         {
             _root = root;
             _localState = gateway;

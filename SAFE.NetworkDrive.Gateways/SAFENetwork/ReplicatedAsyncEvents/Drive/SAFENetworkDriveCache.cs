@@ -12,17 +12,17 @@ using SAFE.Data.Client;
 namespace SAFE.NetworkDrive.Gateways.Memory
 {
     [System.Diagnostics.DebuggerDisplay("{DebuggerDisplay(),nq}")]
-    public sealed class MemoryReplicatedSAFEGateway : ICloudGateway
+    public sealed class SAFENetworkDriveCache : ICloudGateway
     {
         readonly IImDStore _imdStore;
         readonly MemoryGateway _gateway;
+        readonly ConcurrentDictionary<FileId, System.IO.Stream> _contentCache;
 
-        readonly ConcurrentDictionary<FileId, System.IO.Stream> _contentCache = new ConcurrentDictionary<FileId, System.IO.Stream>();
-
-        public MemoryReplicatedSAFEGateway(IImDStore imdStore)
+        public SAFENetworkDriveCache(IImDStore imdStore)
         {
             _imdStore = imdStore;
             _gateway = new MemoryGateway();
+            _contentCache = new ConcurrentDictionary<FileId, System.IO.Stream>();
         }
 
         public bool TryAuthenticate(RootName root, string apiKey, IDictionary<string, string> parameters) => true;
@@ -117,6 +117,6 @@ namespace SAFE.NetworkDrive.Gateways.Memory
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Debugger Display")]
         [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-        static string DebuggerDisplay() => nameof(MemoryReplicatedSAFEGateway);
+        static string DebuggerDisplay() => nameof(SAFENetworkDriveCache);
     }
 }

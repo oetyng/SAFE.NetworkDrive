@@ -4,13 +4,19 @@ using System.Threading;
 
 namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 {
+    /// <summary>
+    /// Receives drive write requests in form of
+    /// events. Transacts it into a disk persisted WAL (encrypted)
+    /// as well as into the DriveWriter, which writes to
+    /// the in memory representation of the file system.
+    /// </summary>
     class EventTransactor
     {
         readonly DriveWriter _driveWriter;
-        readonly DiskQueueWorker _queueWorker;
+        readonly DiskWAL _queueWorker;
         readonly string _password;
 
-        public EventTransactor(DriveWriter driveWriter, DiskQueueWorker synch, string password)
+        public EventTransactor(DriveWriter driveWriter, DiskWAL synch, string password)
         {
             _driveWriter = driveWriter;
             _queueWorker = synch;
@@ -18,7 +24,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         }
 
         public void Start(CancellationToken cancellation)
-            => _queueWorker.Start(cancellation);
+            => _queueWorker.StartDequeueing(cancellation);
 
         public bool Transact(LocalEvent e)
             => Transact<object>(e).Item1;

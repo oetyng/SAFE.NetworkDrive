@@ -10,12 +10,12 @@ namespace SAFE.NetworkDrive.Mounter
     {
         public UserConfig GetUserConfig()
         {
-            var (user, pwd) = GetLogin();
+            var (user, pwd) = GetUserLogin();
             var config = DecrypUserConfig(user, pwd);
             return config;
         }
 
-        (string user, string pwd) GetLogin()
+        (string user, string pwd) GetUserLogin()
         {
             var uReader = new UserReader();
             return (uReader.GetUserName(), uReader.GetPassword());
