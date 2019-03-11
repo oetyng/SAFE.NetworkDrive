@@ -27,9 +27,9 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
             => _wal.StartDequeueing(cancellation);
 
         public bool Transact(LocalEvent e)
-            => Transact<object>(e).Item1;
+            => Transact<object>(e).Succeeded;
 
-        public (bool, T) Transact<T>(LocalEvent e)
+        public (bool Succeeded, T Data) Transact<T>(LocalEvent e)
         {
             try
             {

@@ -62,7 +62,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         /// Operation to be performed within the enqueue transaction.
         /// If "onEnqueued" fails, the transaction is rolled back.
         /// </param>
-        public (bool, T) Enqueue<T>(WALContent data, Func<(bool, object)> onEnqueued)
+        public (bool, T) Enqueue<T>(WALContent data, Func<(bool Succeeded, object Data)> onEnqueued)
         {
             _sw.Reset();
 
@@ -73,9 +73,9 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                     db.BeginTransaction();
                     db.Save(data);
                     var res = onEnqueued();
-                    if (res.Item1) db.Commit();
+                    if (res.Succeeded) db.Commit();
                     else db.Rollback();
-                    return (res.Item1, (T)res.Item2);
+                    return (res.Succeeded, (T)res.Data);
                 }
                 catch { db.Rollback(); throw; }
                 finally { _sw.Restart(); }

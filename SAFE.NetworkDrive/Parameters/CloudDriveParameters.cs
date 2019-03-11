@@ -18,16 +18,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+using NLog;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace SAFE.NetworkDrive.Parameters
 {
     public class CloudDriveParameters
     {
         public string ApiKey { get; set; }
-
         public string EncryptionKey { get; set; }
-
+        public ILogger Logger { get; set; }
+        public CancellationToken Cancellation { get; set; }
         public IDictionary<string, string> Parameters { get; set; }
     }
 }

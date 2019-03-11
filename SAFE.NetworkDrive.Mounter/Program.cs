@@ -28,8 +28,6 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using DokanNet;
-using Microsoft.Extensions.CommandLineUtils;
-using Microsoft.Extensions.Configuration;
 using NLog;
 using SAFE.NetworkDrive.Parameters;
 using SAFE.NetworkDrive.Mounter.Config;
@@ -39,39 +37,15 @@ namespace SAFE.NetworkDrive.Mounter
     internal sealed class Program
     {
         static ILogger _logger;
-        readonly IConfiguration _config;
-
-        Program()
-        {
-            _config = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", true, true)
-                .Build();
-        }
-
-        /// <summary>
-        /// The main application entry point.
-        /// </summary>
-        /// <param name="args">The command line arguments.</param>
-        /// <exception cref="ConfigurationErrorsException">Mount configuration missing</exception>
-        /// <remarks>
-        /// IgorSoft.DokanCloudFS.Mounter [mount [<userNames>] [-p|--passPhrase <passPhrase>]]
-        ///                               [reset [<userNames>]]
-        ///                               [-?|-h|--help]
-        /// </remarks>
+        
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", MessageId = "args")]
         internal static void Main(string[] args)
         {
             try
             {
-                //if (args.Length > 0)
-                //    new Program().ParseCommandLine(args);
-                //else
-                //{
-                    var console = new ConsoleApp();
-                    var user = console.GetUserConfig();
-                    new Program().Mount(user);
-                //}
+                var console = new ConsoleApp();
+                var user = console.GetUserConfig();
+                new Program().Mount(user);
             }
             catch(Exception ex)
             {
@@ -81,17 +55,15 @@ namespace SAFE.NetworkDrive.Mounter
             Console.ReadKey();
         }
 
-        CloudDriveFactory GetCloudDriveFactory()
-            => new CloudDriveFactory();
-
         int Mount(UserConfig config)
         {
             try
             {
                 using (var logFactory = new LogFactory())
                 {
+                    logFactory.Configuration.AddTarget(new NLog.Targets.FileTarget("logs"));
                     _logger = logFactory.GetCurrentClassLogger();
-                    var factory = GetCloudDriveFactory();
+                    var factory = new CloudDriveFactory();
                     using (var tokenSource = new CancellationTokenSource())
                     {
                         var tasks = new List<Task>();
@@ -105,9 +77,10 @@ namespace SAFE.NetworkDrive.Mounter
                                 {
                                     ApiKey = driveConfig.Locator,
                                     EncryptionKey = driveConfig.Secret,
+                                    Logger = _logger,
+                                    Cancellation = tokenSource.Token,
                                     Parameters = driveConfig.GetParameters()
-                                },
-                                tokenSource.Token
+                                }
                             );
 
                             if (!drive.TryAuthenticate())
@@ -123,7 +96,7 @@ namespace SAFE.NetworkDrive.Mounter
                             // HACK: handle non-unique parameter set of DokanOperations.Mount() by explicitely specifying AllocationUnitSize and SectorSize
                             tasks.Add(Task.Run(() => operations.Mount(driveConfig.Root, 
                                 DokanOptions.NetworkDrive | DokanOptions.MountManager | DokanOptions.CurrentSession, 
-                                threadCount: 5,//mountSection.Threads, 
+                                threadCount: 5,
                                 121, 
                                 TimeSpan.FromSeconds(driveConfig.Timeout != 0 ? driveConfig.Timeout : 20), 
                                 null, 512, 512), 
@@ -160,45 +133,7 @@ namespace SAFE.NetworkDrive.Mounter
             {
                 foreach (var drive in config.Drives)
                     Dokan.Unmount(drive.Root[0]);
-                //UIThread.Shutdown();
             }
         }
-
-        //void ParseCommandLine(string[] args)
-        //{
-        //    var commandLine = new CommandLineApplication()
-        //    {
-        //        Name = "Mounter",
-        //        FullName = "SAFE.NetworkDrive.Mounter",
-        //        Description = "A mount manager for cloud drives",
-        //        ShortVersionGetter = () => GetFileVersion(typeof(Program).Assembly, 3),
-        //        LongVersionGetter = () => GetFileVersion(typeof(Program).Assembly, 4)
-        //    };
-        //    commandLine.HelpOption("-?|-h|--help");
-
-        //    commandLine.Command("mount", c =>
-        //    {
-        //        var userNames = c.Argument("<userNames>", "If specified, mount the drives associated with the specified users; otherwise, mount all configured drives.", true);
-        //        var passPhrase = c.Option("-p|--passPhrase", "The pass phrase used to encrypt persisted user credentials and access tokens", CommandOptionType.SingleValue);
-        //        c.HelpOption("-?|-h|--help");
-        //        c.OnExecute(() => Mount(passPhrase.Value(), userNames.Values));
-        //    });
-
-        //    commandLine.Command("reset", c =>
-        //    {
-        //        var userNames = c.Argument("<userNames>", "If specified, purge the persisted settings of the drives associated with the specified users; otherwise, purge the persisted settings of all configured drives.", true);
-        //        c.HelpOption("-?|-h|--help");
-        //        c.OnExecute(() => Reset(userNames.Values));
-        //    });
-
-        //    commandLine.Execute(args);
-        //}
-
-        //string GetFileVersion(Assembly assembly, int components)
-        //{
-        //    var fileVersion = (string)assembly.CustomAttributes.Single(c => c.AttributeType == typeof(AssemblyFileVersionAttribute)).ConstructorArguments[0].Value;
-        //    var versionComponents = fileVersion.Split('.');
-        //    return string.Join(".", versionComponents.Take(components).ToArray());
-        //}
     }
 }

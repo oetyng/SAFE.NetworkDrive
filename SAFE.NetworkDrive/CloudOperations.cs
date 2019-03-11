@@ -119,7 +119,7 @@ namespace SAFE.NetworkDrive
                             throw;
                         }
                     })
-                        .ContinueWith(t => _logger?.Debug($"{nameof(context.File.SetContent)} finished on file '{fileName}'".ToString(CultureInfo.CurrentCulture)), TaskContinuationOptions.OnlyOnRanToCompletion);
+                    .ContinueWith(t => _logger?.Debug($"{nameof(context.File.SetContent)} finished on file '{fileName}'".ToString(CultureInfo.CurrentCulture)), TaskContinuationOptions.OnlyOnRanToCompletion);
                 }
 
                 if (context?.Task != null)
@@ -415,10 +415,7 @@ namespace SAFE.NetworkDrive
             return AsTrace(nameof(LockFile), fileName, info, DokanResult.Success, offset.ToString(CultureInfo.InvariantCulture), length.ToString(CultureInfo.InvariantCulture));
         }
 
-        public NtStatus Mounted(DokanFileInfo info)
-        {
-            return AsTrace(nameof(Mounted), null, info, DokanResult.Success);
-        }
+        public NtStatus Mounted(DokanFileInfo info) => AsTrace(nameof(Mounted), null, info, DokanResult.Success);
 
         public NtStatus MoveFile(string oldName, string newName, bool replace, DokanFileInfo info)
         {
@@ -528,9 +525,7 @@ namespace SAFE.NetworkDrive
         }
 
         public NtStatus SetFileSecurity(string fileName, FileSystemSecurity security, AccessControlSections sections, DokanFileInfo info)
-        {
-            return AsDebug(nameof(SetFileAttributes), fileName, info, DokanResult.NotImplemented, sections.ToString());
-        }
+            => AsDebug(nameof(SetFileAttributes), fileName, info, DokanResult.NotImplemented, sections.ToString());
 
         public NtStatus SetFileTime(string fileName, DateTime? creationTime, DateTime? lastAccessTime, DateTime? lastWriteTime, DokanFileInfo info)
         {
@@ -590,6 +585,6 @@ namespace SAFE.NetworkDrive
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Debugger Display")]
         [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-        private string DebuggerDisplay => $"{nameof(CloudOperations)} drive={_drive} root={_root}".ToString(CultureInfo.CurrentCulture);
+        string DebuggerDisplay => $"{nameof(CloudOperations)} drive={_drive} root={_root}".ToString(CultureInfo.CurrentCulture);
     }
 }

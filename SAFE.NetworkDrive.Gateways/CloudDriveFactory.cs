@@ -21,24 +21,19 @@ SOFTWARE.
 using SAFE.NetworkDrive.Gateways.AsyncEvents;
 using SAFE.NetworkDrive.Interface;
 using SAFE.NetworkDrive.Parameters;
-using System.Threading;
 
 namespace SAFE.NetworkDrive
 {
     internal sealed class CloudDriveFactory
     {
-        internal ICloudDrive CreateCloudDrive(string schema, string userName, string root, CloudDriveParameters parameters, CancellationToken cancellation)
+        internal ICloudDrive CreateCloudDrive(string schema, string userName, string root, CloudDriveParameters parameters)
         {
             var rootName = new RootName(schema, userName, root);
-            var asyncGateway = new SAFENetworkGateway(parameters.EncryptionKey, cancellation);
+            var asyncGateway = new SAFENetworkGateway(
+                parameters.EncryptionKey, 
+                parameters.Cancellation);
+
             return new AsyncCloudDrive(rootName, asyncGateway, parameters);
-
-            //var gateway = new Gateways.File.FileGateway();
-            //var gateway = new Gateways.Memory.MemoryGateway();
-            //return new CloudDrive(rootName, gateway, parameters);
         }
-
-        internal ICloudDrive CreateCloudDrive(string schema, string userName, string root, CloudDriveParameters parameters)
-            => CreateCloudDrive(schema, userName, root, parameters, CancellationToken.None);
     }
 }

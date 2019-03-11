@@ -4,13 +4,12 @@ using System.IO;
 using System.Security.Authentication;
 using System.Threading;
 using System.Threading.Tasks;
-using Polly;
-using Polly.Retry;
 using SAFE.NetworkDrive.IO;
 using SAFE.NetworkDrive.Interface;
 using SAFE.NetworkDrive.Interface.Composition;
 using SAFE.NetworkDrive.Interface.IO;
 using SAFE.NetworkDrive.Replication.Events;
+using NLog;
 
 namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 {
@@ -38,7 +37,6 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
             }
         }
 
-        //readonly AsyncRetryPolicy _retryPolicy = Policy.Handle<ServiceException>().WaitAndRetryAsync(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
         readonly IDictionary<RootName, SAFENetworkContext> _contextCache = new Dictionary<RootName, SAFENetworkContext>();
         readonly CancellationToken _cancellation;
         readonly string _secretKey;
@@ -64,18 +62,17 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 
                 var localState = new Memory.MemoryGateway();
                 var driveCache = new Memory.SAFENetworkDriveCache(store, localState);
-                var service = new SAFENetworkEventService(stream, store, _secretKey);
+                var network = new SAFENetworkEventService(stream, store, _secretKey);
 
                 var materializer = new DriveMaterializer(root, localState, _sequenceNr);
-                var conflictHandler = new VersionConflictHandler(service, materializer);
+                var conflictHandler = new VersionConflictHandler(network, materializer);
                 var driveWriter = new DriveWriter(root, driveCache, _sequenceNr);
 
-                var transactor = new EventTransactor(
-                    driveWriter,
+                var transactor = new EventTransactor(driveWriter,
                     new DiskWALTransactor(conflictHandler.Upload), _secretKey);
                 _contextCache.Add(root, result = new SAFENetworkContext(transactor, new DriveReader(driveCache)));
 
-                var _ = driveCache.GetDrive(root, apiKey, _parameters);
+                var _ = driveCache.GetDrive(root, apiKey, _parameters); // needs to be loaded
 
                 // We need to wait for all events in local WAL to have been persisted to network
                 // before we materialize new events from network.
@@ -84,7 +81,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                     await Task.Delay(500); // beware, this will - currently - spin eternally if there is an unresolved version conflict
 
                 // (todo: should load snapshot + all events since)
-                var allEvents = service.LoadAsync(fromVersion: 0); // load all events from network (since we don't store it locally)
+                var allEvents = network.LoadAsync(fromVersion: 0); // load all events from network (since we don't store it locally)
                 var isMaterialized = await materializer.Materialize(allEvents); // recreate the filesystem locally in memory
                 if (!isMaterialized)
                     throw new InvalidDataException("Could not materialize network filesystem!");
@@ -155,22 +152,22 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 
         FSType GetType(FileSystemId id) => id is DirectoryId ? FSType.Directory : FSType.File;
 
-        async Task<T> Transact<T>(RootName root, Func<ulong, LocalEvent> func)
+        async Task<T> Transact<T>(RootName root, Func<ulong, LocalEvent> getEvent)
         {
             var context = await RequireContextAsync(root);
-            var e = func(_sequenceNr.Next);
-            var info = context.Writer.Transact<T>(e);
+            var e = getEvent(_sequenceNr.Next);
+            var result = context.Writer.Transact<T>(e);
             //if (info.Item1) _sequenceNr.Increment();
-            return info.Item2;
+            return result.Data;
         }
 
-        async Task<bool> Transact(RootName root, Func<ulong, LocalEvent> func)
+        async Task<bool> Transact(RootName root, Func<ulong, LocalEvent> getEvent)
         {
             var context = await RequireContextAsync(root);
-            var e = func(_sequenceNr.Next);
-            var info = context.Writer.Transact(e);
+            var e = getEvent(_sequenceNr.Next);
+            var result = context.Writer.Transact(e);
             //if (info) _sequenceNr.Increment();
-            return info;
+            return result;
         }
 
         public void PurgeSettings(RootName root)
