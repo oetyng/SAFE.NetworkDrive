@@ -12,7 +12,7 @@ namespace SAFE.NetworkDrive.Gateways.Memory
     [System.Diagnostics.DebuggerDisplay("{DebuggerDisplay(),nq}")]
     public sealed class MemoryGateway : ICloudGateway
     {
-        static readonly MemoryFolder _root = new MemoryFolder(null, string.Empty);
+        readonly MemoryFolder _root = new MemoryFolder(null, string.Empty);
         
         public const string PARAMETER_ROOT = "root";
         const string PATH_NOT_FOUND = "Path '{0}' does not exist";
@@ -43,8 +43,8 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             public MemDrive(MemoryFolder root)
                 => _root = root;
 
-            public long TotalSize => System.Diagnostics.Process.GetCurrentProcess().VirtualMemorySize64;// Environment.WorkingSet;
-            public long AvailableFreeSpace => long.MaxValue;//TotalSize - (long)_root.UsedSize;
+            public long TotalSize => long.MaxValue;// System.Diagnostics.Process.GetCurrentProcess().VirtualMemorySize64;
+            public long AvailableFreeSpace => System.Diagnostics.Process.GetCurrentProcess().VirtualMemorySize64; //long.MaxValue;//TotalSize - (long)_root.UsedSize;
         }
 
         public RootDirectoryInfoContract GetRoot(RootName root, string apiKey, IDictionary<string, string> parameters)

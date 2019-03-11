@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using SAFE.NetworkDrive.Encryption;
 using SAFE.NetworkDrive.Mounter.Config;
-using Scrambler = SAFE.NetworkDrive.Gateways.Utils.PathScrambler;
+using Scrambler = SAFE.NetworkDrive.Gateways.Utils.Scrambler;
 using System.IO;
 
 namespace SAFE.NetworkDrive.Mounter

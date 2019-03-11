@@ -61,7 +61,6 @@ namespace SAFE.NetworkDrive.Mounter
             {
                 using (var logFactory = new LogFactory())
                 {
-                    logFactory.Configuration.AddTarget(new NLog.Targets.FileTarget("logs"));
                     _logger = logFactory.GetCurrentClassLogger();
                     var factory = new CloudDriveFactory();
                     using (var tokenSource = new CancellationTokenSource())

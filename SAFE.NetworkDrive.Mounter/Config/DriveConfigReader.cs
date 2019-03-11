@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using Scrambler = SAFE.NetworkDrive.Gateways.Utils.PathScrambler;
+using Scrambler = SAFE.NetworkDrive.Gateways.Utils.Scrambler;
 
 namespace SAFE.NetworkDrive.Mounter.Config
 {

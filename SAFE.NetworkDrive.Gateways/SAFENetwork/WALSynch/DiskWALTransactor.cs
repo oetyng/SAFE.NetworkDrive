@@ -17,8 +17,9 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
     {
         public const int MIN_DELAY_SECONDS = 3;
 
-        static bool _isRunning;
-        static Mutex _mutex;
+        bool _isRunning;
+        readonly Mutex _mutex;
+        readonly string _dbName;
         readonly Stopwatch _sw = new Stopwatch();
         readonly Func<WALContent, Task<bool>> _onDequeued;
         readonly TimeSpan _minWorkDelay = TimeSpan.FromSeconds(MIN_DELAY_SECONDS);
@@ -29,20 +30,19 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         /// </summary>
         /// <param name="storagePath">Where logs will be stored on the machine.</param>
         /// <param name="onDequeued">Operation for handling dequeued logs.</param>
-        public DiskWALTransactor(Func<WALContent, Task<bool>> onDequeued)
+        public DiskWALTransactor(string dbName, Func<WALContent, Task<bool>> onDequeued)
         {
-            if (_mutex != null)
-                throw new ApplicationException("Only one instance of log synch can be running.");
-            _mutex = new Mutex(true, nameof(DiskWALTransactor), out bool firstCaller);
+            _mutex = new Mutex(true, $"{dbName}_{nameof(DiskWALTransactor)}", out bool firstCaller);
             if (!firstCaller)
                 throw new ApplicationException("Only one instance of log synch can be running.");
+            _dbName = dbName;
             _onDequeued = onDequeued;
             _sw.Start();
         }
 
-        public static bool AnyInQueue()
+        public static bool AnyInQueue(string dbName)
         {
-            using (var db = new SqlNado.SQLiteDatabase("content.db"))
+            using (var db = new SqlNado.SQLiteDatabase($"{dbName}.db"))
             {
                 if (!db.TableExists<WALContent>())
                     db.SynchronizeSchema<WALContent>();
@@ -66,7 +66,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         {
             _sw.Reset();
 
-            using (var db = new SqlNado.SQLiteDatabase("content.db"))
+            using (var db = new SqlNado.SQLiteDatabase($"{_dbName}.db"))
             {
                 try
                 {
@@ -102,7 +102,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                 {
                     if (await EnqueueingIsActive())
                         continue;
-                    using (var db = new SqlNado.SQLiteDatabase("content.db"))
+                    using (var db = new SqlNado.SQLiteDatabase($"{_dbName}.db"))
                     {
                         var data = db.Query<WALContent>()
                             .Where(c => !c.Persisted)
@@ -129,7 +129,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 
         void Cleanup()
         {
-            using (var db = new SqlNado.SQLiteDatabase("content.db"))
+            using (var db = new SqlNado.SQLiteDatabase($"{_dbName}.db"))
             {
                 try
                 {

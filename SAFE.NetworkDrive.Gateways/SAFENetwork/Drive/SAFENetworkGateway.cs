@@ -68,8 +68,9 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                 var conflictHandler = new VersionConflictHandler(network, materializer);
                 var driveWriter = new DriveWriter(root, driveCache, _sequenceNr);
 
+                var dbName = Utils.Scrambler.Obfuscate(root.Value, _secretKey);
                 var transactor = new EventTransactor(driveWriter,
-                    new DiskWALTransactor(conflictHandler.Upload), _secretKey);
+                    new DiskWALTransactor(dbName, conflictHandler.Upload), _secretKey);
                 _contextCache.Add(root, result = new SAFENetworkContext(transactor, new DriveReader(driveCache)));
 
                 var _ = driveCache.GetDrive(root, apiKey, _parameters); // needs to be loaded
@@ -77,7 +78,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                 // We need to wait for all events in local WAL to have been persisted to network
                 // before we materialize new events from network.
                 transactor.Start(_cancellation); // start uploading to network
-                while (DiskWALTransactor.AnyInQueue()) // wait until queue is empty
+                while (DiskWALTransactor.AnyInQueue(dbName)) // wait until queue is empty
                     await Task.Delay(500); // beware, this will - currently - spin eternally if there is an unresolved version conflict
 
                 // (todo: should load snapshot + all events since)
