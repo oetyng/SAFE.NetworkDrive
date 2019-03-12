@@ -9,30 +9,50 @@ namespace SAFE.NetworkDrive.Mounter.Config
 {
     public class UserConfigHandler
     {
-        public UserConfig CreateOrDecrypUserConfig(string username, string password)
+        readonly string _username;
+        readonly string _password;
+
+        public UserConfigHandler(string username, string password)
         {
-            var userFolder = Scrambler.Obfuscate(username, password);
+            _username = username;
+            _password = password;
+        }
+
+        public UserConfig CreateOrDecrypUserConfig()
+        {
+            var userFolder = Scrambler.Obfuscate(_username, _password);
             var dirPath = "../sndc";
             var filePath = $"{dirPath}/{userFolder}".ToLowerInvariant();
             if (!File.Exists(filePath))
             {
-                var config = CreateUserConfig(username);
-                var bytes = BytesCrypto.Encrypt(password, JsonConvert.SerializeObject(config));
+                var config = CreateUserConfig();
+                var bytes = BytesCrypto.Encrypt(_password, JsonConvert.SerializeObject(config));
                 if (!Directory.Exists(dirPath))
                     Directory.CreateDirectory(dirPath);
                 File.WriteAllBytes(filePath, bytes);
                 return config;
             }
             var data = File.ReadAllBytes(filePath);
-            var json = BytesCrypto.Decrypt(password, data);
+            var json = BytesCrypto.Decrypt(_password, data);
             return JsonConvert.DeserializeObject<UserConfig>(json);
         }
 
-        UserConfig CreateUserConfig(string username)
+        public bool DeleteUser()
+        {
+            var userFolder = Scrambler.Obfuscate(_username, _password);
+            var dirPath = "../sndc";
+            var filePath = $"{dirPath}/{userFolder}".ToLowerInvariant();
+            if (!File.Exists(filePath))
+                return false;
+            File.Delete(filePath);
+            return true;
+        }
+
+        UserConfig CreateUserConfig()
         {
             var config = new UserConfig
             {
-                Username = username,
+                Username = _username,
                 Drives = new List<DriveConfig>()
             };
 
@@ -52,33 +72,45 @@ namespace SAFE.NetworkDrive.Mounter.Config
             };
         }
 
-        public bool AddDrive(DriveConfig config, string username, string password)
+        public bool AddDrive(DriveConfig config)
         {
-            var user = CreateOrDecrypUserConfig(username, password);
+            var user = CreateOrDecrypUserConfig();
             if (user.Drives.Any(c => c.Root == config.Root))
                 return false;
 
             user.Drives.Add(config);
-            Save(user, password);
+            Save(user);
             return true;
         }
 
-        public bool AddDrives(List<DriveConfig> config, string username, string password)
+        public bool RemoveDrive(char driveLetter)
         {
-            var user = CreateOrDecrypUserConfig(username, password);
+            var user = CreateOrDecrypUserConfig();
+            var removed = user.Drives.RemoveAll(c => c.Root[0] == driveLetter);
+
+            if (removed == 0)
+                return false;
+
+            Save(user);
+            return true;
+        }
+
+        public bool AddDrives(List<DriveConfig> config)
+        {
+            var user = CreateOrDecrypUserConfig();
             config.RemoveAll(c => user.Drives.Any(d => d.Root == c.Root));
             if (config.Count == 0)
                 return false;
 
             user.Drives.AddRange(config);
-            Save(user, password);
+            Save(user);
             return true;
         }
 
-        void Save(UserConfig user, string password)
+        void Save(UserConfig user)
         {
-            var bytes = BytesCrypto.Encrypt(password, JsonConvert.SerializeObject(user));
-            var userFolder = Scrambler.Obfuscate(user.Username, password);
+            var bytes = BytesCrypto.Encrypt(_password, JsonConvert.SerializeObject(user));
+            var userFolder = Scrambler.Obfuscate(user.Username, _password);
             var dirPath = "../sndc";
             var filePath = $"{dirPath}/{userFolder}".ToLowerInvariant();
             File.WriteAllBytes(filePath, bytes);

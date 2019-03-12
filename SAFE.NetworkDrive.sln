@@ -9,9 +9,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SAFE.NetworkDrive.Gateways"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SAFE.NetworkDrive.Tests", "SAFE.NetworkDrive.Tests\SAFE.NetworkDrive.Tests.csproj", "{82630EF7-E46E-43C0-932B-8F3AB761A631}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SAFE.NetworkDrive.Console", "SAFE.NetworkDrive.Console\SAFE.NetworkDrive.Console.csproj", "{E636FE1D-A3B6-4BBF-B440-325C780E2654}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SAFE.NetworkDrive.Console", "SAFE.NetworkDrive.Console\SAFE.NetworkDrive.Console.csproj", "{E636FE1D-A3B6-4BBF-B440-325C780E2654}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SAFE.NetworkDrive.Mounter", "SAFE.NetworkDrive.Mounter\SAFE.NetworkDrive.Mounter.csproj", "{A6303701-4B98-47B6-8E0C-5BD7A037B2FF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SAFE.NetworkDrive.Mounter", "SAFE.NetworkDrive.Mounter\SAFE.NetworkDrive.Mounter.csproj", "{A6303701-4B98-47B6-8E0C-5BD7A037B2FF}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SAFE.NetworkDrive.UI", "SAFE.NetworkDrive.UI\SAFE.NetworkDrive.UI.csproj", "{E1826BCC-1E22-4E52-86F4-D0128E12735E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -61,6 +63,14 @@ Global
 		{A6303701-4B98-47B6-8E0C-5BD7A037B2FF}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A6303701-4B98-47B6-8E0C-5BD7A037B2FF}.Release|x64.ActiveCfg = Release|Any CPU
 		{A6303701-4B98-47B6-8E0C-5BD7A037B2FF}.Release|x64.Build.0 = Release|Any CPU
+		{E1826BCC-1E22-4E52-86F4-D0128E12735E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E1826BCC-1E22-4E52-86F4-D0128E12735E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E1826BCC-1E22-4E52-86F4-D0128E12735E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E1826BCC-1E22-4E52-86F4-D0128E12735E}.Debug|x64.Build.0 = Debug|Any CPU
+		{E1826BCC-1E22-4E52-86F4-D0128E12735E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E1826BCC-1E22-4E52-86F4-D0128E12735E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E1826BCC-1E22-4E52-86F4-D0128E12735E}.Release|x64.ActiveCfg = Release|Any CPU
+		{E1826BCC-1E22-4E52-86F4-D0128E12735E}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

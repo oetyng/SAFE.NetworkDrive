@@ -11,12 +11,12 @@ namespace SAFE.NetworkDrive.Console
         public UserConfig GetUserConfig()
         {
             var (user, pwd) = GetUserLogin();
-            var handler = new UserConfigHandler();
-            var userConfig = handler.CreateOrDecrypUserConfig(user, pwd);
+            var handler = new UserConfigHandler(user, pwd);
+            var userConfig = handler.CreateOrDecrypUserConfig();
 
             var dReader = new DriveConfigReader();
             var drives = dReader.ConfigureDrives(userConfig);
-            handler.AddDrives(drives, user, pwd);
+            handler.AddDrives(drives);
             return userConfig;
         }
 

@@ -27,6 +27,12 @@ namespace SAFE.NetworkDrive.Mounter
             _drives = new ConcurrentDictionary<char, DriveMounter>(mounters);
         }
 
+        public void AddDrive(DriveConfig drive)
+        {
+            if (!_drives.TryAdd(drive.Root[0], new DriveMounter(_user.Username, drive, _logger)))
+                throw new InvalidOperationException($"Drive already exists: {drive.Root}");
+        }
+
         public void MountAll()
         {
             foreach (var drive in _drives.Values)
