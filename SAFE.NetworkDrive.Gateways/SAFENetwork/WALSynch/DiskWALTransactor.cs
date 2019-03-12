@@ -125,6 +125,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
             }
 
             Cleanup();
+            _mutex.Dispose();
         }
 
         void Cleanup()

@@ -87,12 +87,9 @@ namespace SAFE.NetworkDrive.Mounter
             }
             catch (Exception ex)
             {
+                _session = null;
                 _logger.Error($"{ex.GetType().Name}: {ex.Message}");
                 return false;
-            }
-            finally
-            {
-                _session = null;
             }
         }
 
@@ -151,7 +148,7 @@ namespace SAFE.NetworkDrive.Mounter
                 null, 512, 512),
                 cancellation.Token);
 
-            var session = new MountSession(runner, cancellation);
+            var session = new MountSession(_config.Root[0], runner, cancellation);
 
             var driveInfo = new DriveInfo(_config.Root);
             while (!driveInfo.IsReady)
@@ -170,8 +167,9 @@ namespace SAFE.NetworkDrive.Mounter
         public char DriveLetter { get; }
         public bool Mounted { get; private set; }
 
-        public MountSession(Task runner, CancellationTokenSource cancellation)
+        public MountSession(char driveLetter, Task runner, CancellationTokenSource cancellation)
         {
+            DriveLetter = driveLetter;
             _runner = runner;
             _cancellation = cancellation;
         }

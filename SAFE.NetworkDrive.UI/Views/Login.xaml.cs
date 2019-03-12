@@ -15,6 +15,7 @@ namespace SAFE.NetworkDrive.UI
         {
             InitializeComponent();
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            txtUsername.Focus();
         }
 
         private void BtnLogin_Click(object sender, RoutedEventArgs e)

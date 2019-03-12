@@ -1,20 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.Windows.Threading;
 using SAFE.NetworkDrive.Mounter.Config;
 
 namespace SAFE.NetworkDrive.UI
@@ -46,11 +34,10 @@ namespace SAFE.NetworkDrive.UI
             var factory = new NLog.LogFactory();
             var logger = factory.GetLogger("logger");
 
-            // load user drives from encrypted file
             _userConfig = new UserConfigHandler(username, password);
             var user = _userConfig.CreateOrDecrypUserConfig();
             _mounter = new Mounter.DriveMountManager(user, logger);
-            _mounter.MountAll();
+            user.Drives.ForEach(c => ShowDrive(c.Root[0]));
         }
 
         void MainWindow_Closing(object sender, CancelEventArgs e)
@@ -66,19 +53,8 @@ namespace SAFE.NetworkDrive.UI
                 return;
         }
 
-        void ToggleButtons()
-        {
-            if (LstViewDrives.SelectedItem == null)
-            {
-                BtnMountDrive.IsEnabled = false;
-                BtnRemoveDrive.IsEnabled = false;
-            }
-            else
-            {
-                BtnMountDrive.IsEnabled = true;
-                BtnRemoveDrive.IsEnabled = true;
-            }
-        }
+        void BtnToggleMountDrive_Click(object sender, RoutedEventArgs e)
+            => ToggleMountDrive((LstViewDrives.SelectedItem as Drive).Letter);
 
         void BtnAddDrive_Click(object sender, RoutedEventArgs e)
         {
@@ -90,14 +66,7 @@ namespace SAFE.NetworkDrive.UI
                 var location = addDrive.Location;
                 var secret = addDrive.Secret;
 
-                var config = new DriveConfig
-                {
-                    Locator = location,
-                    Secret = secret,
-                    Root = driveLetter.ToString(),
-                    Schema = "safenetwork",
-                    Parameters = $"root=/"
-                };
+                var config = _userConfig.CreateDriveConfig(driveLetter, location, secret);
 
                 // store to config
                 _userConfig.AddDrive(config);
@@ -110,13 +79,6 @@ namespace SAFE.NetworkDrive.UI
                 MessageBox.Show("Unable to load data.", "Error", MessageBoxButton.OK);
         }
 
-        void ShowDrive(char driveLetter)
-        {
-            var drive = new Drive { Letter = driveLetter };
-            _drives.Add(drive);
-            drive.NotifyIcon = DriveNotifyIcon.Create(driveLetter, _app);
-        }
-
         void BtnRemoveDrive_Click(object sender, RoutedEventArgs e)
         {
             var res = MessageBox.Show("This will remove your local drive login. " +
@@ -127,24 +89,9 @@ namespace SAFE.NetworkDrive.UI
                 var drive = _drives.Single(c => c.Letter == (LstViewDrives.SelectedItem as Drive).Letter);
                 _drives.Remove(drive);
                 drive.NotifyIcon.RemoveMenuItem();
+                if (drive.Mounted) _mounter.Unmount(drive.Letter);
                 _userConfig.RemoveDrive(drive.Letter);
             }
-        }
-
-        void BtnToggleMountDrive_Click(object sender, RoutedEventArgs e)
-            => ToggleMountDrive((LstViewDrives.SelectedItem as Drive).Letter);
-
-        void ToggleMountDrive(char driveLetter)
-        {
-            var drive = _drives
-                .Single(c => c.Letter == driveLetter);
-
-            if (drive.Mounted) _mounter.Unmount(driveLetter);
-            else _mounter.Mount(driveLetter);
-
-            drive.Mounted = !drive.Mounted;
-            _drives.ResetBindings();
-            ToggleUnmountAllEnabled();
         }
 
         void BtnDeleteUser_Click(object sender, RoutedEventArgs e)
@@ -166,6 +113,19 @@ namespace SAFE.NetworkDrive.UI
         void BtnUnmountAll_Click(object sender, RoutedEventArgs e)
             => UnmountAll();
 
+        void RunInThread(Action a)
+        {
+            var t = new System.Threading.Thread(new System.Threading.ThreadStart(() => a()));
+            t.Start();
+        }
+
+        void ShowDrive(char driveLetter)
+        {
+            var drive = new Drive { Letter = driveLetter };
+            _drives.Add(drive);
+            drive.NotifyIcon = DriveNotifyIcon.Create(driveLetter, _app);
+        }
+
         void UnmountAll()
         {
             _mounter.UnmountAll();
@@ -173,6 +133,33 @@ namespace SAFE.NetworkDrive.UI
                 drive.Mounted = false;
             _drives.ResetBindings();
             ToggleUnmountAllEnabled();
+        }
+
+        void ToggleMountDrive(char driveLetter)
+        {
+            var drive = _drives
+                .Single(c => c.Letter == driveLetter);
+
+            if (drive.Mounted) _mounter.Unmount(driveLetter);
+            else RunInThread(() => _mounter.Mount(driveLetter));
+
+            drive.Mounted = !drive.Mounted;
+            _drives.ResetBindings();
+            ToggleUnmountAllEnabled();
+        }
+
+        void ToggleButtons()
+        {
+            if (LstViewDrives.SelectedItem == null)
+            {
+                BtnMountDrive.IsEnabled = false;
+                BtnRemoveDrive.IsEnabled = false;
+            }
+            else
+            {
+                BtnMountDrive.IsEnabled = true;
+                BtnRemoveDrive.IsEnabled = true;
+            }
         }
 
         void ToggleUnmountAllEnabled()

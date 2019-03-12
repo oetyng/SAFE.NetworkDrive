@@ -43,7 +43,7 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             public MemDrive(MemoryFolder root)
                 => _root = root;
 
-            public long TotalSize => long.MaxValue;// System.Diagnostics.Process.GetCurrentProcess().VirtualMemorySize64;
+            public long TotalSize => long.MaxValue; // System.Diagnostics.Process.GetCurrentProcess().VirtualMemorySize64;
             public long AvailableFreeSpace => System.Diagnostics.Process.GetCurrentProcess().VirtualMemorySize64; //long.MaxValue;//TotalSize - (long)_root.UsedSize;
         }
 
