@@ -15,7 +15,7 @@ namespace SAFE.NetworkDrive.Console
             
             do
             {
-                WriteLine("Press Enter to add a new drive, or Esc to exit.");
+                WriteLine("Press Enter to add a new drive, or Esc to continue.");
                 ConsoleKeyInfo key = ReadKey(true);
                 if (key.Key == ConsoleKey.Enter)
                     drives.Add(GetDrive(user));
@@ -63,19 +63,21 @@ namespace SAFE.NetworkDrive.Console
                 ConsoleKeyInfo key = ReadKey(true);
                 if (key.Key != ConsoleKey.Backspace && key.Key != ConsoleKey.Enter)
                 {
+                    val = key.KeyChar;
+
                     if (!char.IsLetter(val))
                     {
                         WriteLine("Only letters allowed.");
                         continue;
                     }
-                    if (DriveLetterUtil.GetAvailableDriveLetters().Contains(val))
+                    if (!DriveLetterUtil.GetAvailableDriveLetters().Contains(val))
                     {
                         WriteLine("Drive letter is already used locally.");
                         continue;
                     }
                     if (val != char.MinValue)
                         Write("\b \b");
-                    val = key.KeyChar;
+                    
                     Write(key.KeyChar);
                 }
                 else
