@@ -3,13 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.28606.126
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SAFE.NetworkDrive.Mounter", "SAFE.NetworkDrive.Mounter\SAFE.NetworkDrive.Mounter.csproj", "{349A5431-6237-4235-96FF-FF3865FB8B84}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SAFE.NetworkDrive", "SAFE.NetworkDrive\SAFE.NetworkDrive.csproj", "{1B399F5B-65F4-4739-82B6-365F9E675848}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SAFE.NetworkDrive.Gateways", "SAFE.NetworkDrive.Gateways\SAFE.NetworkDrive.Gateways.csproj", "{019906AF-3C67-4442-943B-C93DBD5FBF4A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SAFE.NetworkDrive.Tests", "SAFE.NetworkDrive.Tests\SAFE.NetworkDrive.Tests.csproj", "{82630EF7-E46E-43C0-932B-8F3AB761A631}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SAFE.NetworkDrive.Console", "SAFE.NetworkDrive.Console\SAFE.NetworkDrive.Console.csproj", "{E636FE1D-A3B6-4BBF-B440-325C780E2654}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SAFE.NetworkDrive.Mounter", "SAFE.NetworkDrive.Mounter\SAFE.NetworkDrive.Mounter.csproj", "{A6303701-4B98-47B6-8E0C-5BD7A037B2FF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,14 +21,6 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{349A5431-6237-4235-96FF-FF3865FB8B84}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{349A5431-6237-4235-96FF-FF3865FB8B84}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{349A5431-6237-4235-96FF-FF3865FB8B84}.Debug|x64.ActiveCfg = Debug|x64
-		{349A5431-6237-4235-96FF-FF3865FB8B84}.Debug|x64.Build.0 = Debug|x64
-		{349A5431-6237-4235-96FF-FF3865FB8B84}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{349A5431-6237-4235-96FF-FF3865FB8B84}.Release|Any CPU.Build.0 = Release|Any CPU
-		{349A5431-6237-4235-96FF-FF3865FB8B84}.Release|x64.ActiveCfg = Release|x64
-		{349A5431-6237-4235-96FF-FF3865FB8B84}.Release|x64.Build.0 = Release|x64
 		{1B399F5B-65F4-4739-82B6-365F9E675848}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1B399F5B-65F4-4739-82B6-365F9E675848}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1B399F5B-65F4-4739-82B6-365F9E675848}.Debug|x64.ActiveCfg = Debug|x64
@@ -51,6 +45,22 @@ Global
 		{82630EF7-E46E-43C0-932B-8F3AB761A631}.Release|Any CPU.Build.0 = Release|Any CPU
 		{82630EF7-E46E-43C0-932B-8F3AB761A631}.Release|x64.ActiveCfg = Release|x64
 		{82630EF7-E46E-43C0-932B-8F3AB761A631}.Release|x64.Build.0 = Release|x64
+		{E636FE1D-A3B6-4BBF-B440-325C780E2654}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E636FE1D-A3B6-4BBF-B440-325C780E2654}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E636FE1D-A3B6-4BBF-B440-325C780E2654}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E636FE1D-A3B6-4BBF-B440-325C780E2654}.Debug|x64.Build.0 = Debug|Any CPU
+		{E636FE1D-A3B6-4BBF-B440-325C780E2654}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E636FE1D-A3B6-4BBF-B440-325C780E2654}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E636FE1D-A3B6-4BBF-B440-325C780E2654}.Release|x64.ActiveCfg = Release|Any CPU
+		{E636FE1D-A3B6-4BBF-B440-325C780E2654}.Release|x64.Build.0 = Release|Any CPU
+		{A6303701-4B98-47B6-8E0C-5BD7A037B2FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A6303701-4B98-47B6-8E0C-5BD7A037B2FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A6303701-4B98-47B6-8E0C-5BD7A037B2FF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A6303701-4B98-47B6-8E0C-5BD7A037B2FF}.Debug|x64.Build.0 = Debug|Any CPU
+		{A6303701-4B98-47B6-8E0C-5BD7A037B2FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A6303701-4B98-47B6-8E0C-5BD7A037B2FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A6303701-4B98-47B6-8E0C-5BD7A037B2FF}.Release|x64.ActiveCfg = Release|Any CPU
+		{A6303701-4B98-47B6-8E0C-5BD7A037B2FF}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
