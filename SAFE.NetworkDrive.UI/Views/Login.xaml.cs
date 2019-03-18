@@ -8,6 +8,8 @@ namespace SAFE.NetworkDrive.UI
     /// </summary>
     public partial class Login : Window
     {
+        const int _minInputLength = 5;
+
         public string Username { get; private set; }
         public string Password { get; private set; }
 
@@ -18,11 +20,9 @@ namespace SAFE.NetworkDrive.UI
             txtUsername.Focus();
         }
 
-        private void BtnLogin_Click(object sender, RoutedEventArgs e)
+        void BtnLogin_Click(object sender, RoutedEventArgs e)
         {
-            if (3 > txtUsername.Text.Length)
-                return;
-            if (4 > pwdBoxPassword.Password.Length)
+            if (!ValidateInput())
                 return;
 
             Username = txtUsername.Text;
@@ -31,10 +31,26 @@ namespace SAFE.NetworkDrive.UI
             Close();
         }
 
-        private void PwdBoxPassword_KeyUp(object sender, KeyEventArgs e)
+        void PwdBoxPassword_KeyUp(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
                 BtnLogin_Click(sender, e);
+        }
+
+        bool ValidateInput()
+        {
+            if (_minInputLength > txtUsername.Text.Length)
+            {
+                MessageBox.Show($"Username must be at least {_minInputLength} chars.", "Invalid username", MessageBoxButton.OK, MessageBoxImage.Asterisk);
+                return false;
+            }
+            if (_minInputLength > pwdBoxPassword.Password.Length)
+            {
+                MessageBox.Show($"Password must be at least {_minInputLength} chars.", "Invalid password", MessageBoxButton.OK, MessageBoxImage.Asterisk);
+                return false;
+            }
+
+            return true;
         }
     }
 }
