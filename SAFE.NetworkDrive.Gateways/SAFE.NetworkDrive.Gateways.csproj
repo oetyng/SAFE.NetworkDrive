@@ -17,19 +17,9 @@
   <ItemGroup>
     <PackageReference Include="MaidSafe.SafeApp" Version="0.2.0" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
+    <PackageReference Include="SAFE.AppendOnlyDb" Version="0.1.0" />
+    <PackageReference Include="SAFE.AuthClient" Version="0.1.0" />
     <PackageReference Include="System.Interactive.Async" Version="4.0.0-preview.1.build.745" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="SAFE.AppendOnlyDb">
-      <HintPath>..\packages\SAFE.AppendOnlyDb\SAFE.AppendOnlyDb\x64\Debug\netcoreapp3.0\SAFE.AppendOnlyDb.dll</HintPath>
-    </Reference>
-    <Reference Include="SAFE.AuthClient">
-      <HintPath>..\packages\SAFE.AppendOnlyDb\SAFE.AuthClient\SAFE.AuthClient.dll</HintPath>
-    </Reference>
-    <Reference Include="SAFE.Data.Common">
-      <HintPath>..\packages\SAFE.AppendOnlyDb\SAFE.AppendOnlyDb\x64\Debug\netcoreapp3.0\SAFE.Data.Common.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
   <ItemGroup>
