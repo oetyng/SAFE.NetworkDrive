@@ -510,6 +510,21 @@ namespace SAFE.NetworkDrive
 
         public NtStatus SetEndOfFile(string fileName, long length, DokanFileInfo info)
         {
+            if (length < 0)
+                throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, "{0} must be non-negative", length), nameof(length));
+            if (info == null)
+                throw new ArgumentNullException(nameof(info));
+
+            var context = ((StreamContext)info.Context);
+
+            lock (context)
+            {
+                if (context.Stream == null)
+                    throw new ArgumentNullException(nameof(context.Stream));
+
+                context.Stream.SetLength(length);
+            }
+
             return AsDebug(nameof(SetEndOfFile), fileName, info, DokanResult.Success, length.ToString(CultureInfo.InvariantCulture));
         }
 
