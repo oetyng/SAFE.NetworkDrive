@@ -110,11 +110,13 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                             .Take(1)
                             .FirstOrDefault();
                         if (data == null && HighSpeed())
-                            SetDelay(_currentWorkDelay.Ticks * 2);
+                            SetDelay(1 + _currentWorkDelay.Ticks * 2);
                         else if (await _onDequeued(data))
                         {
                             data.Persisted = true;
                             db.RunTransaction(() => db.Save(data));
+                            if (_currentWorkDelay.Ticks > 0) // more than MIN_DELAY_SECONDS since last access
+                                SetDelay(_currentWorkDelay.Ticks / 2); // synch again in half previous wait time
                         }
                     }
                 }
@@ -162,8 +164,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                 _currentWorkDelay = _minWorkDelay; // reset delay time to MIN_DELAY_SECONDS
                 return true; // enqueueing is active
             }
-            if (_currentWorkDelay.Ticks > 0) // more than MIN_DELAY_SECONDS since last access
-                SetDelay(_currentWorkDelay.Ticks / 2); // synch again in half previous wait time
+            
             return false; // enqueueing is not active
         }
 
