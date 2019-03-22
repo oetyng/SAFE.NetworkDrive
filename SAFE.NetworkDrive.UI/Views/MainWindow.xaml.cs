@@ -15,7 +15,7 @@ namespace SAFE.NetworkDrive.UI
         readonly UserConfigHandler _userConfig;
         readonly BindingList<Drive> _drives = new BindingList<Drive>();
         readonly ApplicationManagement _app;
-        readonly Mounter.DriveMountManager _mounter;
+        readonly Mounter.DriveManager _mounter;
 
         public MainWindow(string username, string password)
         {
@@ -36,7 +36,7 @@ namespace SAFE.NetworkDrive.UI
 
             _userConfig = new UserConfigHandler(username, password);
             var user = _userConfig.CreateOrDecrypUserConfig();
-            _mounter = new Mounter.DriveMountManager(user, logger);
+            _mounter = new Mounter.DriveManager((c) => new DokanMounter(c), user, logger);
             user.Drives.ForEach(c => ShowDrive(c.Root[0]));
         }
 

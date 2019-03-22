@@ -27,12 +27,12 @@ namespace SAFE.NetworkDrive.Console
 
         public int Mount(UserConfig config)
         {
-            DriveMountManager mounter = default;
+            DriveManager mounter = default;
 
             try
             {
                 var logger = Utils.LogFactory.GetLogger("logger");
-                mounter = new DriveMountManager(config, logger);
+                mounter = new DriveManager((c) => new DokanMounter(c), config, logger);
 
                 mounter.MountAll();
 

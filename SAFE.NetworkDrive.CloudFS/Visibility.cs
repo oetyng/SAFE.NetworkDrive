@@ -2,5 +2,5 @@
 
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 [assembly: InternalsVisibleTo("SAFE.NetworkDrive")]
-[assembly: InternalsVisibleTo("SAFE.NetworkDrive.Mounter")]
+[assembly: InternalsVisibleTo("SAFE.NetworkDrive.Dokan.Mounter")]
 [assembly: InternalsVisibleTo("SAFE.NetworkDrive.Tests")]

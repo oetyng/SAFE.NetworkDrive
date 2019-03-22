@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SAFE.NetworkDrive.Mounter\SAFE.NetworkDrive.Mounter.csproj" />
+    <ProjectReference Include="..\SAFE.NetworkDrive.Dokan.Mounter\SAFE.NetworkDrive.Dokan.Mounter.csproj" />
   </ItemGroup>
   
   <ItemGroup>

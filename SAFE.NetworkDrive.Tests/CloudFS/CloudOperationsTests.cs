@@ -30,7 +30,6 @@ using DokanNet;
 using FileAccess = DokanNet.FileAccess;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using NLog;
 using SAFE.Filesystem.Interface.IO;
 using SAFE.NetworkDrive.Interface;
 
