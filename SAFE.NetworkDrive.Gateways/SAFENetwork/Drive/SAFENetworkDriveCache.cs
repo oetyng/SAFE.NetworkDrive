@@ -51,8 +51,15 @@ namespace SAFE.NetworkDrive.Gateways.Memory
 
                 _contentCache[source] = content;
             }
-            
-            return new System.IO.BufferedStream(new System.IO.MemoryStream(_contentCache[source]));
+
+            // If you create a MemoryStream over a pre-allocated byte array, 
+            // it can't expand (ie. get longer than the size you specified when you started).
+            // The key is to use the empty (no params) MemoryStream() ctor, which creates it as expandable.
+            var ms = new System.IO.MemoryStream();
+            var bytes = _contentCache[source];
+            ms.Write(bytes, 0, bytes.Length);
+            ms.Seek(0, System.IO.SeekOrigin.Begin);
+            return new System.IO.BufferedStream(ms);
         }
 
         public void SetContent(RootName root, FileId target, System.IO.Stream content, IProgress<ProgressValue> progress)
