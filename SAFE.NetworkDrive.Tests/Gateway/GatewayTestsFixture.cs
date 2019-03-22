@@ -96,9 +96,9 @@ namespace SAFE.NetworkDrive.Tests.Gateway
             {
                 switch (config.Schema)
                 {
-                    case "file":
-                        Gateways[config.Schema] = new Gateways.File.FileGateway();
-                        break;
+                    //case "file":
+                    //    Gateways[config.Schema] = new Gateways.File.FileGateway();
+                    //    break;
                     case "memory":
                         Gateways[config.Schema] = new Gateways.Memory.MemoryGateway();
                         break;
