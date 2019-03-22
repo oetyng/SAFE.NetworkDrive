@@ -13,7 +13,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SAFE.NetworkDrive.Gateways\SAFE.NetworkDrive.Gateways.csproj" />
-    <ProjectReference Include="..\SAFE.NetworkDrive.Windows\SAFE.NetworkDrive.Windows.csproj" />
   </ItemGroup>
 
 </Project>

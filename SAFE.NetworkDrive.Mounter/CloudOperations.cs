@@ -31,10 +31,6 @@ using FileAccess = DokanNet.FileAccess;
 using NLog;
 using SAFE.Filesystem.Interface.IO;
 using SAFE.NetworkDrive.IO;
-using System.Runtime.CompilerServices;
-
-[assembly: InternalsVisibleTo("SAFE.NetworkDrive.Mounter")]
-[assembly: InternalsVisibleTo("SAFE.NetworkDrive.Tests")]
 
 namespace SAFE.NetworkDrive
 {
