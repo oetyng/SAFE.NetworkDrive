@@ -25,9 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SAFE.NetworkDrive.Gateways\SAFE.NetworkDrive.Gateways.csproj" />
     <ProjectReference Include="..\SAFE.NetworkDrive.Mounter\SAFE.NetworkDrive.Mounter.csproj" />
-    <ProjectReference Include="..\SAFE.NetworkDrive\SAFE.NetworkDrive.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
     <LangVersion>8.0</LangVersion>
     <Platforms>x64</Platforms>
   </PropertyGroup>
@@ -11,8 +11,21 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DokanNet" Version="1.1.2.1" />
-    <PackageReference Include="NLog" Version="4.5.11" />
+    <ProjectReference Include="..\SAFE.NetworkDrive.CloudAbstraction\SAFE.NetworkDrive.CloudAbstraction.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MaidSafe.SafeApp" Version="0.2.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
+    <PackageReference Include="SAFE.AppendOnlyDb" Version="0.1.0-alpha.1" />
+    <PackageReference Include="SAFE.AuthClient" Version="0.1.0-alpha.1" />
+    <PackageReference Include="System.Interactive.Async" Version="4.0.0-preview.1.build.745" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Native\sqlite-dll-win64-x64-3270200\sqlite3.x64.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

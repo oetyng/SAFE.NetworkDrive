@@ -28,7 +28,6 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using DokanNet;
 using FileAccess = DokanNet.FileAccess;
-using NLog;
 using SAFE.Filesystem.Interface.IO;
 using SAFE.NetworkDrive.IO;
 

@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using DokanNet;
-using NLog;
 using SAFE.NetworkDrive.Mounter.Config;
 using SAFE.NetworkDrive.Parameters;
 

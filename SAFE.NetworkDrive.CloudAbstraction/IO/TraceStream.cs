@@ -23,7 +23,6 @@ using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using NLog;
 
 namespace SAFE.NetworkDrive.IO
 {
@@ -32,18 +31,13 @@ namespace SAFE.NetworkDrive.IO
     public class TraceStream : Stream
     {
         readonly string _name;
-
         readonly string _fileName;
-
         readonly Stream _baseStream;
+        readonly object _lockObject = new object();
 
         bool _disposed;
 
-        readonly object _lockObject = new object();
-
-#pragma warning disable CS3003
         public ILogger Logger { get; set; }
-#pragma warning restore CS3003
 
         public TraceStream(string name, string fileName, Stream baseStream)
         {
@@ -59,18 +53,18 @@ namespace SAFE.NetworkDrive.IO
             _baseStream = baseStream;
         }
 
-        private void Trace(string message)
+        void Trace(string message)
         {
             Logger.Trace($"[{Thread.CurrentThread.ManagedThreadId}] {_name}: '{_fileName}' {message}".ToString(CultureInfo.CurrentCulture));
         }
 
-        private T Trace<T>(string message, T result)
+        T Trace<T>(string message, T result)
         {
             Logger.Trace($"[{Thread.CurrentThread.ManagedThreadId}] {_name}: '{_fileName}' {message} => {result}".ToString(CultureInfo.CurrentCulture));
             return result;
         }
 
-        private void Trace<T>(T value, string message)
+        void Trace<T>(T value, string message)
         {
             Logger.Trace($"[{Thread.CurrentThread.ManagedThreadId}] {_name}: '{_fileName}' {message}={value}".ToString(CultureInfo.CurrentCulture));
         }
@@ -359,6 +353,6 @@ namespace SAFE.NetworkDrive.IO
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Debugger Display")]
         [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-        private string DebuggerDisplay => $"{nameof(TraceStream)}[{_baseStream.GetType().Name}]".ToString(CultureInfo.CurrentCulture);
+        string DebuggerDisplay => $"{nameof(TraceStream)}[{_baseStream.GetType().Name}]".ToString(CultureInfo.CurrentCulture);
     }
 }

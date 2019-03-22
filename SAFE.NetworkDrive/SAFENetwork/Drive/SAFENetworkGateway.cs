@@ -9,7 +9,6 @@ using SAFE.NetworkDrive.Interface;
 using SAFE.NetworkDrive.Interface.Composition;
 using SAFE.NetworkDrive.Interface.IO;
 using SAFE.NetworkDrive.Replication.Events;
-using NLog;
 
 namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 {

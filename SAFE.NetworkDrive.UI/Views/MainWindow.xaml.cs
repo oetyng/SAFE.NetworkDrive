@@ -31,8 +31,7 @@ namespace SAFE.NetworkDrive.UI
                 UnmountAll = UnmountAll
             };
 
-            var factory = new NLog.LogFactory();
-            var logger = factory.GetLogger("logger");
+            var logger = Utils.LogFactory.GetLogger("logger");
 
             _userConfig = new UserConfigHandler(username, password);
             var user = _userConfig.CreateOrDecrypUserConfig();
