@@ -3,10 +3,15 @@ using SAFE.NetworkDrive.Mounter.Config;
 using System;
 using static System.Console;
 
-namespace SAFE.NetworkDrive.Console
+namespace SAFE.NetworkDrive.ConsoleApp
 {
-    class ConsoleApp
+    public class ConsoleApp
     {
+        readonly Func<DriveConfig, IDriveMounter> _mounter;
+        
+        public ConsoleApp(Func<DriveConfig, IDriveMounter> mounter)
+            => _mounter = mounter;
+
         public UserConfig GetUserConfig()
         {
             var (user, pwd) = GetUserLogin();
@@ -32,7 +37,7 @@ namespace SAFE.NetworkDrive.Console
             try
             {
                 var logger = Utils.LogFactory.GetLogger("logger");
-                mounter = new DriveManager((c) => new DokanMounter(c), config, logger);
+                mounter = new DriveManager(_mounter, config, logger);
 
                 mounter.MountAll();
 

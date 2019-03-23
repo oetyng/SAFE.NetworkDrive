@@ -5,7 +5,7 @@ using System.Linq;
 using static System.Console;
 using SAFE.NetworkDrive.Mounter.Config;
 
-namespace SAFE.NetworkDrive.Console
+namespace SAFE.NetworkDrive.ConsoleApp
 {
     class DriveConfigReader : StringReader
     {

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
     <Platforms>x64</Platforms>
   </PropertyGroup>
 
@@ -11,6 +11,10 @@
 
   <ItemGroup>
     <PackageReference Include="Mono.Fuse.NETStandard" Version="1.0.0-pre2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SAFE.NetworkDrive.Mounter\SAFE.NetworkDrive.Mounter.csproj" />
   </ItemGroup>
 
 </Project>

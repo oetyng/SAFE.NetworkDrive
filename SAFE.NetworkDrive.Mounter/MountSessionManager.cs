@@ -53,7 +53,7 @@ namespace SAFE.NetworkDrive.Mounter
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"{ex.GetType().Name}: {ex.Message}");
+                _logger.Error($"{ex.GetType().Name}: {ex.Message}");
             }
             finally
             {
@@ -88,7 +88,7 @@ namespace SAFE.NetworkDrive.Mounter
 
             var runner = Task.Run(() => _mounter(_config).Mount(drive, _logger, cancellation));
 
-            var session = new MountSession(_config.Root[0], runner, (c) => _mounter(_config).Unmount(c), cancellation);
+            var session = new MountSession(_config.Root[0], runner, () => _mounter(_config).Unmount(), cancellation);
 
             var driveInfo = new DriveInfo(_config.Root);
             while (!driveInfo.IsReady)

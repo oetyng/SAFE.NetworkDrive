@@ -7,13 +7,13 @@ namespace SAFE.NetworkDrive.Mounter
     public class MountSession
     {
         readonly Task _runner;
-        readonly Action<char> _unmount;
+        readonly Action _unmount;
         readonly CancellationTokenSource _cancellation;
 
         public char DriveLetter { get; }
         public bool Mounted { get; private set; }
 
-        public MountSession(char driveLetter, Task runner, Action<char> unmount, CancellationTokenSource cancellation)
+        public MountSession(char driveLetter, Task runner, Action unmount, CancellationTokenSource cancellation)
         {
             DriveLetter = driveLetter;
             _runner = runner;
@@ -24,7 +24,7 @@ namespace SAFE.NetworkDrive.Mounter
         public void Unmount()
         {
             _cancellation.Cancel();
-            _unmount(DriveLetter);
+            _unmount();
             Mounted = false;
         }
     }

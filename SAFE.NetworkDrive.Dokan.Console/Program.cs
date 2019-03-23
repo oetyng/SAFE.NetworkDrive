@@ -1,7 +1,8 @@
 ﻿using System;
 using static System.Console;
+using App = SAFE.NetworkDrive.ConsoleApp.ConsoleApp;
 
-namespace SAFE.NetworkDrive.Console
+namespace SAFE.NetworkDrive.Dokan.Console
 {
     internal sealed class Program
     {
@@ -9,9 +10,9 @@ namespace SAFE.NetworkDrive.Console
         {
             try
             {
-                var console = new ConsoleApp();
-                var user = console.GetUserConfig();
-                console.Mount(user);
+                var app = new App((c) => new DokanMounter(c));
+                var user = app.GetUserConfig();
+                app.Mount(user);
             }
             catch(Exception ex)
             {

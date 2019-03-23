@@ -9,6 +9,7 @@ namespace SAFE.NetworkDrive.Mounter.Config
 {
     public class UserConfigHandler
     {
+        readonly string DIR_PATH = $"..{Path.DirectorySeparatorChar}sndc";
         readonly string _username;
         readonly string _password;
 
@@ -21,14 +22,13 @@ namespace SAFE.NetworkDrive.Mounter.Config
         public UserConfig CreateOrDecrypUserConfig()
         {
             var userFolder = Scrambler.Obfuscate(_username, _password);
-            var dirPath = "../sndc";
-            var filePath = $"{dirPath}/{userFolder}".ToLowerInvariant();
+            var filePath = $"{DIR_PATH}{Path.DirectorySeparatorChar}{userFolder}".ToLowerInvariant();
             if (!File.Exists(filePath))
             {
                 var config = CreateUserConfig();
                 var bytes = BytesCrypto.Encrypt(_password, JsonConvert.SerializeObject(config));
-                if (!Directory.Exists(dirPath))
-                    Directory.CreateDirectory(dirPath);
+                if (!Directory.Exists(DIR_PATH))
+                    Directory.CreateDirectory(DIR_PATH);
                 File.WriteAllBytes(filePath, bytes);
                 return config;
             }
@@ -40,8 +40,7 @@ namespace SAFE.NetworkDrive.Mounter.Config
         public bool DeleteUser()
         {
             var userFolder = Scrambler.Obfuscate(_username, _password);
-            var dirPath = "../sndc";
-            var filePath = $"{dirPath}/{userFolder}".ToLowerInvariant();
+            var filePath = $"{DIR_PATH}{Path.DirectorySeparatorChar}{userFolder}".ToLowerInvariant();
             if (!File.Exists(filePath))
                 return false;
             File.Delete(filePath);
@@ -111,8 +110,7 @@ namespace SAFE.NetworkDrive.Mounter.Config
         {
             var bytes = BytesCrypto.Encrypt(_password, JsonConvert.SerializeObject(user));
             var userFolder = Scrambler.Obfuscate(user.Username, _password);
-            var dirPath = "../sndc";
-            var filePath = $"{dirPath}/{userFolder}".ToLowerInvariant();
+            var filePath = $"{DIR_PATH}{Path.DirectorySeparatorChar}{userFolder}".ToLowerInvariant();
             File.WriteAllBytes(filePath, bytes);
         }
     }

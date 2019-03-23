@@ -30,7 +30,7 @@ namespace SAFE.NetworkDrive
             return runner;
         }
 
-        public bool Unmount(char driveLetter)
-            => Dokan.Unmount(driveLetter);
+        public bool Unmount()
+            => Dokan.Unmount(_config.Root[0]);
     }
 }

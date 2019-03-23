@@ -1,7 +1,7 @@
 ﻿using System;
 using static System.Console;
 
-namespace SAFE.NetworkDrive.Console
+namespace SAFE.NetworkDrive.ConsoleApp
 {
     public abstract class StringReader
     {

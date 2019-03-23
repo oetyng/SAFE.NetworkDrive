@@ -1,5 +1,5 @@
 ﻿
-namespace SAFE.NetworkDrive.Console
+namespace SAFE.NetworkDrive.ConsoleApp
 {
     public class UserReader : StringReader
     {
