@@ -25,6 +25,7 @@ namespace SAFE.NetworkDrive.UI
             this.Closing += new CancelEventHandler(MainWindow_Closing);
             _app = new ApplicationManagement
             {
+                Explore = Explore,
                 Exit = () => Application.Current.Shutdown(-1),
                 OpenDriveSettings = Show,
                 ToggleMount = ToggleMountDrive,
@@ -167,6 +168,24 @@ namespace SAFE.NetworkDrive.UI
                 BtnUnmountAll.IsEnabled = true;
             else
                 BtnUnmountAll.IsEnabled = false;
+        }
+
+        void LstViewDrives_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (LstViewDrives.SelectedItem == null)
+                return;
+            var drive = LstViewDrives.SelectedItem as Drive;
+            if (!drive.Mounted)
+                return;
+            Explore(drive.Letter);
+        }
+
+        void Explore(char driveLetter)
+        {
+            // See http://support.microsoft.com/kb/152457 for a list of command-line args
+            // that are supported by Windows Explorer.
+            var explorerArgs = $"/e,{driveLetter}:\\";
+            System.Diagnostics.Process.Start("explorer.exe", explorerArgs);
         }
     }
 

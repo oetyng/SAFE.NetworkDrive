@@ -58,13 +58,7 @@ namespace SAFE.NetworkDrive.UI
             => _app.ToggleMount(_driveLetter);
 
         void OnStartExplorer(object sender, EventArgs e)
-        {
-            // See http://support.microsoft.com/kb/152457 for a list of command-line args
-            // that are supported by Windows Explorer.
-
-            var explorerArgs = $"/e,{_driveLetter}:\\";
-            System.Diagnostics.Process.Start("explorer.exe", explorerArgs);
-        }
+            => _app.Explore(_driveLetter);
 
         void OnExit(object sender, EventArgs e)
         {

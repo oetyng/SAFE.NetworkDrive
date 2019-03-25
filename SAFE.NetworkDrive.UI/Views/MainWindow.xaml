@@ -21,7 +21,7 @@
             <Button Name="BtnMountDrive" IsEnabled="False" Content="Mount drive" Click="BtnToggleMountDrive_Click" HorizontalAlignment="Left" Margin="10,80,0,0" VerticalAlignment="Top" Width="88" Height="30" RenderTransformOrigin="-0.386,-0.536" Grid.Column="1"/>
             <Button Name="BtnDeleteUser" Content="Delete user" Click="BtnDeleteUser_Click" HorizontalAlignment="Left" Margin="10,135,0,0" VerticalAlignment="Top" Width="88" Height="30" RenderTransformOrigin="-0.386,-0.536" Grid.Column="1"/>
             <Button Name="BtnUnmountAll" IsEnabled="False" Content="Unmount all" Click="BtnUnmountAll_Click" HorizontalAlignment="Left" Margin="10,183,0,0" VerticalAlignment="Top" Width="88" Height="30" RenderTransformOrigin="-0.386,-0.536" Grid.Column="1"/>
-            <ListView Name="LstViewDrives" SelectionMode="Single" HorizontalAlignment="Left" Height="213" Margin="10,10,0,0" VerticalAlignment="Top" Width="287" SelectionChanged="LstViewDrives_SelectionChanged">
+            <ListView Name="LstViewDrives" SelectionMode="Single" HorizontalAlignment="Left" Height="213" Margin="10,10,0,0" VerticalAlignment="Top" Width="287" SelectionChanged="LstViewDrives_SelectionChanged" MouseDoubleClick="LstViewDrives_MouseDoubleClick">
                 <ListView.View>
                     <GridView>
                         <GridViewColumn  Header="Drive" Width="70" DisplayMemberBinding="{Binding Letter}"/>
