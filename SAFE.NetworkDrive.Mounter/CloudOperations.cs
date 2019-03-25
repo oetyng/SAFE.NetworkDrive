@@ -517,10 +517,11 @@ namespace SAFE.NetworkDrive
 
             var context = ((StreamContext)info.Context);
 
+            if (context.Stream == null) // is this a valid situation? Null case happened when copying large amount of data to the drive. It worked to use the data though.
+                return AsDebug(nameof(SetEndOfFile), fileName, info, DokanResult.Success, length.ToString(CultureInfo.InvariantCulture));
+
             lock (context)
             {
-                if (context.Stream == null)
-                    throw new ArgumentNullException(nameof(context.Stream));
 
                 context.Stream.SetLength(length);
             }
