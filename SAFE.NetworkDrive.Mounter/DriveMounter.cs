@@ -32,6 +32,12 @@ namespace SAFE.NetworkDrive.Mounter
                 throw new InvalidOperationException($"Drive already exists: {drive.Root}");
         }
 
+        public void RemoveDrive(char driveLetter)
+        {
+            Unmount(driveLetter);
+            _drives.TryRemove(driveLetter, out _);
+        }
+
         public void MountAll()
         {
             foreach (var drive in _drives.Values)

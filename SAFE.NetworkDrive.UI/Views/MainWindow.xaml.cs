@@ -88,7 +88,7 @@ namespace SAFE.NetworkDrive.UI
                 var drive = _drives.Single(c => c.Letter == (LstViewDrives.SelectedItem as Drive).Letter);
                 _drives.Remove(drive);
                 drive.NotifyIcon.RemoveMenuItem();
-                if (drive.Mounted) _mounter.Unmount(drive.Letter);
+                _mounter.RemoveDrive(drive.Letter);
                 _userConfig.RemoveDrive(drive.Letter);
             }
         }
