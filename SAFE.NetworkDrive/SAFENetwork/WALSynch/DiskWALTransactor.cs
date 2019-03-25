@@ -100,7 +100,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
             {
                 try
                 {
-                    if (await EnqueueingIsActive())
+                    if (await EnqueueingIsActive(cancellation))
                         continue;
                     using (var db = new SqlNado.SQLiteDatabase($"{_dbName}.db"))
                     {
@@ -119,6 +119,9 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                                 SetDelay(_currentWorkDelay.Ticks / 2); // synch again in half previous wait time
                         }
                     }
+
+                    try { await Task.Delay(_currentWorkDelay, cancellation); }
+                    catch (TaskCanceledException) { break; }
                 }
                 catch
                 {
@@ -155,10 +158,8 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 
         // Only start synching if enqueueing has been inactive for MIN_DELAY_SECONDS
         // Then synch faster and faster, dividing wait time by two for every time.
-        async Task<bool> EnqueueingIsActive()
+        async Task<bool> EnqueueingIsActive(CancellationToken cancellation)
         {
-            await Task.Delay(_currentWorkDelay);
-
             if (_minWorkDelay > _sw.Elapsed) // less than MIN_DELAY_SECONDS since last access
             {
                 _currentWorkDelay = _minWorkDelay; // reset delay time to MIN_DELAY_SECONDS

@@ -176,7 +176,12 @@ namespace SAFE.NetworkDrive.UI
                 return;
             var drive = LstViewDrives.SelectedItem as Drive;
             if (!drive.Mounted)
-                return;
+            {
+                ToggleMountDrive(drive.Letter);
+                var driveInfo = new System.IO.DriveInfo(drive.Letter.ToString());
+                while (!driveInfo.IsReady)
+                    System.Threading.Thread.Sleep(10);
+            }
             Explore(drive.Letter);
         }
 
