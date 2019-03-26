@@ -23,10 +23,11 @@ namespace SAFE.NetworkDrive.Mounter
             _drives = new ConcurrentDictionary<char, MountSessionManager>(mounters);
         }
 
-        public void AddDrive(DriveConfig drive)
+        public bool AddDrive(DriveConfig drive)
         {
             if (!_drives.TryAdd(drive.Root[0], new MountSessionManager(_mounter, _user.Username, drive, _logger)))
-                throw new InvalidOperationException($"Drive already exists: {drive.Root}");
+                return false;
+            return true;
         }
 
         public void RemoveDrive(char driveLetter)

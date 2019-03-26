@@ -71,9 +71,14 @@ namespace SAFE.NetworkDrive.UI
                 // store to config
                 _userConfig.AddDrive(config);
                 // add mounter
-                _mounter.AddDrive(config);
+                if (!_mounter.AddDrive(config))
+                {
+                    MessageBox.Show("Drive letter already exists. Choose another letter.", "Error", MessageBoxButton.OK);
+                    return;
+                }
 
                 ShowDrive(driveLetter);
+                ToggleMountDrive(driveLetter);
             }
             else
                 MessageBox.Show("Unable to load data.", "Error", MessageBoxButton.OK);

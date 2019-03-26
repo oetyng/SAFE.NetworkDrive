@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using SAFE.NetworkDrive.Mounter.Config;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
 
@@ -20,7 +21,7 @@ namespace SAFE.NetworkDrive.UI
         {
             InitializeComponent();
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
-            _availableLetters = new BindingList<char>(DriveLetterUtility.GetAvailableDriveLetters());
+            _availableLetters = new BindingList<char>(DriveLetterUtil.GetAvailableDriveLetters());
             CmbDriveLetters.ItemsSource = _availableLetters;
             CmbDriveLetters.SelectedIndex = 0;
         }

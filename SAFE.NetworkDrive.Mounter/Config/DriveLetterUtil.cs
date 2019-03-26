@@ -25,9 +25,12 @@ namespace SAFE.NetworkDrive.Mounter.Config
                 allDrives += c.ToString();
 
             // these are the ones that are available;
-            var availableDriveLetters = allDrives.Except(usedDriveLetters);
+            var availableDriveLetters = allDrives
+                .Except(usedDriveLetters)
+                .Reverse()
+                .ToList();
 
-            if (availableDriveLetters.Count() == 0)
+            if (availableDriveLetters.Count == 0)
                 throw new DriveNotFoundException("No drives available!");
 
             return availableDriveLetters.First();
@@ -50,6 +53,7 @@ namespace SAFE.NetworkDrive.Mounter.Config
             // these are the ones that are available;
             var availableDriveLetters = allDrives
                 .Except(usedDriveLetters)
+                .Reverse()
                 .ToList();
 
             if (availableDriveLetters.Count == 0)
