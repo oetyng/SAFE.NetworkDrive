@@ -26,9 +26,9 @@ namespace SAFE.NetworkDrive
 {
     internal sealed class CloudDriveFactory
     {
-        internal ICloudDrive CreateCloudDrive(string schema, string userName, string root, string volumeId, CloudDriveParameters parameters)
+        internal ICloudDrive CreateCloudDrive(string schema, string volumeId, string root, CloudDriveParameters parameters)
         {
-            var rootName = new RootName(schema, userName, root, volumeId);
+            var rootName = new RootName(schema, volumeId, root);
             var asyncGateway = new SAFENetworkGateway(
                 parameters.EncryptionKey, 
                 parameters.Cancellation);

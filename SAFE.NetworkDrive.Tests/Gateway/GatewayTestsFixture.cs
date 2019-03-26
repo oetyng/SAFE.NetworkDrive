@@ -112,7 +112,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
             if (config == null)
                 throw new ArgumentNullException(nameof(config));
 
-            return new RootName(config.Schema, config.UserName, config.Mount, "config.VolumeId");
+            return new RootName(config.Schema, config.VolumeId, config.Mount);
         }
 
         public IDictionary<string, string> GetParameters(GatewaySection config)

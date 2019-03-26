@@ -19,13 +19,13 @@ namespace SAFE.NetworkDrive.Mounter
             _mounter = mounter;
             var mounters = _user.Drives
                     .ToDictionary(c => c.Root[0],
-                        c => new MountSessionManager(mounter, _user.Username, c, _logger));
+                        c => new MountSessionManager(mounter, c, _logger));
             _drives = new ConcurrentDictionary<char, MountSessionManager>(mounters);
         }
 
         public bool AddDrive(DriveConfig drive)
         {
-            if (!_drives.TryAdd(drive.Root[0], new MountSessionManager(_mounter, _user.Username, drive, _logger)))
+            if (!_drives.TryAdd(drive.Root[0], new MountSessionManager(_mounter, drive, _logger)))
                 return false;
             return true;
         }

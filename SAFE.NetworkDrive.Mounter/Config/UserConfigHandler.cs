@@ -11,15 +11,14 @@ namespace SAFE.NetworkDrive.Mounter.Config
     public class UserConfigHandler
     {
         readonly string DIR_PATH = $"..{Path.DirectorySeparatorChar}sndc";
-        readonly string _username;
         readonly string _password;
         readonly string _filePath;
 
         public UserConfigHandler(string password)
         {
             _password = password;
-            _username = Scrambler.Obfuscate(_password, _password);
-            _filePath = $"{DIR_PATH}{Path.DirectorySeparatorChar}{_username}".ToLowerInvariant();
+            var username = Scrambler.Obfuscate(_password, _password);
+            _filePath = $"{DIR_PATH}{Path.DirectorySeparatorChar}{username}".ToLowerInvariant();
         }
 
         public UserConfig CreateOrDecrypUserConfig()
@@ -50,7 +49,6 @@ namespace SAFE.NetworkDrive.Mounter.Config
         {
             var config = new UserConfig
             {
-                Username = _username,
                 Drives = new List<DriveConfig>()
             };
 
@@ -59,7 +57,7 @@ namespace SAFE.NetworkDrive.Mounter.Config
 
         public DriveConfig CreateDriveConfig(char driveLetter)
         {
-            var volumeId = Guid.NewGuid().ToString("D");
+            var volumeId = Guid.NewGuid().ToString("N");
             var locator = GetLocator(driveLetter);
             var secret = GetSecret(locator);
             var dirPath = Path.DirectorySeparatorChar.ToString();

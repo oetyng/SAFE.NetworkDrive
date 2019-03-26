@@ -45,14 +45,13 @@ namespace SAFE.NetworkDrive.Tests
         {
             public const string MOUNT_POINT = "Z";
             public const string SCHEMA = "mock";
-            public const string USER_NAME = "oetyng";
             public const string VOLUME_ID = "VOLUME_ID";
             public const long FREE_SPACE = 64 * 1 << 20;
             public const long USED_SPACE = 36 * 1 << 20;
 
             readonly Mock<IAsyncCloudGateway> _gateway;
             readonly RootDirectoryInfoContract _root;
-            readonly RootName _rootName = new RootName(SCHEMA, USER_NAME, MOUNT_POINT, VOLUME_ID);
+            readonly RootName _rootName = new RootName(SCHEMA, VOLUME_ID, MOUNT_POINT);
 
             public IAsyncCloudGateway Gateway => _gateway.Object;
             public readonly DirectoryInfoContract TargetDirectory = new DirectoryInfoContract(@"\SubDir", "SubDir", "2015-01-01 10:11:12".ToDateTime(), "2015-01-01 20:21:22".ToDateTime());
@@ -76,7 +75,7 @@ namespace SAFE.NetworkDrive.Tests
             }
 
             public AsyncCloudDrive Create(string apiKey, string encryptionKey)
-                => new AsyncCloudDrive(new RootName(SCHEMA, USER_NAME, MOUNT_POINT, VOLUME_ID), 
+                => new AsyncCloudDrive(new RootName(SCHEMA, VOLUME_ID, MOUNT_POINT), 
                         _gateway.Object, 
                         new CloudDriveParameters() { ApiKey = apiKey, EncryptionKey = encryptionKey });
 

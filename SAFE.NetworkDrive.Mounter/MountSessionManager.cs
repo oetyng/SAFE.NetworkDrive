@@ -10,17 +10,15 @@ namespace SAFE.NetworkDrive.Mounter
     public class MountSessionManager
     {
         readonly Func<DriveConfig, IDriveMounter> _mounter;
-        readonly string _username;
         readonly DriveConfig _config;
         readonly ILogger _logger;
         MountSession _session;
 
         public bool Mounted => _session != null && _session.Mounted;
 
-        public MountSessionManager(Func<DriveConfig, IDriveMounter> mounter, string username, DriveConfig driveConfig, ILogger logger)
+        public MountSessionManager(Func<DriveConfig, IDriveMounter> mounter, DriveConfig driveConfig, ILogger logger)
         {
             _mounter = mounter;
-            _username = username;
             _config = driveConfig;
             _logger = logger;
         }
@@ -67,9 +65,8 @@ namespace SAFE.NetworkDrive.Mounter
             var factory = new CloudDriveFactory();
             var drive = factory.CreateCloudDrive(
                 _config.Schema,
-                _username,
-                _config.Root,
                 _config.VolumeId,
+                _config.Root,
                 new CloudDriveParameters()
                 {
                     ApiKey = _config.Locator,

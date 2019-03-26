@@ -288,7 +288,6 @@ namespace SAFE.NetworkDrive.Tests
             public const string MOUNT_POINT = "Z:";
             public const string VOLUME_LABEL = "SAFENetwork";
             public const string SCHEMA = "mock";
-            public const string USER_NAME = "oetyng";
             public const string VOLUME_ID = "VOLUME_ID";
 
             const long _freeSpace = 64 * 1 << 20;
@@ -392,7 +391,7 @@ namespace SAFE.NetworkDrive.Tests
             {
                 var verifies = _drive
                     .SetupGet(d => d.DisplayRoot)
-                    .Returns(root ?? (new RootName(SCHEMA, USER_NAME, MOUNT_POINT, VOLUME_ID)).Value);
+                    .Returns(root ?? (new RootName(SCHEMA, VOLUME_ID, MOUNT_POINT)).Value);
 
                 if (!string.IsNullOrEmpty(root))
                     verifies.Verifiable();

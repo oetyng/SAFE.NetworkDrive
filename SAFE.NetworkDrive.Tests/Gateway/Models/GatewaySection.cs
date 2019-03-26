@@ -17,7 +17,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway.Config
         
         public GatewayType Type { get; set; }
 
-        public string UserName { get; set; }
+        public string VolumeId { get; set; }
 
         [Required]
         public string Mount { get; set; }
@@ -34,6 +34,6 @@ namespace SAFE.NetworkDrive.Tests.Gateway.Config
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Debugger Display")]
         [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-        string DebuggerDisplay() => $"{nameof(GatewaySection)} schema='{Schema}', userName='{UserName}', mount='{Mount}', apiKey='{ApiKey}', parameters=[{Parameters?.Length ?? 0}], exclusions='{Exclusions}', testDirectory='{TestDirectory}'".ToString(CultureInfo.CurrentCulture);
+        string DebuggerDisplay() => $"{nameof(GatewaySection)} schema='{Schema}', userName='{VolumeId}', mount='{Mount}', apiKey='{ApiKey}', parameters=[{Parameters?.Length ?? 0}], exclusions='{Exclusions}', testDirectory='{TestDirectory}'".ToString(CultureInfo.CurrentCulture);
     }
 }

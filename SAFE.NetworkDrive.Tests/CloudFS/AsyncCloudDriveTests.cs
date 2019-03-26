@@ -116,7 +116,7 @@ namespace SAFE.NetworkDrive.Tests
             using (var sut = _fixture.Create(_apiKey, _encryptionKey)) {
                 var result = sut.GetRoot();
 
-                Assert.AreEqual($"{Fixture.SCHEMA}@{Fixture.USER_NAME}|{Fixture.MOUNT_POINT}{Path.VolumeSeparatorChar}{Path.DirectorySeparatorChar}".ToString(CultureInfo.CurrentCulture), result.FullName, "Unexpected root name");
+                Assert.AreEqual($"{Fixture.SCHEMA}@{Fixture.VOLUME_ID}|{Fixture.MOUNT_POINT}{Path.VolumeSeparatorChar}{Path.DirectorySeparatorChar}".ToString(CultureInfo.CurrentCulture), result.FullName, "Unexpected root name");
             }
         }
 
@@ -129,7 +129,7 @@ namespace SAFE.NetworkDrive.Tests
             using (var sut = _fixture.Create(_apiKey, _encryptionKey)) {
                 var result = sut.DisplayRoot;
 
-                Assert.AreEqual($"{Fixture.SCHEMA}@{Fixture.USER_NAME}|{Fixture.MOUNT_POINT}".ToString(CultureInfo.CurrentCulture), result, "Unexpected DisplayRoot value");
+                Assert.AreEqual($"{Fixture.SCHEMA}@{Fixture.VOLUME_ID}|{Fixture.MOUNT_POINT}".ToString(CultureInfo.CurrentCulture), result, "Unexpected DisplayRoot value");
             }
         }
 

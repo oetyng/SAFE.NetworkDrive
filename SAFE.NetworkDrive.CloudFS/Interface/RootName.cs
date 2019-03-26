@@ -34,8 +34,10 @@ namespace SAFE.NetworkDrive.Interface
     [System.Diagnostics.DebuggerDisplay("{DebuggerDisplay(),nq}")]
     public sealed class RootName : SemanticType<string>
     {
-        const string rootNamePattern = @"^(?<Schema>[a-z][_a-z0-9]*)(@(?<UserName>[_a-zA-Z0-9]+))?(\|(?<Root>.+))?$";
+        const string rootNamePattern = @"^(?<Schema>[a-z][_a-z0-9]*)(@(?<VolumeId>[a-f0-9]{8}([a-f0-9]{4}){3}[a-f0-9]{12}))?(\|(?<Root>.+))?$";
         static readonly Regex validationRegex = new Regex(rootNamePattern, RegexOptions.Compiled);
+
+        //  @"([a-f0-9]{8}([a-f0-9]{4}){3}[a-f0-9]{12})$"
 
         /// <summary>
         /// Gets the schema of cloud service providing the storage space.
@@ -43,11 +45,11 @@ namespace SAFE.NetworkDrive.Interface
         /// <value>The schema.</value>
         public string Schema { get; }
 
-        /// <summary>
-        /// Gets the user name of the the storage account.
-        /// </summary>
-        /// <value>The user name.</value>
-        public string UserName { get; }
+        ///// <summary>
+        ///// Gets the user name of the the storage account.
+        ///// </summary>
+        ///// <value>The user name.</value>
+        //public string UserName { get; }
 
         /// <summary>
         /// Gets the root volume for the mounted cloud file system.
@@ -65,14 +67,13 @@ namespace SAFE.NetworkDrive.Interface
         /// Initializes a new instance of the <see cref="RootName"/> class from a formatted string.
         /// </summary>
         /// <param name="name">The formatted root name.</param>
-        public RootName(string name, string volumeId)
+        public RootName(string name)
             : base(validationRegex.IsMatch, name)
         {
             var groups = validationRegex.Match(name).Groups;
             Schema = groups[nameof(Schema)].Value;
-            UserName = groups[nameof(UserName)].Value;
+            VolumeId = groups[nameof(VolumeId)].Value;
             Root = groups[nameof(Root)].Value;
-            VolumeId = volumeId;
         }
 
         /// <summary>
@@ -81,17 +82,17 @@ namespace SAFE.NetworkDrive.Interface
         /// <param name="schema">The cloud service schema.</param>
         /// <param name="userName">The user name.</param>
         /// <param name="root">The root volume.</param>
-        public RootName(string schema, string userName, string root, string volumeId) 
-            : this(Format(schema, userName, root), volumeId)
+        public RootName(string schema, string volumeId, string root) 
+            : this(Format(schema, volumeId, root))
         { }
 
-        static string Format(string schema, string userName, string root)
+        static string Format(string schema, string volumeId, string root)
         {
             var builder = new StringBuilder(schema);
-            if (!string.IsNullOrEmpty(userName))
+            if (!string.IsNullOrEmpty(volumeId))
             {
                 builder.Append("@");
-                builder.Append(userName);
+                builder.Append(volumeId);
             }
             if (!string.IsNullOrEmpty(root) && root != Path.DirectorySeparatorChar.ToString())
             {
@@ -103,6 +104,6 @@ namespace SAFE.NetworkDrive.Interface
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Used for DebuggerDisplay")]
         [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-        string DebuggerDisplay() => $"{nameof(RootName)} {Format(Schema, UserName, Root)}".ToString(CultureInfo.CurrentCulture);
+        string DebuggerDisplay() => $"{nameof(RootName)} {Format(Schema, VolumeId, Root)}".ToString(CultureInfo.CurrentCulture);
     }
 }
