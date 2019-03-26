@@ -69,6 +69,7 @@ namespace SAFE.NetworkDrive.Mounter
                 _config.Schema,
                 _username,
                 _config.Root,
+                _config.VolumeId,
                 new CloudDriveParameters()
                 {
                     ApiKey = _config.Locator,

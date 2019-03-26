@@ -13,6 +13,9 @@ namespace SAFE.NetworkDrive.Mounter.Config
         public string Root { get; set; }
 
         [Required]
+        public string VolumeId { get; set; }
+
+        [Required]
         public string Locator { get; set; }
 
         [Required]

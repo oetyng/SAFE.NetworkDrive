@@ -54,7 +54,7 @@ namespace SAFE.NetworkDrive.Tests
                 }
             }
 
-            static FakeCloudDrive CreateCloudDrive() => new FakeCloudDrive(new RootName("fake", "FakeUser", "FakeRoot"), null);
+            static FakeCloudDrive CreateCloudDrive() => new FakeCloudDrive(new RootName("fake", "FakeUser", "FakeRoot", "FakeVolumeId"), null);
 
             public static void ExecuteInSemaphore(Action action, string methodName)
             {

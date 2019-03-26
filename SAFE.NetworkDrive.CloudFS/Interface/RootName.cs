@@ -18,6 +18,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+using System;
 using System.Globalization;
 using System.IO;
 using System.Text;
@@ -31,13 +32,10 @@ namespace SAFE.NetworkDrive.Interface
     /// </summary>
     /// <seealso cref="SemanticType{string}" />
     [System.Diagnostics.DebuggerDisplay("{DebuggerDisplay(),nq}")]
-//#pragma warning disable CS3009 // Base type is not CLS-compliant
     public sealed class RootName : SemanticType<string>
-//#pragma warning restore CS3009 // Base type is not CLS-compliant
     {
-        private const string rootNamePattern = @"^(?<Schema>[a-z][_a-z0-9]*)(@(?<UserName>[_a-zA-Z0-9]+))?(\|(?<Root>.+))?$";
-
-        private static readonly Regex validationRegex = new Regex(rootNamePattern, RegexOptions.Compiled);
+        const string rootNamePattern = @"^(?<Schema>[a-z][_a-z0-9]*)(@(?<UserName>[_a-zA-Z0-9]+))?(\|(?<Root>.+))?$";
+        static readonly Regex validationRegex = new Regex(rootNamePattern, RegexOptions.Compiled);
 
         /// <summary>
         /// Gets the schema of cloud service providing the storage space.
@@ -58,16 +56,23 @@ namespace SAFE.NetworkDrive.Interface
         public string Root { get; }
 
         /// <summary>
+        /// Gets the volume ID for the cloud file system.
+        /// </summary>
+        /// <value>The volume ID.</value>
+        public string VolumeId { get; }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="RootName"/> class from a formatted string.
         /// </summary>
         /// <param name="name">The formatted root name.</param>
-        public RootName(string name) 
+        public RootName(string name, string volumeId)
             : base(validationRegex.IsMatch, name)
         {
             var groups = validationRegex.Match(name).Groups;
             Schema = groups[nameof(Schema)].Value;
             UserName = groups[nameof(UserName)].Value;
             Root = groups[nameof(Root)].Value;
+            VolumeId = volumeId;
         }
 
         /// <summary>
@@ -76,8 +81,8 @@ namespace SAFE.NetworkDrive.Interface
         /// <param name="schema">The cloud service schema.</param>
         /// <param name="userName">The user name.</param>
         /// <param name="root">The root volume.</param>
-        public RootName(string schema, string userName, string root) 
-            : this(Format(schema, userName, root))
+        public RootName(string schema, string userName, string root, string volumeId) 
+            : this(Format(schema, userName, root), volumeId)
         { }
 
         static string Format(string schema, string userName, string root)

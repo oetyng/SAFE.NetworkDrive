@@ -26,9 +26,9 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         public static async Task<(IStreamAD, IImDStore)> GetDriveDbsAsync(RootName root, string apiKey, string secretKey)
         {
             var client = await _factory.GetMockNetworkClient(new Credentials(apiKey, secretKey), inMem: false);
-            var db = await client.GetOrAddDbAsync<IStreamDb>(root.Value);
+            var db = await client.GetOrAddDbAsync<IStreamDb>(root.VolumeId);
             var store = client.GetImDStore();
-            var stream = await db.GetOrAddStreamAsync(root.Root);
+            var stream = await db.GetOrAddStreamAsync(root.VolumeId);
             return (stream.Value, store);
         }
     }

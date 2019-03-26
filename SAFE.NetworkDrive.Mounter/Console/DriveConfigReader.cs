@@ -48,7 +48,7 @@ namespace SAFE.NetworkDrive.ConsoleApp
                 Locator = locator,
                 Secret = secret,
                 Root = driveLetter,
-                Schema = "safenetwork",
+                Schema = "safenetworkdrive_v1",
                 Parameters = $"root={dirPath}"
             };
         }

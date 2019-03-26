@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using SAFE.NetworkDrive.Encryption;
 using SAFE.NetworkDrive.Gateways.Utils;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -58,6 +59,7 @@ namespace SAFE.NetworkDrive.Mounter.Config
 
         public DriveConfig CreateDriveConfig(char driveLetter)
         {
+            var volumeId = Guid.NewGuid().ToString("D");
             var locator = GetLocator(driveLetter);
             var secret = GetSecret(locator);
             var dirPath = Path.DirectorySeparatorChar.ToString();
@@ -66,7 +68,8 @@ namespace SAFE.NetworkDrive.Mounter.Config
                 Locator = locator,
                 Secret = secret,
                 Root = driveLetter.ToString(),
-                Schema = "safenetwork",
+                VolumeId = volumeId,
+                Schema = "safenetworkdrive_v1",
                 Parameters = $"root={dirPath}"
             };
         }

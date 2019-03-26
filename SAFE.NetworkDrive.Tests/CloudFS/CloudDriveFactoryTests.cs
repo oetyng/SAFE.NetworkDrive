@@ -35,6 +35,7 @@ namespace SAFE.NetworkDrive.Tests
         const string _schema = "test";
         const string _user = "testUser";
         const string _root = "Z";
+        const string _volumeId = "volumeId";
 
         Fixture _fixture;
 
@@ -49,7 +50,7 @@ namespace SAFE.NetworkDrive.Tests
         public void CreateCloudDrive_WhereGatewayManagerIsNotInitialized_Throws()
         {
             var sut = new CloudDriveFactory();
-            sut.CreateCloudDrive(_schema, _user, _root, null);
+            sut.CreateCloudDrive(_schema, _user, _root, _volumeId, null);
         }
 
         [TestMethod, TestCategory(nameof(TestCategories.Offline))]
@@ -60,7 +61,7 @@ namespace SAFE.NetworkDrive.Tests
             _fixture.SetupTryGetCloudGatewayForSchema(_schema, false);
             var sut = new CloudDriveFactory();// { GatewayManager = _fixture.GetGatewayManager() };
 
-            sut.CreateCloudDrive(_schema, _user, _root, new CloudDriveParameters());
+            sut.CreateCloudDrive(_schema, _user, _root, _volumeId, new CloudDriveParameters());
         }
 
         [TestMethod, TestCategory(nameof(TestCategories.Offline))]
@@ -70,7 +71,7 @@ namespace SAFE.NetworkDrive.Tests
 
             var sut = new CloudDriveFactory();// { GatewayManager = _fixture.GetGatewayManager() };
 
-            using (var result = sut.CreateCloudDrive(_schema, _user, _root, new CloudDriveParameters())) {
+            using (var result = sut.CreateCloudDrive(_schema, _user, _root, _volumeId, new CloudDriveParameters())) {
                 Assert.IsInstanceOfType(result, typeof(AsyncCloudDrive), "Unexpected result type");
             }
         }
@@ -84,7 +85,7 @@ namespace SAFE.NetworkDrive.Tests
 
             var sut = new CloudDriveFactory();// { GatewayManager = _fixture.GetGatewayManager() };
 
-            using (var result = sut.CreateCloudDrive(schema, _user, _root, new CloudDriveParameters())) {
+            using (var result = sut.CreateCloudDrive(schema, _user, _root, _volumeId, new CloudDriveParameters())) {
                 Assert.IsInstanceOfType(result, typeof(CloudDrive), "Unexpected result type");
             }
         }
