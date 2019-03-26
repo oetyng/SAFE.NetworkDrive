@@ -5,9 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SAFE.NetworkDrive.UI"
         mc:Ignorable="d"
-        Title="Add drive" Height="174" Width="244.333" Icon="../Resources/favicon_white.ico">
+        Title="Add drive" Height="148.409" Width="244.333" Icon="../Resources/favicon_white.ico">
     <Grid Margin="0,0,2,0">
-        <Button Name="BtnAddDrive" Content="Add" HorizontalAlignment="Left" Margin="96,104,0,0" 
+        <Button Name="BtnAddDrive" Content="Add" HorizontalAlignment="Left" Margin="96,67,0,0" 
                 VerticalAlignment="Top" Width="120" Click="BtnAddDrive_Click" Height="22"/>
         <Label Content="Drive letter:" HorizontalAlignment="Left" Margin="14,14,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.479,0.538"/>
         <ComboBox Name="CmbDriveLetters" HorizontalAlignment="Left" Margin="96,18,0,0" VerticalAlignment="Top" Width="51" RenderTransformOrigin="0.458,-0.167"/>
