@@ -32,10 +32,11 @@ namespace SAFE.NetworkDrive.UI
 
                 _notifyIcon = new NotifyIcon
                 {
-                    Text = $"SAFENetwork on {_driveLetter}:\\",
+                    Text = $"SAFE.NetworkDrive",
                     Icon = icon,
                     ContextMenu = new ContextMenu(menuItems)
                 };
+                _notifyIcon.BalloonTipClosed += (sender, e) => { var thisIcon = (NotifyIcon)sender; thisIcon.Visible = false; thisIcon.Dispose(); };
                 _notifyIcon.DoubleClick += (s, e) => _app.OpenDriveSettings();
                 _notifyIcon.Visible = true;
             }
