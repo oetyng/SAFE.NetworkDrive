@@ -5,15 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SAFE.NetworkDrive.UI"
         mc:Ignorable="d"
-        Title="Login" Height="144" Width="281" Icon="../Resources/favicon_white.ico">
-    <Grid Margin="0,0,11,-5">
-        <TextBox Name="txtUsername" HorizontalAlignment="Left" Height="23" Margin="101,17,0,0" 
-                 TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+        Title="Login" Height="121.553" Width="286.496" Icon="../Resources/favicon_white.ico">
+    <Grid Margin="0,0,2,0">
         <PasswordBox Name="pwdBoxPassword" KeyUp="PwdBoxPassword_KeyUp" HorizontalAlignment="Left" 
-                 Height="23" Margin="101,45,0,0" VerticalAlignment="Top" Width="120"/>
-        <Button Name="BtnLogin" Content="OK" HorizontalAlignment="Left" Margin="101,73,0,0" 
+                 Height="23" Margin="100,19,0,0" VerticalAlignment="Top" Width="120"/>
+        <Button Name="BtnLogin" Content="OK" HorizontalAlignment="Left" Margin="100,47,0,0" 
                 VerticalAlignment="Top" Width="120" Click="BtnLogin_Click"/>
-        <Label Content="Username:" HorizontalAlignment="Left" Margin="19,14,0,0" VerticalAlignment="Top"/>
-        <Label Content="Password:" HorizontalAlignment="Left" Margin="23,45,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.339,0.577"/>
+        <Label Content="Password:" HorizontalAlignment="Left" Margin="22,19,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.339,0.577"/>
     </Grid>
 </Window>

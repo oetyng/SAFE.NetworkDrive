@@ -17,7 +17,7 @@ namespace SAFE.NetworkDrive.UI
         readonly ApplicationManagement _app;
         readonly Mounter.DriveManager _mounter;
 
-        public MainWindow(string username, string password)
+        public MainWindow(string password)
         {
             InitializeComponent();
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
@@ -34,7 +34,7 @@ namespace SAFE.NetworkDrive.UI
 
             var logger = Utils.LogFactory.GetLogger("logger");
 
-            _userConfig = new UserConfigHandler(username, password);
+            _userConfig = new UserConfigHandler(password);
             var user = _userConfig.CreateOrDecrypUserConfig();
             _mounter = new Mounter.DriveManager((c) => new DokanMounter(c), user, logger);
             user.Drives.ForEach(c => ShowDrive(c.Root[0]));
@@ -63,10 +63,7 @@ namespace SAFE.NetworkDrive.UI
             if (addDrive.ShowDialog() == true)
             {
                 var driveLetter = (char)addDrive.CmbDriveLetters.SelectedItem;
-                var location = addDrive.Location;
-                var secret = addDrive.Secret;
-
-                var config = _userConfig.CreateDriveConfig(driveLetter, location, secret);
+                var config = _userConfig.CreateDriveConfig(driveLetter);
 
                 // store to config
                 _userConfig.AddDrive(config);

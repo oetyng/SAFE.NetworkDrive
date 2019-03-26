@@ -1,11 +1,8 @@
 ﻿
 namespace SAFE.NetworkDrive.ConsoleApp
 {
-    public class UserReader : StringReader
+    public class PasswordReader : StringReader
     {
-        public string GetUserName()
-            => GetString("username");
-
         public string GetPassword()
             => GetSecretString("password");
     }

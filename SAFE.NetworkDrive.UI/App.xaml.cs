@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using System.Windows;
 
 namespace SAFE.NetworkDrive.UI
 {
@@ -22,7 +16,7 @@ namespace SAFE.NetworkDrive.UI
 
             if (login.ShowDialog() == true)
             {
-                var mainWindow = new MainWindow(login.Username, login.Password);
+                var mainWindow = new MainWindow(login.Password);
                 //Re-enable normal shutdown mode.
                 Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
                 Current.MainWindow = mainWindow;

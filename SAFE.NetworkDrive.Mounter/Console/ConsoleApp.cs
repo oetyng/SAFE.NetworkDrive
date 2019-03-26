@@ -14,8 +14,8 @@ namespace SAFE.NetworkDrive.ConsoleApp
 
         public UserConfig GetUserConfig()
         {
-            var (user, pwd) = GetUserLogin();
-            var handler = new UserConfigHandler(user, pwd);
+            var pwd = GetUserLogin();
+            var handler = new UserConfigHandler(pwd);
             var userConfig = handler.CreateOrDecrypUserConfig();
 
             var dReader = new DriveConfigReader();
@@ -24,10 +24,10 @@ namespace SAFE.NetworkDrive.ConsoleApp
             return userConfig;
         }
 
-        (string user, string pwd) GetUserLogin()
+        string GetUserLogin()
         {
-            var uReader = new UserReader();
-            return (uReader.GetUserName(), uReader.GetPassword());
+            var uReader = new PasswordReader();
+            return uReader.GetPassword();
         }
 
         public int Mount(UserConfig config)
