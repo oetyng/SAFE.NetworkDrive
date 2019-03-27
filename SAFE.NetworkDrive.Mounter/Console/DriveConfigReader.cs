@@ -70,7 +70,7 @@ namespace SAFE.NetworkDrive.ConsoleApp
                         WriteLine("Only letters allowed.");
                         continue;
                     }
-                    if (!DriveLetterUtil.GetAvailableDriveLetters().Contains(val))
+                    if (!DriveLetterUtil.GetAvailableDriveLetters(new List<char>()).Contains(val))
                     {
                         WriteLine("Drive letter is already used locally.");
                         continue;

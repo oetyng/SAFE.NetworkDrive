@@ -36,7 +36,7 @@ namespace SAFE.NetworkDrive.Mounter.Config
             return availableDriveLetters.First();
         }
 
-        public static List<char> GetAvailableDriveLetters()
+        public static List<char> GetAvailableDriveLetters(IEnumerable<char> reservedInConfig)
         {
             // these are the driveletters that are in use;
             var usedDriveLetters =
@@ -52,6 +52,7 @@ namespace SAFE.NetworkDrive.Mounter.Config
 
             // these are the ones that are available;
             var availableDriveLetters = allDrives
+                .Except(reservedInConfig)
                 .Except(usedDriveLetters)
                 .Reverse()
                 .ToList();

@@ -58,7 +58,10 @@ namespace SAFE.NetworkDrive.UI
 
         void BtnAddDrive_Click(object sender, RoutedEventArgs e)
         {
-            var addDrive = new AddDrive();
+            var reservedInConfig = _drives
+                .Where(c => !c.Mounted)
+                .Select(c => c.Letter);
+            var addDrive = new AddDrive(reservedInConfig);
 
             if (addDrive.ShowDialog() == true)
             {

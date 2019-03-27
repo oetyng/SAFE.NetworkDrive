@@ -1,7 +1,7 @@
 ﻿using SAFE.NetworkDrive.Mounter.Config;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows;
-using System.Windows.Input;
 
 namespace SAFE.NetworkDrive.UI
 {
@@ -10,15 +10,13 @@ namespace SAFE.NetworkDrive.UI
     /// </summary>
     public partial class AddDrive : Window
     {
-        const int _minInputLength = 5;
-
         readonly BindingList<char> _availableLetters;
 
-        public AddDrive()
+        public AddDrive(IEnumerable<char> reservedInConfig)
         {
             InitializeComponent();
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
-            _availableLetters = new BindingList<char>(DriveLetterUtil.GetAvailableDriveLetters());
+            _availableLetters = new BindingList<char>(DriveLetterUtil.GetAvailableDriveLetters(reservedInConfig));
             CmbDriveLetters.ItemsSource = _availableLetters;
             CmbDriveLetters.SelectedIndex = 0;
         }
@@ -27,12 +25,6 @@ namespace SAFE.NetworkDrive.UI
         {
             DialogResult = true;
             Close();
-        }
-
-        void PwdBoxPassword_KeyUp(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Enter)
-                BtnAddDrive_Click(sender, e);
         }
     }
 }
