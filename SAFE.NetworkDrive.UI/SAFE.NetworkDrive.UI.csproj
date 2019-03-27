@@ -54,6 +54,9 @@
     <Page Update="Views\AddDrive.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Update="Views\EditDrive.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Views\Login.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>

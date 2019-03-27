@@ -1,5 +1,4 @@
-﻿using SAFE.NetworkDrive.Mounter.Config;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows;
 
@@ -8,11 +7,11 @@ namespace SAFE.NetworkDrive.UI
     /// <summary>
     /// Interaction logic for Login.xaml
     /// </summary>
-    public partial class AddDrive : Window
+    public partial class EditDrive : Window
     {
         readonly BindingList<char> _availableLetters;
 
-        public AddDrive(List<char> availableLetters)
+        public EditDrive(List<char> availableLetters)
         {
             InitializeComponent();
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
@@ -21,7 +20,7 @@ namespace SAFE.NetworkDrive.UI
             CmbDriveLetters.SelectedIndex = 0;
         }
 
-        void BtnAddDrive_Click(object sender, RoutedEventArgs e)
+        void BtnOK_Click(object sender, RoutedEventArgs e)
         {
             DialogResult = true;
             Close();

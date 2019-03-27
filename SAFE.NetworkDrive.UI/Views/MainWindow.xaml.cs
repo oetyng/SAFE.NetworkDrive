@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Windows;
@@ -58,10 +59,7 @@ namespace SAFE.NetworkDrive.UI
 
         void BtnAddDrive_Click(object sender, RoutedEventArgs e)
         {
-            var reservedInConfig = _drives
-                .Where(c => !c.Mounted)
-                .Select(c => c.Letter);
-            var addDrive = new AddDrive(reservedInConfig);
+            var addDrive = new AddDrive(GetAvailableLetters());
 
             if (addDrive.ShowDialog() == true)
             {
@@ -82,6 +80,14 @@ namespace SAFE.NetworkDrive.UI
             }
             else
                 MessageBox.Show("Unable to load data.", "Error", MessageBoxButton.OK);
+        }
+
+        List<char> GetAvailableLetters()
+        {
+            var reservedInConfig = _drives
+                .Where(c => !c.Mounted)
+                .Select(c => c.Letter);
+            return DriveLetterUtil.GetAvailableDriveLetters(reservedInConfig);
         }
 
         void BtnRemoveDrive_Click(object sender, RoutedEventArgs e)
