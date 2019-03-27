@@ -2,7 +2,6 @@
 using SAFE.AppendOnlyDb.Factories;
 using SAFE.Data.Client;
 using SAFE.Data.Client.Auth;
-using SAFE.NetworkDrive.Interface;
 using System.Threading.Tasks;
 
 namespace SAFE.NetworkDrive.Gateways.AsyncEvents
@@ -23,12 +22,12 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
             _factory = new ClientFactory(appInfo, (session, appId) => new SAFEClient(session, appId));
         }
 
-        public static async Task<(IStreamAD, IImDStore)> GetDriveDbsAsync(RootName root, string apiKey, string secretKey)
+        public static async Task<(IStreamAD, IImDStore)> GetDriveDbsAsync(string volumeId, string apiKey, string secretKey)
         {
             var client = await _factory.GetMockNetworkClient(new Credentials(apiKey, secretKey), inMem: false);
-            var db = await client.GetOrAddDbAsync<IStreamDb>(root.VolumeId);
+            var db = await client.GetOrAddDbAsync<IStreamDb>(volumeId);
             var store = client.GetImDStore();
-            var stream = await db.GetOrAddStreamAsync(root.VolumeId);
+            var stream = await db.GetOrAddStreamAsync(volumeId);
             return (stream.Value, store);
         }
     }

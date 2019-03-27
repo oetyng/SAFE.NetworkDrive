@@ -27,7 +27,7 @@ namespace SAFE.NetworkDrive.UI
             _app = new ApplicationManagement
             {
                 Explore = Explore,
-                Exit = () => Application.Current.Shutdown(-1),
+                Exit = Exit,
                 OpenDriveSettings = Show,
                 ToggleMount = ToggleMountDrive,
                 UnmountAll = UnmountAll
@@ -48,11 +48,7 @@ namespace SAFE.NetworkDrive.UI
         }
 
         void LstViewDrives_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            ToggleButtons();
-            if (LstViewDrives.SelectedItem == null)
-                return;
-        }
+            => SetMountToggleEnabled();
 
         void BtnToggleMountDrive_Click(object sender, RoutedEventArgs e)
             => ToggleMountDrive((LstViewDrives.SelectedItem as Drive).Letter);
@@ -90,18 +86,31 @@ namespace SAFE.NetworkDrive.UI
             return DriveLetterUtil.GetAvailableDriveLetters(reservedInConfig);
         }
 
-        void BtnRemoveDrive_Click(object sender, RoutedEventArgs e)
+        void BtnEditDrive_Click(object sender, RoutedEventArgs e)
         {
-            var res = MessageBox.Show("This will remove your local drive login. " +
-                "If you don't remember your network login credentials, you will never be " +
-                "able to access your data on this drive again.", "Remove drive.", MessageBoxButton.OKCancel);
-            if (res == MessageBoxResult.OK)
+            var drive = _drives.Single(c => c.Letter == (LstViewDrives.SelectedItem as Drive).Letter);
+            void removal()
             {
-                var drive = _drives.Single(c => c.Letter == (LstViewDrives.SelectedItem as Drive).Letter);
                 _drives.Remove(drive);
                 drive.NotifyIcon.RemoveMenuItem();
                 _mounter.RemoveDrive(drive.Letter);
                 _userConfig.RemoveDrive(drive.Letter);
+            }
+            var edit = new EditDrive(drive.Mounted, removal, GetAvailableLetters());
+            if (edit.ShowDialog() != true)
+                return;
+            if (edit.NewDriveLetter.HasValue)
+            {
+                var editResult = _userConfig.TrySetDriveLetter(drive.Letter, edit.NewDriveLetter.Value);
+                if (editResult.HasValue)
+                {
+                    drive.Letter = edit.NewDriveLetter.Value;
+                    drive.NotifyIcon.RemoveMenuItem();
+                    drive.NotifyIcon = DriveNotifyIcon.Create(drive.Letter, _app);
+                    _drives.ResetBindings();
+                    _mounter.RemoveDrive(drive.Letter);
+                    _mounter.AddDrive(editResult.Value);
+                }
             }
         }
 
@@ -121,8 +130,8 @@ namespace SAFE.NetworkDrive.UI
             }
         }
 
-        void BtnUnmountAll_Click(object sender, RoutedEventArgs e)
-            => UnmountAll();
+        void BtnExitApp_Click(object sender, RoutedEventArgs e)
+            => _app.Exit();
 
         void RunInThread(Action a)
         {
@@ -137,13 +146,18 @@ namespace SAFE.NetworkDrive.UI
             drive.NotifyIcon = DriveNotifyIcon.Create(driveLetter, _app);
         }
 
+        void Exit()
+        {
+            UnmountAll();
+            Application.Current.Shutdown(-1);
+        }
+
         void UnmountAll()
         {
             _mounter.UnmountAll();
             foreach (var drive in _drives)
                 drive.Mounted = false;
             _drives.ResetBindings();
-            ToggleUnmountAllEnabled();
         }
 
         void ToggleMountDrive(char driveLetter)
@@ -156,29 +170,21 @@ namespace SAFE.NetworkDrive.UI
 
             drive.Mounted = !drive.Mounted;
             _drives.ResetBindings();
-            ToggleUnmountAllEnabled();
+            SetMountToggleEnabled();
         }
 
-        void ToggleButtons()
+        void SetMountToggleEnabled()
         {
             if (LstViewDrives.SelectedItem == null)
             {
                 BtnMountDrive.IsEnabled = false;
-                BtnRemoveDrive.IsEnabled = false;
+                BtnEditDrive.IsEnabled = false;
             }
             else
             {
                 BtnMountDrive.IsEnabled = true;
-                BtnRemoveDrive.IsEnabled = true;
+                BtnEditDrive.IsEnabled = (LstViewDrives.SelectedItem as Drive).Mounted == false; // temporary: as long as changing label is the only edit option, we better not enable edit at all if mounted
             }
-        }
-
-        void ToggleUnmountAllEnabled()
-        {
-            if (_drives.Any(c => c.Mounted))
-                BtnUnmountAll.IsEnabled = true;
-            else
-                BtnUnmountAll.IsEnabled = false;
         }
 
         void LstViewDrives_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)

@@ -17,10 +17,10 @@
                 <ColumnDefinition Width="112"/>
             </Grid.ColumnDefinitions>
             <Button Name="BtnAddDrive" Content="Add drive" Click="BtnAddDrive_Click" Grid.Column="1" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="88" Height="30"/>
-            <Button Name="BtnRemoveDrive" IsEnabled="False" Content="Remove drive" Click="BtnRemoveDrive_Click" HorizontalAlignment="Left" Margin="10,45,0,0" VerticalAlignment="Top" Width="88" Height="30" RenderTransformOrigin="-0.386,-0.536" Grid.Column="1"/>
-            <Button Name="BtnMountDrive" IsEnabled="False" Content="Mount drive" Click="BtnToggleMountDrive_Click" HorizontalAlignment="Left" Margin="10,80,0,0" VerticalAlignment="Top" Width="88" Height="30" RenderTransformOrigin="-0.386,-0.536" Grid.Column="1"/>
+            <Button Name="BtnEditDrive" IsEnabled="False" Content="Edit drive" Click="BtnEditDrive_Click" HorizontalAlignment="Left" Margin="10,45,0,0" VerticalAlignment="Top" Width="88" Height="30" RenderTransformOrigin="-0.386,-0.536" Grid.Column="1"/>
+            <Button Name="BtnMountDrive" IsEnabled="False" Content="Toggle mount" Click="BtnToggleMountDrive_Click" HorizontalAlignment="Left" Margin="10,80,0,0" VerticalAlignment="Top" Width="88" Height="30" RenderTransformOrigin="-0.386,-0.536" Grid.Column="1"/>
             <Button Name="BtnDeleteUser" Content="Delete user" Click="BtnDeleteUser_Click" HorizontalAlignment="Left" Margin="10,135,0,0" VerticalAlignment="Top" Width="88" Height="30" RenderTransformOrigin="-0.386,-0.536" Grid.Column="1"/>
-            <Button Name="BtnUnmountAll" IsEnabled="False" Content="Unmount all" Click="BtnUnmountAll_Click" HorizontalAlignment="Left" Margin="10,183,0,0" VerticalAlignment="Top" Width="88" Height="30" RenderTransformOrigin="-0.386,-0.536" Grid.Column="1"/>
+            <Button Name="BtnExitApp" Content="Exit app" Click="BtnExitApp_Click" HorizontalAlignment="Left" Margin="10,183,0,0" VerticalAlignment="Top" Width="88" Height="30" RenderTransformOrigin="-0.386,-0.536" Grid.Column="1"/>
             <ListView Name="LstViewDrives" SelectionMode="Single" HorizontalAlignment="Left" Height="213" Margin="10,10,0,0" VerticalAlignment="Top" Width="287" SelectionChanged="LstViewDrives_SelectionChanged" MouseDoubleClick="LstViewDrives_MouseDoubleClick">
                 <ListView.View>
                     <GridView>

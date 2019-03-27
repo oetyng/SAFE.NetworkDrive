@@ -56,7 +56,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 
             if (!_contextCache.TryGetValue(root, out SAFENetworkContext result))
             {
-                var (stream, store) = await DbFactory.GetDriveDbsAsync(root, apiKey, _secretKey);
+                var (stream, store) = await DbFactory.GetDriveDbsAsync(root.VolumeId, apiKey, _secretKey);
                 _sequenceNr = new SequenceNr();
 
                 var localState = new Memory.MemoryGateway();
@@ -67,7 +67,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                 var conflictHandler = new VersionConflictHandler(network, materializer);
                 var driveWriter = new DriveWriter(root, driveCache, _sequenceNr);
 
-                var dbName = Utils.Scrambler.Obfuscate(root.Value, _secretKey);
+                var dbName = Utils.Scrambler.Obfuscate(root.VolumeId, _secretKey);
                 var transactor = new EventTransactor(driveWriter,
                     new DiskWALTransactor(dbName, conflictHandler.Upload), _secretKey);
                 _contextCache.Add(root, result = new SAFENetworkContext(transactor, new DriveReader(driveCache)));

@@ -39,7 +39,6 @@
       <DependentUpon>Login.xaml</DependentUpon>
     </Compile>
     <Compile Update="Views\MainWindow.xaml.cs">
-      <SubType>Code</SubType>
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </Compile>
   </ItemGroup>

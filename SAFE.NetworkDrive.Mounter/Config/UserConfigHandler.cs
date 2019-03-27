@@ -95,6 +95,23 @@ namespace SAFE.NetworkDrive.Mounter.Config
             return true;
         }
 
+        public Data.Result<DriveConfig> TrySetDriveLetter(char driveLetter, char newDriveLetter)
+        {
+            if (driveLetter == newDriveLetter)
+                return Data.Result.Fail<DriveConfig>(-999, "");
+
+            var user = CreateOrDecrypUserConfig();
+            var drive = user.Drives.SingleOrDefault(c => c.Root[0] == driveLetter);
+
+            if (drive == null)
+                return Data.Result.Fail<DriveConfig>(-999, "");
+
+            drive.Root = newDriveLetter.ToString();
+
+            Save(user);
+            return Data.Result.OK(drive);
+        }
+
         public bool RemoveDrive(char driveLetter)
         {
             var user = CreateOrDecrypUserConfig();
