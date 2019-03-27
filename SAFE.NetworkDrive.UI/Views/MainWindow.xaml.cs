@@ -74,8 +74,6 @@ namespace SAFE.NetworkDrive.UI
                 ShowDrive(driveLetter);
                 ToggleMountDrive(driveLetter);
             }
-            else
-                MessageBox.Show("Unable to load data.", "Error", MessageBoxButton.OK);
         }
 
         List<char> GetAvailableLetters()
@@ -96,7 +94,7 @@ namespace SAFE.NetworkDrive.UI
                 _mounter.RemoveDrive(drive.Letter);
                 _userConfig.RemoveDrive(drive.Letter);
             }
-            var edit = new EditDrive(drive.Mounted, removal, GetAvailableLetters());
+            var edit = new EditDrive(drive.Letter, drive.Mounted, removal, GetAvailableLetters());
             if (edit.ShowDialog() != true)
                 return;
             if (edit.NewDriveLetter.HasValue)

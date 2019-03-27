@@ -35,6 +35,9 @@
     <Compile Update="Views\AddDrive.xaml.cs">
       <DependentUpon>AddDrive.xaml</DependentUpon>
     </Compile>
+    <Compile Update="Views\EditDrive.xaml.cs">
+      <DependentUpon>EditDrive.xaml</DependentUpon>
+    </Compile>
     <Compile Update="Views\Login.xaml.cs">
       <DependentUpon>Login.xaml</DependentUpon>
     </Compile>

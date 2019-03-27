@@ -5,11 +5,15 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SAFE.NetworkDrive.UI"
         mc:Ignorable="d"
-        Title="Edit drive" Height="148.409" Width="244.333" Icon="../Resources/favicon_white.ico">
+        Title="Edit drive" Height="153.076" Width="243.946" Icon="../Resources/favicon_white.ico">
     <Grid Margin="0,0,2,0">
-        <Button Name="BtnOK" Content="Apply" HorizontalAlignment="Left" Margin="96,67,0,0" 
-                VerticalAlignment="Top" Width="120" Click="BtnOK_Click" Height="22"/>
-        <Label Content="Drive letter:" HorizontalAlignment="Left" Margin="14,14,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.479,0.538"/>
-        <ComboBox Name="CmbDriveLetters" HorizontalAlignment="Left" Margin="96,18,0,0" VerticalAlignment="Top" Width="51" RenderTransformOrigin="0.458,-0.167" SelectionChanged="CmbDriveLetters_SelectionChanged"/>
+        <Button Name="BtnOK" Content="Apply" HorizontalAlignment="Left" Margin="150,19,0,0" 
+                VerticalAlignment="Top" Width="51" Click="BtnOK_Click" Height="22"/>
+        <Label Content="New letter:" HorizontalAlignment="Left" Margin="13,15,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.479,0.538"/>
+        <ComboBox Name="CmbDriveLetters" HorizontalAlignment="Left" Margin="89,19,0,0" VerticalAlignment="Top" Width="51" RenderTransformOrigin="0.458,-0.167" SelectionChanged="CmbDriveLetters_SelectionChanged"/>
+        <Button x:Name="BtnShareDrive" IsEnabled="False" Content="Share" HorizontalAlignment="Left" Margin="150,70,0,0" 
+            VerticalAlignment="Top" Width="51" Click="BtnShareDrive_Click" Height="22"/>
+        <Button x:Name="BtnRemoveDrive" Content="Remove" HorizontalAlignment="Left" Margin="20,70,0,0" 
+            VerticalAlignment="Top" Width="50" Click="BtnRemoveDrive_Click" Height="22"/>
     </Grid>
 </Window>
