@@ -1,7 +1,6 @@
 ﻿using Newtonsoft.Json;
 using SAFE.NetworkDrive.Encryption;
 using SAFE.NetworkDrive.Gateways.Utils;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -17,7 +16,7 @@ namespace SAFE.NetworkDrive.Mounter.Config
         public UserConfigHandler(string password)
         {
             _password = password;
-            var username = Scrambler.Obfuscate(_password, _password);
+            var username = Scrambler.ShortCode(_password, _password);
             _filePath = $"{DIR_PATH}{Path.DirectorySeparatorChar}{username}".ToLowerInvariant();
         }
 
@@ -37,6 +36,8 @@ namespace SAFE.NetworkDrive.Mounter.Config
             return JsonConvert.DeserializeObject<UserConfig>(json);
         }
 
+        public bool Equals(UserConfigHandler other) => _password == other._password;
+
         public bool DeleteUser()
         {
             if (!File.Exists(_filePath))
@@ -49,6 +50,7 @@ namespace SAFE.NetworkDrive.Mounter.Config
         {
             var config = new UserConfig
             {
+                VolumeNrCheckpoint = 0,
                 Drives = new List<DriveConfig>()
             };
 
@@ -57,30 +59,36 @@ namespace SAFE.NetworkDrive.Mounter.Config
 
         public DriveConfig CreateDriveConfig(char driveLetter)
         {
-            var volumeId = Guid.NewGuid().ToString("N");
-            var locator = GetLocator(driveLetter);
-            var secret = GetSecret(locator);
+            var volumeNr = CreateOrDecrypUserConfig().VolumeNrCheckpoint;
+            var volumeId = Scrambler.VolumeId(volumeNr, _password);
+            var (locator, secret) = GetLocatorAndSecret(volumeId);
+
             var dirPath = Path.DirectorySeparatorChar.ToString();
             return new DriveConfig
             {
                 Locator = locator,
                 Secret = secret,
                 Root = driveLetter.ToString(),
+                VolumeNr = volumeNr,
                 VolumeId = volumeId,
                 Schema = "safenetworkdrive_v1",
                 Parameters = $"root={dirPath}"
             };
         }
 
-        string GetLocator(char driveLetter)
-            => GetSecret(driveLetter.ToString());
-
-        string GetSecret(string source)
+        (string, string) GetLocatorAndSecret(string volumeId)
         {
-            var first = Scrambler.Obfuscate(source, _password);
-            var second = Scrambler.Obfuscate(first, _password);
-            var third = Scrambler.Obfuscate(second, _password);
-            var fourth = Scrambler.Obfuscate(third, _password);
+            var locator = GenerateString(volumeId);
+            var secret = GenerateString(locator);
+            return (locator, secret);
+        }
+
+        string GenerateString(string source)
+        {
+            var first = Scrambler.ShortCode(source, _password);
+            var second = Scrambler.ShortCode(first, _password);
+            var third = Scrambler.ShortCode(second, _password);
+            var fourth = Scrambler.ShortCode(third, _password);
             return second + third + fourth;
         }
 
@@ -89,8 +97,12 @@ namespace SAFE.NetworkDrive.Mounter.Config
             var user = CreateOrDecrypUserConfig();
             if (user.Drives.Any(c => c.Root == config.Root))
                 return false;
+            if (config.VolumeNr != user.VolumeNrCheckpoint)
+                return false;
 
             user.Drives.Add(config);
+            ++user.VolumeNrCheckpoint;
+
             Save(user);
             return true;
         }

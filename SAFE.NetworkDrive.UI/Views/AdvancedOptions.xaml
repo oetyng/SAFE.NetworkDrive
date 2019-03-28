@@ -1,0 +1,61 @@
+﻿<Window x:Class="SAFE.NetworkDrive.UI.AdvancedOptions"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SAFE.NetworkDrive.UI"
+        mc:Ignorable="d"
+        Title="Advanced options" Height="203.679" Width="377.521" Icon="../Resources/favicon_white.ico">
+    <Grid Margin="0,0,2,0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50*"/>
+            <RowDefinition Height="67*"/>
+        </Grid.RowDefinitions>
+        <GroupBox Header="Delete drive" HorizontalAlignment="Left" Height="61" Margin="20,10,0,0" Grid.RowSpan="2" VerticalAlignment="Top" Width="151">
+            <Grid HorizontalAlignment="Left" Height="41" Margin="0,0,-2,-2" VerticalAlignment="Top" Width="141">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="5*"/>
+                    <ColumnDefinition Width="13*"/>
+                </Grid.ColumnDefinitions>
+                <ComboBox x:Name="CmbDriveLetters" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="51" RenderTransformOrigin="0.458,-0.167" Grid.ColumnSpan="2"/>
+                <Button x:Name="BtnDeleteDrive" Content="Delete" HorizontalAlignment="Left" Margin="32,10,0,0" 
+            VerticalAlignment="Top" Width="60" Click="BtnDeleteDrive_Click" Height="22" Grid.Column="1"/>
+            </Grid>
+        </GroupBox>
+        <GroupBox Header="Delete all" HorizontalAlignment="Left" Height="61" Margin="190,10,0,0" VerticalAlignment="Top" Width="164">
+            <Grid x:Name="GridDeleteAll" HorizontalAlignment="Left" Height="43" Margin="0,0,-2,0" VerticalAlignment="Top" Width="154">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="57*"/>
+                    <RowDefinition Height="37*"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="5*"/>
+                    <ColumnDefinition Width="13*"/>
+                </Grid.ColumnDefinitions>
+                <Grid x:Name="GridPassword" Visibility="Hidden" HorizontalAlignment="Left" Height="31" Margin="4,6,0,0" VerticalAlignment="Top" Width="150" Grid.ColumnSpan="2" Grid.RowSpan="2">
+                    <Button x:Name="BtnDeleteAll" Content="OK" HorizontalAlignment="Left" Margin="110,5,0,0" 
+                VerticalAlignment="Top" Width="35" Click="BtnDeleteAll_Click" Height="21"/>
+                    <PasswordBox x:Name="PasswordBox" HorizontalAlignment="Left" Margin="5,8,0,0" VerticalAlignment="Top" Width="100"/>
+                </Grid>
+                <Button x:Name="BtnEnterPassword" Content="Enter password" Click="BtnEnterPassword_Click" HorizontalAlignment="Left" Margin="25,11,0,0" VerticalAlignment="Top" Width="106" Grid.ColumnSpan="2" Grid.RowSpan="2"/>
+            </Grid>
+        </GroupBox>
+        <GroupBox Header="Restore drive" HorizontalAlignment="Left" Height="68" Margin="20,10,0,0" Grid.Row="1" VerticalAlignment="Top" Width="151">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="13" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="13" />
+                    <RowDefinition Height="13" />
+                </Grid.RowDefinitions>
+                <TextBox Name="NUDTextBox"  Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" TextAlignment="Right" PreviewKeyDown="NUDTextBox_PreviewKeyDown" PreviewKeyUp="NUDTextBox_PreviewKeyUp" TextChanged="NUDTextBox_TextChanged" Margin="10,11,80,-11"/>
+                <RepeatButton Name="NUDButtonUP" Grid.Row="0" FontSize="8" FontFamily="Marlett" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Click="NUDButtonUP_Click" Margin="46,11,68,3" Grid.RowSpan="2">5</RepeatButton>
+                <RepeatButton Name="NUDButtonDown" Grid.Row="1" FontSize="8"  FontFamily="Marlett" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Height="13" VerticalAlignment="Bottom" Click="NUDButtonDown_Click" Margin="46,0,68,-11">6</RepeatButton>
+                <Button x:Name="BtnRestoreDrive" Content="Restore" HorizontalAlignment="Left" Margin="69,0,0,-8" 
+                    VerticalAlignment="Top" Width="60" Click="BtnRestoreDrive_Click" Height="22" Grid.ColumnSpan="2" Grid.Row="1"/>
+            </Grid>
+        </GroupBox>
+    </Grid>
+</Window>

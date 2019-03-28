@@ -23,7 +23,7 @@ namespace SAFE.NetworkDrive
                 DokanOptions.NetworkDrive | DokanOptions.MountManager | DokanOptions.CurrentSession,
                 threadCount: 5,
                 121,
-                TimeSpan.FromSeconds(_config.Timeout != 0 ? _config.Timeout : 20),
+                TimeSpan.FromSeconds(20),
                 null, 512, 512),
                 cancellation.Token);
 
