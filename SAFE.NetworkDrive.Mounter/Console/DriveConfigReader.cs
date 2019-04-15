@@ -41,7 +41,7 @@ namespace SAFE.NetworkDrive.ConsoleApp
             var locator = csReader.GetLocator();
             var secret = csReader.GetSecret();
 
-            var dirPath = Path.DirectorySeparatorChar.ToString();
+            //var dirPath = Path.DirectorySeparatorChar.ToString();
             
             return new DriveConfig
             {
@@ -49,7 +49,7 @@ namespace SAFE.NetworkDrive.ConsoleApp
                 Secret = secret,
                 Root = driveLetter,
                 Schema = "safenetworkdrive_v1",
-                Parameters = $"root={dirPath}"
+                //Parameters = $"root={dirPath}"
             };
         }
 

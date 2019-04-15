@@ -11,7 +11,7 @@ namespace SAFE.NetworkDrive.Fuse
 
         public string BaseDir { get; set; }
 
-        public FuseOperations(ICloudDrive drive, ILogger logger)
+        public FuseOperations(ISAFEDrive drive, ILogger logger)
             => _operations = new CloudOperations(drive, logger);
 
         // CONVERTED

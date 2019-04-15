@@ -1,53 +1,24 @@
-﻿/*
-The MIT License(MIT)
-
-Copyright(c) 2015 IgorSoft
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
-
-using System;
+﻿using System;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace SAFE.NetworkDrive.Tests
 {
     [TestClass]
-    public sealed partial class CloudDirectoryNodeTests
+    public sealed partial class SAFEDirectoryNodeTests
     {
         Fixture _fixture;
 
         [TestInitialize]
-        public void Initialize()
-        {
-            _fixture = Fixture.Initialize();
-        }
+        public void Initialize() => _fixture = Fixture.Initialize();
 
         [TestMethod, TestCategory(nameof(TestCategories.Offline))]
         [ExpectedException(typeof(ArgumentNullException))]
-        public void CloudDirectoryNode_Create_WhereContractIsMissing_Throws()
-        {
-            _fixture.GetDirectory(null);
-        }
+        public void SAFEDirectoryNode_Create_WhereContractIsMissing_Throws()
+            => _fixture.GetDirectory(null);
 
         [TestMethod, TestCategory(nameof(TestCategories.Offline))]
-        public void CloudDirectoryNode_Create_WhereContractIsSpecified_StoresContract()
+        public void SAFEDirectoryNode_Create_WhereContractIsSpecified_StoresContract()
         {
             var contract = _fixture.TargetDirectory;
 
@@ -57,7 +28,7 @@ namespace SAFE.NetworkDrive.Tests
         }
 
         [TestMethod, TestCategory(nameof(TestCategories.Offline))]
-        public void CloudDirectoryNode_GetChildItemByName_CallsDriveCorrectly()
+        public void SAFEDirectoryNode_GetChildItemByName_CallsDriveCorrectly()
         {
             var fileName = _fixture.SubDirectoryItems.First().Name;
             var directory = _fixture.TargetDirectory;
@@ -74,7 +45,7 @@ namespace SAFE.NetworkDrive.Tests
 
         [TestMethod, TestCategory(nameof(TestCategories.Offline))]
         [ExpectedException(typeof(ArgumentNullException))]
-        public void CloudDirectoryNode_GetChildItems_WhereDriveIsNull_Throws()
+        public void SAFEDirectoryNode_GetChildItems_WhereDriveIsNull_Throws()
         {
             var directory = _fixture.TargetDirectory;
 
@@ -83,7 +54,7 @@ namespace SAFE.NetworkDrive.Tests
         }
 
         [TestMethod, TestCategory(nameof(TestCategories.Offline))]
-        public void CloudDirectoryNode_GetChildItems_CallsDriveCorrectly()
+        public void SAFEDirectoryNode_GetChildItems_CallsDriveCorrectly()
         {
             var directory = _fixture.TargetDirectory;
 
@@ -98,7 +69,7 @@ namespace SAFE.NetworkDrive.Tests
         }
 
         [TestMethod, TestCategory(nameof(TestCategories.Offline))]
-        public void CloudDirectoryNode_Move_Succeeds()
+        public void SAFEDirectoryNode_Move_Succeeds()
         {
             var contract = _fixture.TestDirectory;
             var directory = _fixture.TargetDirectory;
@@ -107,13 +78,13 @@ namespace SAFE.NetworkDrive.Tests
             _fixture.SetupMove(contract, contract.Name, directory);
 
             var sut = _fixture.GetDirectory(contract);
-            sut.Move(_fixture.Drive, contract.Name, new CloudDirectoryNode(directory));
+            sut.Move(_fixture.Drive, contract.Name, new SAFEDirectoryNode(directory));
 
             _fixture.VerifyAll();
         }
 
         [TestMethod, TestCategory(nameof(TestCategories.Offline))]
-        public void CloudDirectoryNode_MoveAndRename_Succeeds()
+        public void SAFEDirectoryNode_MoveAndRename_Succeeds()
         {
             const string newName = "RenamedDirectory";
             var contract = _fixture.TestDirectory;
@@ -123,14 +94,14 @@ namespace SAFE.NetworkDrive.Tests
             _fixture.SetupMove(contract, newName, directory);
 
             var sut = _fixture.GetDirectory(contract);
-            sut.Move(_fixture.Drive, newName, new CloudDirectoryNode(directory));
+            sut.Move(_fixture.Drive, newName, new SAFEDirectoryNode(directory));
 
             _fixture.VerifyAll();
         }
 
         [TestMethod, TestCategory(nameof(TestCategories.Offline))]
         [ExpectedException(typeof(ArgumentNullException))]
-        public void CloudDirectoryNode_NewDirectoryItem_WhereDriveIsNull_Throws()
+        public void SAFEDirectoryNode_NewDirectoryItem_WhereDriveIsNull_Throws()
         {
             const string newName = "NewDirectory";
             var contract = _fixture.TestDirectory;
@@ -143,7 +114,7 @@ namespace SAFE.NetworkDrive.Tests
         }
 
         [TestMethod, TestCategory(nameof(TestCategories.Offline))]
-        public void CloudDirectoryNode_NewDirectoryItem_Succeeds()
+        public void SAFEDirectoryNode_NewDirectoryItem_Succeeds()
         {
             const string newName = "NewDirectory";
             var contract = _fixture.TestDirectory;
@@ -162,7 +133,7 @@ namespace SAFE.NetworkDrive.Tests
 
         [TestMethod, TestCategory(nameof(TestCategories.Offline))]
         [ExpectedException(typeof(ArgumentNullException))]
-        public void CloudDirectoryNode_NewFileItem_WhereDriveIsNull_Throws()
+        public void SAFEDirectoryNode_NewFileItem_WhereDriveIsNull_Throws()
         {
             const string newName = "NewFile.ext";
             var contract = _fixture.TestDirectory;
@@ -175,7 +146,7 @@ namespace SAFE.NetworkDrive.Tests
         }
 
         [TestMethod, TestCategory(nameof(TestCategories.Offline))]
-        public void CloudDirectoryNode_NewFileItem_Succeeds()
+        public void SAFEDirectoryNode_NewFileItem_Succeeds()
         {
             const string newName = "NewFile.ext";
             var contract = _fixture.TestDirectory;
@@ -193,7 +164,7 @@ namespace SAFE.NetworkDrive.Tests
         }
 
         [TestMethod, TestCategory(nameof(TestCategories.Offline))]
-        public void CloudDirectoryNode_Remove_Succeeds()
+        public void SAFEDirectoryNode_Remove_Succeeds()
         {
             var contract = _fixture.TestDirectory;
 

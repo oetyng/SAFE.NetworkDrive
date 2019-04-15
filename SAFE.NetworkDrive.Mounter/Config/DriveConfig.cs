@@ -26,7 +26,7 @@ namespace SAFE.NetworkDrive.Mounter.Config
         [Required]
         public string Secret { get; set; } // Used as encryptionKey
 
-        public string Parameters { get; set; } // todo: deprecate
+        // public string Parameters { get; set; } // todo: deprecate
         
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Debugger Display")]

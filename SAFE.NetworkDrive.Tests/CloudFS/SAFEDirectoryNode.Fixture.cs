@@ -1,28 +1,4 @@
-﻿/*
-The MIT License(MIT)
-
-Copyright(c) 2015 IgorSoft
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using Moq;
@@ -31,24 +7,19 @@ using SAFE.Filesystem.Interface.IO;
 
 namespace SAFE.NetworkDrive.Tests
 {
-    public sealed partial class CloudDirectoryNodeTests
+    public sealed partial class SAFEDirectoryNodeTests
     {
         internal class Fixture
         {
             const string _mountPoint = "Z:";
-
             const long _freeSpace = 64 * 1 << 20;
-
             const long _usedSpace = 36 * 1 << 20;
 
-            readonly Mock<ICloudDrive> _drive;
+            readonly Mock<ISAFEDrive> _drive;
+            readonly SAFEDirectoryNode _root;
 
-            readonly CloudDirectoryNode _root;
-
-            public ICloudDrive Drive => _drive.Object;
-
+            public ISAFEDrive Drive => _drive.Object;
             public readonly DirectoryInfoContract TestDirectory = new DirectoryInfoContract(@"\Dir", "Dir", "2015-01-02 20:11:12".ToDateTime(), "2015-01-02 20:21:22".ToDateTime());
-
             public readonly DirectoryInfoContract TargetDirectory = new DirectoryInfoContract(@"\SubDir", "SubDir", "2015-01-01 10:11:12".ToDateTime(), "2015-01-01 20:21:22".ToDateTime());
 
             public FileSystemInfoContract[] SubDirectoryItems { get; } = new FileSystemInfoContract[] {
@@ -60,17 +31,17 @@ namespace SAFE.NetworkDrive.Tests
 
             public static Fixture Initialize() => new Fixture();
 
-            private Fixture()
+            Fixture()
             {
-                _drive = new Mock<ICloudDrive>(MockBehavior.Strict);
-                _root = new CloudDirectoryNode(new RootDirectoryInfoContract(Path.DirectorySeparatorChar.ToString(), "2015-01-01 00:00:00".ToDateTime(), "2015-01-01 00:00:00".ToDateTime()) {
+                _drive = new Mock<ISAFEDrive>(MockBehavior.Strict);
+                _root = new SAFEDirectoryNode(new RootDirectoryInfoContract(Path.DirectorySeparatorChar.ToString(), "2015-01-01 00:00:00".ToDateTime(), "2015-01-01 00:00:00".ToDateTime()) {
                     Drive = new DriveInfoContract(_mountPoint, _freeSpace, _usedSpace)
-                }) { children = new Dictionary<string, CloudItemNode>() };
+                }) { children = new Dictionary<string, SAFEItemNode>() };
             }
 
-            public CloudDirectoryNode GetDirectory(DirectoryInfoContract contract)
+            public SAFEDirectoryNode GetDirectory(DirectoryInfoContract contract)
             {
-                var result = new CloudDirectoryNode(contract);
+                var result = new SAFEDirectoryNode(contract);
                 result.SetParent(_root);
                 return result;
             }
@@ -105,15 +76,9 @@ namespace SAFE.NetworkDrive.Tests
             }
 
             public void SetupRemove(DirectoryInfoContract target)
-            {
-                _drive
-                    .Setup(d => d.RemoveItem(target, false));
-            }
+                => _drive.Setup(d => d.RemoveItem(target, false));
 
-            public void VerifyAll()
-            {
-                _drive.VerifyAll();
-            }
+            public void VerifyAll() => _drive.VerifyAll();
         }
     }
 }

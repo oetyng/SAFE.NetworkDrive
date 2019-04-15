@@ -28,7 +28,6 @@ using System.IO;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SAFE.Filesystem.Interface.IO;
-using SAFE.NetworkDrive.Gateways;
 using SAFE.NetworkDrive.Interface;
 
 namespace SAFE.NetworkDrive.Tests.Gateway
@@ -48,46 +47,11 @@ namespace SAFE.NetworkDrive.Tests.Gateway
                 _largeContent[i] = (byte)(i % 251 + 1);
         }
 
-        //[ClassCleanup]
-        //public static void ClassCleanup()
-        //{
-        //    UIThread.Shutdown();
-        //}
-
         [TestInitialize]
-        public void Initialize()
-        {
-            _fixture = new GatewayTestsFixture();
-        }
+        public void Initialize() => _fixture = new GatewayTestsFixture();
 
         [TestCleanup]
-        public void Cleanup()
-        {
-            _fixture = null;
-        }
-
-        //[TestMethod, TestCategory(nameof(TestCategories.Online))]
-        //public void Import_Gateways_MatchConfigurations()
-        //{
-        //    var configuredGateways = GatewayTestsFixture.GetGatewayConfigurations(GatewayType.Sync, GatewayCapabilities.None);
-        //    var importedGateways = _fixture.Gateways;
-
-        //    CollectionAssert.AreEquivalent(configuredGateways.Select(c => c.Schema).ToList(), importedGateways.Select(g => g.Metadata.CloudService).ToList(), "Gateway configurations do not match imported gateways");
-        //    foreach (var configuredGateway in configuredGateways)
-        //    {
-        //        var importedGateway = importedGateways[configuredGateway.Schema];
-        //        Assert.AreEqual(GatewayCapabilities.All ^ configuredGateway.Exclusions, importedGateway.Metadata.Capabilities, $"Gateway capabilities for '{configuredGateway.Schema}' differ".ToString(CultureInfo.CurrentCulture));
-        //    }
-        //}
-
-        [TestMethod, TestCategory(nameof(TestCategories.Online))]
-        public void TryAuthenticate_Succeeds()
-        {
-            _fixture.ExecuteByConfiguration((gateway, rootName, config) =>
-            {
-                Assert.IsTrue(gateway.TryAuthenticate(rootName, config.ApiKey, _fixture.GetParameters(config)));
-            });
-        }
+        public void Cleanup() => _fixture = null;
 
         [TestMethod, TestCategory(nameof(TestCategories.Online))]
         public void GetDrive_ReturnsResult()
@@ -95,7 +59,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
             _fixture.ExecuteByConfiguration((gateway, rootName, config) => {
                 _fixture.OnCondition(config, GatewayCapabilities.GetDrive, () =>
                 {
-                    var drive = gateway.GetDrive(rootName, config.ApiKey, _fixture.GetParameters(config));
+                    var drive = gateway.GetDrive(rootName);
 
                     Assert.IsNotNull(drive, $"Drive is null ({config.Schema})".ToString(CultureInfo.CurrentCulture));
                     Assert.IsNotNull(drive.Id, $"Missing drive ID ({config.Schema})".ToString(CultureInfo.CurrentCulture));
@@ -109,11 +73,11 @@ namespace SAFE.NetworkDrive.Tests.Gateway
         public void GetRoot_ReturnsResult()
         {
             _fixture.ExecuteByConfiguration((gateway, rootName, config) => {
-                gateway.GetDrive(rootName, config.ApiKey, _fixture.GetParameters(config));
+                gateway.GetDrive(rootName);
 
                 _fixture.OnCondition(config, GatewayCapabilities.GetRoot, () =>
                 {
-                    var root = gateway.GetRoot(rootName, config.ApiKey, _fixture.GetParameters(config));
+                    var root = gateway.GetRoot(rootName);
 
                     Assert.IsNotNull(root, "Root is null");
                     Assert.AreEqual(Path.DirectorySeparatorChar.ToString(), root.Name, "Unexpected root name");
@@ -127,7 +91,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
             _fixture.ExecuteByConfiguration((gateway, rootName, config) => {
                 using (var testDirectory = TestDirectoryFixture.CreateTestDirectory(gateway, config, _fixture))
                 {
-                    gateway.GetDrive(rootName, config.ApiKey, _fixture.GetParameters(config));
+                    gateway.GetDrive(rootName);
 
                     gateway.NewDirectoryItem(rootName, testDirectory.Id, "DirectoryContent");
                     gateway.NewFileItem(rootName, testDirectory.Id, "File.ext", new MemoryStream(new byte[100]), _fixture.GetProgressReporter());
@@ -150,7 +114,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
             _fixture.ExecuteByConfiguration((gateway, rootName, config) => {
                 using (var testDirectory = TestDirectoryFixture.CreateTestDirectory(gateway, config, _fixture))
                 {
-                    gateway.GetDrive(rootName, config.ApiKey, _fixture.GetParameters(config));
+                    gateway.GetDrive(rootName);
 
                     var testFile = gateway.NewFileItem(rootName, testDirectory.Id, "File.ext", new MemoryStream(new byte[100]), _fixture.GetProgressReporter());
                     testFile.Directory = testDirectory.ToContract();
@@ -175,7 +139,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
             _fixture.ExecuteByConfiguration((gateway, rootName, config) => {
                 using (var testDirectory = TestDirectoryFixture.CreateTestDirectory(gateway, config, _fixture))
                 {
-                    gateway.GetDrive(rootName, config.ApiKey, _fixture.GetParameters(config));
+                    gateway.GetDrive(rootName);
 
                     var testFile = gateway.NewFileItem(rootName, testDirectory.Id, "File.ext", _smallContent.ToStream(), _fixture.GetProgressReporter());
 
@@ -197,7 +161,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
             _fixture.ExecuteByConfiguration((gateway, rootName, config) => {
                 using (var testDirectory = TestDirectoryFixture.CreateTestDirectory(gateway, config, _fixture))
                 {
-                    gateway.GetDrive(rootName, config.ApiKey, _fixture.GetParameters(config));
+                    gateway.GetDrive(rootName);
 
                     var testFile = gateway.NewFileItem(rootName, testDirectory.Id, "File.ext", new MemoryStream(new byte[100]), _fixture.GetProgressReporter());
                     testFile.Directory = testDirectory.ToContract();
@@ -222,7 +186,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
             _fixture.ExecuteByConfiguration((gateway, rootName, config) => {
                 using (var testDirectory = TestDirectoryFixture.CreateTestDirectory(gateway, config, _fixture))
                 {
-                    gateway.GetDrive(rootName, config.ApiKey, _fixture.GetParameters(config));
+                    gateway.GetDrive(rootName);
 
                     var testFile = gateway.NewFileItem(rootName, testDirectory.Id, "File.ext", _smallContent.ToStream(), _fixture.GetProgressReporter());
                     testFile.Directory = testDirectory.ToContract();
@@ -254,7 +218,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
             _fixture.ExecuteByConfiguration((gateway, rootName, config) => {
                 using (var testDirectory = TestDirectoryFixture.CreateTestDirectory(gateway, config, _fixture))
                 {
-                    gateway.GetDrive(rootName, config.ApiKey, _fixture.GetParameters(config));
+                    gateway.GetDrive(rootName);
 
                     var testFile = gateway.NewFileItem(rootName, testDirectory.Id, "File.ext", new MemoryStream(new byte[100]), _fixture.GetProgressReporter());
                     testFile.Directory = testDirectory.ToContract();
@@ -286,7 +250,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
             _fixture.ExecuteByConfiguration((gateway, rootName, config) => {
                 using (var testDirectory = TestDirectoryFixture.CreateTestDirectory(gateway, config, _fixture))
                 {
-                    gateway.GetDrive(rootName, config.ApiKey, _fixture.GetParameters(config));
+                    gateway.GetDrive(rootName);
 
                     var directoryOriginal = gateway.NewDirectoryItem(rootName, testDirectory.Id, "Directory");
                     var fileOriginal = gateway.NewFileItem(rootName, directoryOriginal.Id, "File.ext", _smallContent.ToStream(), _fixture.GetProgressReporter());
@@ -317,7 +281,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
             _fixture.ExecuteByConfiguration((gateway, rootName, config) => {
                 using (var testDirectory = TestDirectoryFixture.CreateTestDirectory(gateway, config, _fixture))
                 {
-                    gateway.GetDrive(rootName, config.ApiKey, _fixture.GetParameters(config));
+                    gateway.GetDrive(rootName);
 
                     var directoryOriginal = gateway.NewDirectoryItem(rootName, testDirectory.Id, "Directory");
                     var fileOriginal = gateway.NewFileItem(rootName, directoryOriginal.Id, "File.ext", _smallContent.ToStream(), _fixture.GetProgressReporter());
@@ -350,7 +314,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
             _fixture.ExecuteByConfiguration((gateway, rootName, config) => {
                 using (var testDirectory = TestDirectoryFixture.CreateTestDirectory(gateway, config, _fixture))
                 {
-                    gateway.GetDrive(rootName, config.ApiKey, _fixture.GetParameters(config));
+                    gateway.GetDrive(rootName);
 
                     var fileOriginal = gateway.NewFileItem(rootName, testDirectory.Id, "File.ext", _smallContent.ToStream(), _fixture.GetProgressReporter());
 
@@ -377,7 +341,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
             _fixture.ExecuteByConfiguration((gateway, rootName, config) => {
                 using (var testDirectory = TestDirectoryFixture.CreateTestDirectory(gateway, config, _fixture))
                 {
-                    gateway.GetDrive(rootName, config.ApiKey, _fixture.GetParameters(config));
+                    gateway.GetDrive(rootName);
 
                     var fileOriginal = gateway.NewFileItem(rootName, testDirectory.Id, "File.ext", _smallContent.ToStream(), _fixture.GetProgressReporter());
                     var directoryTarget = gateway.NewDirectoryItem(rootName, testDirectory.Id, "Target");
@@ -406,7 +370,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
             _fixture.ExecuteByConfiguration((gateway, rootName, config) => {
                 using (var testDirectory = TestDirectoryFixture.CreateTestDirectory(gateway, config, _fixture))
                 {
-                    gateway.GetDrive(rootName, config.ApiKey, _fixture.GetParameters(config));
+                    gateway.GetDrive(rootName);
 
                     var directoryOriginal = gateway.NewDirectoryItem(rootName, testDirectory.Id, "Directory");
                     directoryOriginal.Parent = testDirectory.ToContract();
@@ -444,7 +408,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
             _fixture.ExecuteByConfiguration((gateway, rootName, config) => {
                 using (var testDirectory = TestDirectoryFixture.CreateTestDirectory(gateway, config, _fixture))
                 {
-                    gateway.GetDrive(rootName, config.ApiKey, _fixture.GetParameters(config));
+                    gateway.GetDrive(rootName);
 
                     var directoryTarget = gateway.NewDirectoryItem(rootName, testDirectory.Id, "DirectoryTarget");
                     directoryTarget.Parent = testDirectory.ToContract();
@@ -476,7 +440,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
             _fixture.ExecuteByConfiguration((gateway, rootName, config) => {
                 using (var testDirectory = TestDirectoryFixture.CreateTestDirectory(gateway, config, _fixture))
                 {
-                    gateway.GetDrive(rootName, config.ApiKey, _fixture.GetParameters(config));
+                    gateway.GetDrive(rootName);
 
                     _fixture.OnCondition(config, GatewayCapabilities.NewDirectoryItem, () =>
                     {
@@ -496,7 +460,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
             _fixture.ExecuteByConfiguration((gateway, rootName, config) => {
                 using (var testDirectory = TestDirectoryFixture.CreateTestDirectory(gateway, config, _fixture))
                 {
-                    gateway.GetDrive(rootName, config.ApiKey, _fixture.GetParameters(config));
+                    gateway.GetDrive(rootName);
 
                     _fixture.OnCondition(config, GatewayCapabilities.NewFileItem, () =>
                     {
@@ -521,7 +485,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
             _fixture.ExecuteByConfiguration((gateway, rootName, config) => {
                 using (var testDirectory = TestDirectoryFixture.CreateTestDirectory(gateway, config, _fixture))
                 {
-                    gateway.GetDrive(rootName, config.ApiKey, _fixture.GetParameters(config));
+                    gateway.GetDrive(rootName);
 
                     _fixture.OnCondition(config, GatewayCapabilities.NewFileItem, () =>
                     {
@@ -553,7 +517,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
             _fixture.ExecuteByConfiguration((gateway, rootName, config) => {
                 using (var testDirectory = TestDirectoryFixture.CreateTestDirectory(gateway, config, _fixture))
                 {
-                    gateway.GetDrive(rootName, config.ApiKey, _fixture.GetParameters(config));
+                    gateway.GetDrive(rootName);
 
                     var directory = gateway.NewDirectoryItem(rootName, testDirectory.Id, "Directory");
                     gateway.NewFileItem(rootName, directory.Id, "File.ext", _smallContent.ToStream(), _fixture.GetProgressReporter());
@@ -575,7 +539,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
             _fixture.ExecuteByConfiguration((gateway, rootName, config) => {
                 using (var testDirectory = TestDirectoryFixture.CreateTestDirectory(gateway, config, _fixture))
                 {
-                    gateway.GetDrive(rootName, config.ApiKey, _fixture.GetParameters(config));
+                    gateway.GetDrive(rootName);
 
                     var file = gateway.NewFileItem(rootName, testDirectory.Id, "File.ext", _smallContent.ToStream(), _fixture.GetProgressReporter());
 
@@ -596,7 +560,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
             _fixture.ExecuteByConfiguration((gateway, rootName, config) => {
                 using (var testDirectory = TestDirectoryFixture.CreateTestDirectory(gateway, config, _fixture))
                 {
-                    gateway.GetDrive(rootName, config.ApiKey, _fixture.GetParameters(config));
+                    gateway.GetDrive(rootName);
 
                     var directory = gateway.NewDirectoryItem(rootName, testDirectory.Id, "Directory");
                     directory.Parent = testDirectory.ToContract();
@@ -619,7 +583,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
             _fixture.ExecuteByConfiguration((gateway, rootName, config) => {
                 using (var testDirectory = TestDirectoryFixture.CreateTestDirectory(gateway, config, _fixture))
                 {
-                    gateway.GetDrive(rootName, config.ApiKey, _fixture.GetParameters(config));
+                    gateway.GetDrive(rootName);
 
                     var file = gateway.NewFileItem(rootName, testDirectory.Id, "File.ext", _smallContent.ToStream(), _fixture.GetProgressReporter());
                     file.Directory = testDirectory.ToContract();

@@ -1,6 +1,5 @@
 ﻿using SAFE.Filesystem.Interface.IO;
 using SAFE.NetworkDrive.Interface;
-using SAFE.NetworkDrive.Interface.Composition;
 using SAFE.NetworkDrive.Interface.IO;
 using System;
 using System.Collections.Generic;
@@ -10,23 +9,22 @@ using System.Linq;
 namespace SAFE.NetworkDrive.Gateways.Memory
 {
     [System.Diagnostics.DebuggerDisplay("{DebuggerDisplay(),nq}")]
-    public sealed class MemoryGateway : ICloudGateway
+    public sealed class MemoryGateway : Interfaces.IMemoryGateway
     {
         readonly MemoryFolder _root = new MemoryFolder(null, string.Empty);
-        
+
         public const string PARAMETER_ROOT = "root";
         const string PATH_NOT_FOUND = "Path '{0}' does not exist";
         const string DUPLICATE_PATH = "'{0}' is already present";
         string _rootPath;
 
-        public bool TryAuthenticate(RootName root, string apiKey, IDictionary<string, string> parameters) => true;
-
-        public DriveInfoContract GetDrive(RootName root, string apiKey, IDictionary<string, string> parameters)
+        public DriveInfoContract GetDrive(RootName root)
         {
             if (root == null)
                 throw new ArgumentNullException(nameof(root));
-            if (parameters?.TryGetValue(PARAMETER_ROOT, out _rootPath) != true)
-                throw new ArgumentException($"Required {PARAMETER_ROOT} missing in {nameof(parameters)}".ToString(CultureInfo.CurrentCulture));
+            _rootPath = System.IO.Path.DirectorySeparatorChar.ToString();
+            //if (parameters?.TryGetValue(PARAMETER_ROOT, out _rootPath) != true)
+            //    throw new ArgumentException($"Required {PARAMETER_ROOT} missing in {nameof(parameters)}".ToString(CultureInfo.CurrentCulture));
             if (string.IsNullOrEmpty(_rootPath))
                 throw new ArgumentException($"{PARAMETER_ROOT} cannot be empty".ToString(CultureInfo.CurrentCulture));
 
@@ -47,7 +45,7 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             public long AvailableFreeSpace => System.Diagnostics.Process.GetCurrentProcess().VirtualMemorySize64; //long.MaxValue;//TotalSize - (long)_root.UsedSize;
         }
 
-        public RootDirectoryInfoContract GetRoot(RootName root, string apiKey, IDictionary<string, string> parameters)
+        public RootDirectoryInfoContract GetRoot(RootName root)
         {
             if (root == null)
                 throw new ArgumentNullException(nameof(root));
@@ -90,17 +88,17 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             if (directory.Exists())
                 return directory.EnumerateDirectories()
                     .Select(d => new DirectoryInfoContract(
-                        GetRelativePath(_rootPath, d.FullName), 
-                        d.Name, 
-                        d.CreationTime, 
+                        GetRelativePath(_rootPath, d.FullName),
+                        d.Name,
+                        d.CreationTime,
                         d.LastWriteTime))
                     .Cast<FileSystemInfoContract>()
                     .Concat(directory.EnumerateFiles()
                         .Select(f => new FileInfoContract(
-                            GetRelativePath(_rootPath, f.FullName), 
-                            f.Name, 
-                            f.CreationTime, 
-                            f.LastWriteTime, 
+                            GetRelativePath(_rootPath, f.FullName),
+                            f.Name,
+                            f.CreationTime,
+                            f.LastWriteTime,
                             (FileSize)f.Size, null))
                         .Cast<FileSystemInfoContract>());
             else
@@ -146,7 +144,7 @@ namespace SAFE.NetworkDrive.Gateways.Memory
                 throw new InvalidOperationException($"{nameof(_rootPath)} not initialized".ToString(CultureInfo.CurrentCulture));
 
             var file = GetFile(source);
-            
+
             return new System.IO.BufferedStream(file.OpenRead());
         }
 
@@ -196,8 +194,8 @@ namespace SAFE.NetworkDrive.Gateways.Memory
                 directory.CopyTo(directoryCopy, recurse);
                 return new DirectoryInfoContract(
                     GetRelativePath(_rootPath, directoryCopy.FullName),
-                    directoryCopy.Name, 
-                    directoryCopy.CreationTime, 
+                    directoryCopy.Name,
+                    directoryCopy.CreationTime,
                     directoryCopy.LastWriteTime);
             }
 
@@ -212,10 +210,10 @@ namespace SAFE.NetworkDrive.Gateways.Memory
                     parentFolder = _root.GetFolderByPath(parentFolderPath); // destinationPath
                 }
                 var fileCopy = file.CopyTo(parentFolder, copyName);
-                return new FileInfoContract(GetRelativePath(_rootPath, fileCopy.FullName), 
-                    fileCopy.Name, 
-                    fileCopy.CreationTime, 
-                    fileCopy.LastWriteTime, 
+                return new FileInfoContract(GetRelativePath(_rootPath, fileCopy.FullName),
+                    fileCopy.Name,
+                    fileCopy.CreationTime,
+                    fileCopy.LastWriteTime,
                     (FileSize)fileCopy.Size, null);
             }
 
@@ -250,9 +248,9 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             if (directory.Exists())
             {
                 directory.MoveTo(newParent, moveName);
-                return new DirectoryInfoContract(GetRelativePath(_rootPath, directory.FullName), 
-                    directory.Name, 
-                    directory.CreationTime, 
+                return new DirectoryInfoContract(GetRelativePath(_rootPath, directory.FullName),
+                    directory.Name,
+                    directory.CreationTime,
                     directory.LastWriteTime);
             }
 
@@ -260,10 +258,10 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             if (file.Exists())
             {
                 file.MoveTo(newParent, moveName);
-                return new FileInfoContract(GetRelativePath(_rootPath, file.FullName), 
-                    file.Name, 
-                    file.CreationTime, 
-                    file.LastWriteTime, 
+                return new FileInfoContract(GetRelativePath(_rootPath, file.FullName),
+                    file.Name,
+                    file.CreationTime,
+                    file.LastWriteTime,
                     (FileSize)file.Size, null);
             }
 
@@ -290,13 +288,13 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             _root.CreatePath(effectivePath);
             directory = _root.GetFolderByPath(effectivePath);
 
-            return new DirectoryInfoContract(GetRelativePath(_rootPath, directory.FullName), 
-                directory.Name, 
-                directory.CreationTime, 
+            return new DirectoryInfoContract(GetRelativePath(_rootPath, directory.FullName),
+                directory.Name,
+                directory.CreationTime,
                 directory.LastWriteTime);
         }
 
-        public FileInfoContract NewFileItem(RootName root, DirectoryId parent, 
+        public FileInfoContract NewFileItem(RootName root, DirectoryId parent,
             string name, System.IO.Stream content, IProgress<ProgressValue> progress)
         {
             if (root == null)
@@ -316,14 +314,14 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             var parentPath = GetFullPath(_rootPath, parent.Value);
             var parentDir = _root.GetFolderByPath(parentPath);
             file = MemoryFile.New(parentDir, name);
-            
+
             if (content != null)
                 content.CopyTo(file);
 
-            return new FileInfoContract(GetRelativePath(_rootPath, file.FullName), 
-                file.Name, 
-                file.CreationTime, 
-                file.LastWriteTime, 
+            return new FileInfoContract(GetRelativePath(_rootPath, file.FullName),
+                file.Name,
+                file.CreationTime,
+                file.LastWriteTime,
                 (FileSize)file.Size, null);
         }
 
@@ -376,9 +374,9 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             if (directory.Exists())
             {
                 directory.MoveTo(destination, newName);
-                return new DirectoryInfoContract(GetRelativePath(_rootPath, directory.FullName), 
-                    directory.Name, 
-                    directory.CreationTime, 
+                return new DirectoryInfoContract(GetRelativePath(_rootPath, directory.FullName),
+                    directory.Name,
+                    directory.CreationTime,
                     directory.LastWriteTime);
             }
 
@@ -386,10 +384,10 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             if (file.Exists())
             {
                 file.MoveTo(destination, newName);
-                return new FileInfoContract(GetRelativePath(_rootPath, file.FullName), 
-                    file.Name, 
-                    file.CreationTime, 
-                    file.LastWriteTime, 
+                return new FileInfoContract(GetRelativePath(_rootPath, file.FullName),
+                    file.Name,
+                    file.CreationTime,
+                    file.LastWriteTime,
                     (FileSize)file.Size, null);
             }
 

@@ -12,11 +12,11 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         public DriveReader(SAFENetworkDriveCache gateway)
             => _gateway = gateway;
 
-        public DriveInfoContract GetDrive(RootName root, string apiKey, IDictionary<string, string> parameters)
-            => _gateway.GetDrive(root, apiKey, parameters);
+        public DriveInfoContract GetDrive(RootName root)
+            => _gateway.GetDrive(root);
 
-        public RootDirectoryInfoContract GetRoot(RootName root, string apiKey, IDictionary<string, string> parameters)
-            => _gateway.GetRoot(root, apiKey, parameters);
+        public RootDirectoryInfoContract GetRoot(RootName root)
+            => _gateway.GetRoot(root);
 
         public IEnumerable<FileSystemInfoContract> GetChildItem(RootName root, DirectoryId parent)
             => _gateway.GetChildItem(root, parent);

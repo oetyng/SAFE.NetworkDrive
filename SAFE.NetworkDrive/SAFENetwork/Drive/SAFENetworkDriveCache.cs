@@ -1,6 +1,5 @@
 ﻿using SAFE.NetworkDrive.IO;
 using SAFE.NetworkDrive.Interface;
-using SAFE.NetworkDrive.Interface.Composition;
 using SAFE.NetworkDrive.Interface.IO;
 using SAFE.NetworkDrive.Replication.Events;
 using System;
@@ -12,7 +11,7 @@ using SAFE.Data.Client;
 namespace SAFE.NetworkDrive.Gateways.Memory
 {
     [System.Diagnostics.DebuggerDisplay("{DebuggerDisplay(),nq}")]
-    public sealed class SAFENetworkDriveCache : ICloudGateway
+    public sealed class SAFENetworkDriveCache
     {
         readonly IImDStore _imdStore;
         readonly MemoryGateway _localState;
@@ -25,13 +24,11 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             _contentCache = new ConcurrentDictionary<FileId, byte[]>();
         }
 
-        public bool TryAuthenticate(RootName root, string apiKey, IDictionary<string, string> parameters) => true;
+        public DriveInfoContract GetDrive(RootName root)
+            => _localState.GetDrive(root);
 
-        public DriveInfoContract GetDrive(RootName root, string apiKey, IDictionary<string, string> parameters)
-            => _localState.GetDrive(root, apiKey, parameters);
-
-        public RootDirectoryInfoContract GetRoot(RootName root, string apiKey, IDictionary<string, string> parameters)
-            => _localState.GetRoot(root, apiKey, parameters);
+        public RootDirectoryInfoContract GetRoot(RootName root)
+            => _localState.GetRoot(root);
 
         public IEnumerable<FileSystemInfoContract> GetChildItem(RootName root, DirectoryId parent)
             => _localState.GetChildItem(root, parent);

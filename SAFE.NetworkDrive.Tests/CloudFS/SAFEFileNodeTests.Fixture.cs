@@ -1,28 +1,4 @@
-﻿/*
-The MIT License(MIT)
-
-Copyright(c) 2015 IgorSoft
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -32,7 +8,7 @@ using SAFE.Filesystem.Interface.IO;
 
 namespace SAFE.NetworkDrive.Tests
 {
-    public sealed partial class CloudFileNodeTests
+    public sealed partial class SAFEFileNodeTests
     {
         internal class Fixture
         {
@@ -40,10 +16,10 @@ namespace SAFE.NetworkDrive.Tests
             const long _freeSpace = 64 * 1 << 20;
             const long _usedSpace = 36 * 1 << 20;
 
-            readonly Mock<ICloudDrive> _drive;
-            readonly CloudDirectoryNode _root;
+            readonly Mock<ISAFEDrive> _drive;
+            readonly SAFEDirectoryNode _root;
 
-            public ICloudDrive Drive => _drive.Object;
+            public ISAFEDrive Drive => _drive.Object;
             public readonly FileInfoContract TestFile = new FileInfoContract(@"\File.ext", "File.ext", "2015-01-02 10:11:12".ToDateTime(), "2015-01-02 20:21:22".ToDateTime(), new FileSize("16kB"), "16384".ToHash());
             public readonly ProxyFileInfoContract ProxyTestFile = new ProxyFileInfoContract("File.ext");
             public readonly DirectoryInfoContract ProxyParentDirectory = new DirectoryInfoContract(@"\Dir", "Dir", "2016-01-01 10:11:12".ToDateTime(), "2016-01-01 20:21:22".ToDateTime());
@@ -58,18 +34,18 @@ namespace SAFE.NetworkDrive.Tests
 
             public static Fixture Initialize() => new Fixture();
 
-            private Fixture()
+            Fixture()
             {
-                _drive = new Mock<ICloudDrive>(MockBehavior.Strict);
-                _root = new CloudDirectoryNode(new RootDirectoryInfoContract(Path.DirectorySeparatorChar.ToString(), "2015-01-01 00:00:00".ToDateTime(), "2015-01-01 00:00:00".ToDateTime()) {
+                _drive = new Mock<ISAFEDrive>(MockBehavior.Strict);
+                _root = new SAFEDirectoryNode(new RootDirectoryInfoContract(Path.DirectorySeparatorChar.ToString(), "2015-01-01 00:00:00".ToDateTime(), "2015-01-01 00:00:00".ToDateTime()) {
                     Drive = new DriveInfoContract(_mountPoint, _freeSpace, _usedSpace)
-                }) { children = new Dictionary<string, CloudItemNode>() };
+                }) { children = new Dictionary<string, SAFEItemNode>() };
             }
 
-            public CloudFileNode GetFile(FileInfoContract contract, DirectoryInfoContract parent = null)
+            public SAFEFileNode GetFile(FileInfoContract contract, DirectoryInfoContract parent = null)
             {
-                var result = new CloudFileNode(contract);
-                result.SetParent(parent != null ? new CloudDirectoryNode(parent) : _root);
+                var result = new SAFEFileNode(contract);
+                result.SetParent(parent != null ? new SAFEDirectoryNode(parent) : _root);
                 return result;
             }
 
@@ -103,27 +79,18 @@ namespace SAFE.NetworkDrive.Tests
             }
 
             public void SetupRemove(FileInfoContract target)
-            {
-                _drive
-                    .Setup(d => d.RemoveItem(target, false));
-            }
+                => _drive
+                     .Setup(d => d.RemoveItem(target, false));
 
             public void SetupSetContent(FileInfoContract file, byte[] content)
-            {
-                _drive
-                    .Setup(d => d.SetContent(file, It.Is<Stream>(s => s.Contains(content))));
-            }
+                => _drive
+                        .Setup(d => d.SetContent(file, It.Is<Stream>(s => s.Contains(content))));
 
             public void SetupTruncate(FileInfoContract file)
-            {
-                _drive
+                => _drive
                     .Setup(d => d.SetContent(file, It.Is<Stream>(m => m.Length == 0)));
-            }
 
-            public void VerifyAll()
-            {
-                _drive.VerifyAll();
-            }
+            public void VerifyAll() => _drive.VerifyAll();
         }
     }
 }

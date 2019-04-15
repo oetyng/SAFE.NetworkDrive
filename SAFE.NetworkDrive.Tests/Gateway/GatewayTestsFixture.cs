@@ -29,7 +29,6 @@ using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SAFE.NetworkDrive.Interface.Composition;
 using SAFE.NetworkDrive.Interface;
 using SAFE.NetworkDrive.Tests.Gateway.Config;
 using SAFE.NetworkDrive.Gateways;
@@ -47,8 +46,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
         static Dictionary<string, GatewaySection> _gatewaySections;
         static readonly ConcurrentDictionary<string, byte[]> _cache = new ConcurrentDictionary<string, byte[]>();
 
-        public Dictionary<string, IAsyncCloudGateway> AsyncGateways { get; } = new Dictionary<string, IAsyncCloudGateway>();
-        public Dictionary<string, ICloudGateway> Gateways { get; } = new Dictionary<string, ICloudGateway>();
+        public Dictionary<string, Interfaces.IMemoryGateway> Gateways { get; } = new Dictionary<string, Interfaces.IMemoryGateway>();
         
         [AssemblyInitialize]
         public static void Initialize(TestContext context)
@@ -63,12 +61,8 @@ namespace SAFE.NetworkDrive.Tests.Gateway
                 throw new ArgumentNullException("Test configuration missing"); // ConfigurationErrorsException
         }
 
-        static void Log(string message)
-        {
-            Console.WriteLine(message);
-        }
+        static void Log(string message) => Console.WriteLine(message);
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1026:DefaultParametersShouldNotBeUsed")]
         public static IEnumerable<GatewaySection> GetGatewayConfigurations(GatewayType type, GatewayCapabilities capability)
         {
             return _gatewaySections.Values.Where(g => 
@@ -76,21 +70,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
                 !g.Exclusions.HasFlag(capability))) ?? Enumerable.Empty<GatewaySection>();
         }
 
-        public IAsyncCloudGateway GetAsyncGateway(GatewaySection config)
-        {
-            if (!AsyncGateways.ContainsKey(config.Schema))
-            {
-                switch (config.Schema)
-                {
-                    case "async":
-                        AsyncGateways[config.Schema] = new Moq.Mock<IAsyncCloudGateway>().Object;
-                        break;
-                }
-            }
-            return AsyncGateways[config.Schema];
-        }
-
-        public ICloudGateway GetGateway(GatewaySection config)
+        public Interfaces.IMemoryGateway GetGateway(GatewaySection config)
         {
             if (!Gateways.ContainsKey(config.Schema))
             {
@@ -134,7 +114,6 @@ namespace SAFE.NetworkDrive.Tests.Gateway
             return result;
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
         void CallTimedTestOnConfig<TGateway>(Action<TGateway, RootName, GatewaySection> test, GatewaySection config, Func<GatewaySection, TGateway> getGateway, IDictionary<string, Exception> failures)
         {
             try
@@ -183,21 +162,9 @@ namespace SAFE.NetworkDrive.Tests.Gateway
                 throw new AggregateException("Test failed in " + string.Join(", ", failures.Select(t => t.Key)), failures.Select(t => t.Value));
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1026:DefaultParametersShouldNotBeUsed")]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
-        public void ExecuteByConfiguration(Action<IAsyncCloudGateway, RootName, GatewaySection> test, int maxDegreeOfParallelism = int.MaxValue)
-        {
-            ExecuteByConfiguration(test, GatewayType.Async, config => GetAsyncGateway(config), maxDegreeOfParallelism);
-        }
+        public void ExecuteByConfiguration(Action<Interfaces.IMemoryGateway, RootName, GatewaySection> test, int maxDegreeOfParallelism = int.MaxValue)
+            => ExecuteByConfiguration(test, GatewayType.Sync, config => GetGateway(config), maxDegreeOfParallelism);
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1026:DefaultParametersShouldNotBeUsed")]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
-        public void ExecuteByConfiguration(Action<ICloudGateway, RootName, GatewaySection> test, int maxDegreeOfParallelism = int.MaxValue)
-        {
-            ExecuteByConfiguration(test, GatewayType.Sync, config => GetGateway(config), maxDegreeOfParallelism);
-        }
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate")]
         public IProgress<ProgressValue> GetProgressReporter() => new NullProgressReporter();
 
         public void OnCondition(GatewaySection config, GatewayCapabilities capability, Action action)

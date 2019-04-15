@@ -15,7 +15,7 @@ namespace SAFE.NetworkDrive.Fuse
         public FuseMounter(DriveConfig config)
             => _config = config;
 
-        public Task Mount(ICloudDrive drive, ILogger logger, CancellationTokenSource cancellation)
+        public Task Mount(ISAFEDrive drive, ILogger logger, CancellationTokenSource cancellation)
         {
             _logger = logger;
             _operations = new FuseOperations(drive, logger);

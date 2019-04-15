@@ -34,19 +34,19 @@ using SAFE.NetworkDrive.IO;
 namespace SAFE.NetworkDrive
 {
     [System.Diagnostics.DebuggerDisplay("{DebuggerDisplay,nq}")]
-    internal partial class CloudOperations : IDokanOperations
+    internal partial class SAFEFSOperations : IDokanOperations
     {
         [System.Diagnostics.DebuggerDisplay("{DebuggerDisplay,nq}")]
         class StreamContext : IDisposable
         {
-            public CloudFileNode File { get; }
+            public SAFEFileNode File { get; }
             public FileAccess Access { get; }
             public Stream Stream { get; set; }
             public Task Task { get; set; }
             public bool IsLocked { get; set; }
             public bool CanWriteDelayed => Access.HasFlag(FileAccess.WriteData) && (Stream?.CanRead ?? false) && Task == null;
 
-            public StreamContext(CloudFileNode file, FileAccess access)
+            public StreamContext(SAFEFileNode file, FileAccess access)
             {
                 File = file;
                 Access = access;
@@ -60,28 +60,28 @@ namespace SAFE.NetworkDrive
             string DebuggerDisplay => $"{nameof(StreamContext)} {File.Name} [{Access}] [{nameof(Stream.Length)}={((Stream?.CanSeek ?? false) ? Stream.Length : 0)}] [{nameof(Task.Status)}={Task?.Status}] {nameof(IsLocked)}={IsLocked}".ToString(CultureInfo.CurrentCulture);
         }
 
-        ICloudDrive _drive;
-        CloudDirectoryNode _root;
+        ISAFEDrive _drive;
+        SAFEDirectoryNode _root;
         ILogger _logger;
 
         static readonly IList<FileInformation> emptyDirectoryDefaultFiles = new[] { ".", ".." }.Select(fileName =>
             new FileInformation() { FileName = fileName, Attributes = FileAttributes.Directory, CreationTime = DateTime.Today, LastWriteTime = DateTime.Today, LastAccessTime = DateTime.Today }
         ).ToList();
 
-        public CloudOperations(ICloudDrive drive, ILogger logger)
+        public SAFEFSOperations(ISAFEDrive drive, ILogger logger)
         {
             _drive = drive ?? throw new ArgumentNullException(nameof(drive));
             _logger = logger;
         }
 
-        private CloudItemNode GetItem(string fileName)
+        private SAFEItemNode GetItem(string fileName)
         {
-            var result = _root ?? (_root = new CloudDirectoryNode(_drive.GetRoot())) as CloudItemNode;
+            var result = _root ?? (_root = new SAFEDirectoryNode(_drive.GetRoot())) as SAFEItemNode;
 
             var pathSegments = new Queue<string>(fileName.Split(new[] { Path.DirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries));
 
             while (result != null && pathSegments.Count > 0)
-                result = (result as CloudDirectoryNode)?.GetChildItemByName(_drive, pathSegments.Dequeue());
+                result = (result as SAFEDirectoryNode)?.GetChildItemByName(_drive, pathSegments.Dequeue());
 
             return result;
         }
@@ -93,7 +93,7 @@ namespace SAFE.NetworkDrive
 
             if (info.DeleteOnClose)
             {
-                (GetItem(fileName) as CloudFileNode)?.Remove(_drive);
+                (GetItem(fileName) as SAFEFileNode)?.Remove(_drive);
             }
             else if (!info.IsDirectory)
             {
@@ -165,17 +165,17 @@ namespace SAFE.NetworkDrive
 
             fileName = fileName.TrimEnd(Path.DirectorySeparatorChar);
 
-            var parent = GetItem(Path.GetDirectoryName(fileName)) as CloudDirectoryNode;
+            var parent = GetItem(Path.GetDirectoryName(fileName)) as SAFEDirectoryNode;
             if (parent == null)
                 return AsDebug(nameof(CreateFile), fileName, info, access, share, mode, options, attributes, DokanResult.PathNotFound);
 
             var itemName = Path.GetFileName(fileName);
             var item = parent.GetChildItemByName(_drive, itemName);
-            CloudFileNode fileItem;
+            SAFEFileNode fileItem;
             switch (mode)
             {
                 case FileMode.Create:
-                    fileItem = item as CloudFileNode;
+                    fileItem = item as SAFEFileNode;
                     if (fileItem != null)
                         fileItem.Truncate(_drive);
                     else
@@ -185,7 +185,7 @@ namespace SAFE.NetworkDrive
 
                     return AsTrace(nameof(CreateFile), fileName, info, access, share, mode, options, attributes, DokanResult.Success);
                 case FileMode.Open:
-                    fileItem = item as CloudFileNode;
+                    fileItem = item as SAFEFileNode;
                     if (fileItem != null)
                     {
                         if (access.HasFlag(FileAccess.ReadData) || access.HasFlag(FileAccess.GenericRead) || access.HasFlag(FileAccess.ReadAttributes))
@@ -206,7 +206,7 @@ namespace SAFE.NetworkDrive
                     else
                         return AsError(nameof(CreateFile), fileName, info, access, share, mode, options, attributes, DokanResult.FileNotFound);
                 case FileMode.OpenOrCreate:
-                    fileItem = item as CloudFileNode ?? parent.NewFileItem(_drive, itemName);
+                    fileItem = item as SAFEFileNode ?? parent.NewFileItem(_drive, itemName);
 
                     if (access.HasFlag(FileAccess.ReadData) && !access.HasFlag(FileAccess.WriteData))
                         info.Context = new StreamContext(fileItem, FileAccess.ReadData);
@@ -229,7 +229,7 @@ namespace SAFE.NetworkDrive
                 case FileMode.Append:
                     return AsError(nameof(CreateFile), fileName, info, access, share, mode, options, attributes, DokanResult.NotImplemented);
                 case FileMode.Truncate:
-                    fileItem = item as CloudFileNode;
+                    fileItem = item as SAFEFileNode;
                     if (fileItem == null)
                         return AsDebug(nameof(CreateFile), fileName, info, access, share, mode, options, attributes, DokanResult.FileNotFound);
 
@@ -245,7 +245,7 @@ namespace SAFE.NetworkDrive
 
         public NtStatus DeleteDirectory(string fileName, DokanFileInfo info)
         {
-            var item = GetItem(fileName) as CloudDirectoryNode;
+            var item = GetItem(fileName) as SAFEDirectoryNode;
             if (item == null)
                 return AsDebug(nameof(DeleteDirectory), fileName, info, DokanResult.PathNotFound);
             if (item.GetChildItems(_drive).Any())
@@ -268,15 +268,15 @@ namespace SAFE.NetworkDrive
 
         public NtStatus FindFiles(string fileName, out IList<FileInformation> files, DokanFileInfo info)
         {
-            var parent = GetItem(fileName) as CloudDirectoryNode;
+            var parent = GetItem(fileName) as SAFEDirectoryNode;
 
             var childItems = parent.GetChildItems(_drive).Where(i => i.IsResolved).ToList();
             files = childItems.Any()
                 ? childItems.Select(i => new FileInformation()
                 {
                     FileName = i.Name,
-                    Length = (i as CloudFileNode)?.Contract.Size ?? FileSize.Empty,
-                    Attributes = i is CloudDirectoryNode ? FileAttributes.Directory : FileAttributes.NotContentIndexed,
+                    Length = (i as SAFEFileNode)?.Contract.Size ?? FileSize.Empty,
+                    Attributes = i is SAFEDirectoryNode ? FileAttributes.Directory : FileAttributes.NotContentIndexed,
                     CreationTime = i.Contract.Created.DateTime,
                     LastWriteTime = i.Contract.Updated.DateTime,
                     LastAccessTime = i.Contract.Updated.DateTime
@@ -291,7 +291,7 @@ namespace SAFE.NetworkDrive
             if (searchPattern == null)
                 throw new ArgumentNullException(nameof(searchPattern));
 
-            var parent = GetItem(fileName) as CloudDirectoryNode;
+            var parent = GetItem(fileName) as SAFEDirectoryNode;
 
             var childItems = parent
                 .GetChildItems(_drive)
@@ -304,8 +304,8 @@ namespace SAFE.NetworkDrive
                     .Select(i => new FileInformation()
                     {
                         FileName = i.Name,
-                        Length = (i as CloudFileNode)?.Contract.Size ?? FileSize.Empty,
-                        Attributes = i is CloudDirectoryNode ? FileAttributes.Directory : FileAttributes.NotContentIndexed,
+                        Length = (i as SAFEFileNode)?.Contract.Size ?? FileSize.Empty,
+                        Attributes = i is SAFEDirectoryNode ? FileAttributes.Directory : FileAttributes.NotContentIndexed,
                         CreationTime = i.Contract.Created.DateTime,
                         LastWriteTime = i.Contract.Updated.DateTime,
                         LastAccessTime = i.Contract.Updated.DateTime
@@ -362,8 +362,8 @@ namespace SAFE.NetworkDrive
             fileInfo = new FileInformation()
             {
                 FileName = fileName,
-                Length = (info.Context as StreamContext)?.Stream?.Length ?? (item as CloudFileNode)?.Contract.Size ?? FileSize.Empty,
-                Attributes = item is CloudDirectoryNode ? FileAttributes.Directory : FileAttributes.NotContentIndexed,
+                Length = (info.Context as StreamContext)?.Stream?.Length ?? (item as SAFEFileNode)?.Contract.Size ?? FileSize.Empty,
+                Attributes = item is SAFEDirectoryNode ? FileAttributes.Directory : FileAttributes.NotContentIndexed,
                 CreationTime = item.Contract.Created.DateTime,
                 LastWriteTime = item.Contract.Updated.DateTime,
                 LastAccessTime = item.Contract.Updated.DateTime
@@ -418,7 +418,7 @@ namespace SAFE.NetworkDrive
             if (item == null)
                 return AsWarn(nameof(MoveFile), oldName, info, DokanResult.FileNotFound, newName, replace.ToString(CultureInfo.InvariantCulture));
 
-            var destinationDirectory = GetItem(Path.GetDirectoryName(newName)) as CloudDirectoryNode;
+            var destinationDirectory = GetItem(Path.GetDirectoryName(newName)) as SAFEDirectoryNode;
             if (destinationDirectory == null)
                 return AsWarn(nameof(MoveFile), oldName, info, DokanResult.PathNotFound, newName, replace.ToString(CultureInfo.InvariantCulture));
 
@@ -429,7 +429,7 @@ namespace SAFE.NetworkDrive
 
         public NtStatus OpenDirectory(string fileName, DokanFileInfo info)
         {
-            var item = GetItem(fileName) as CloudDirectoryNode;
+            var item = GetItem(fileName) as SAFEDirectoryNode;
             if (item == null)
                 return AsDebug(nameof(OpenDirectory), fileName, info, DokanResult.PathNotFound);
 
@@ -596,6 +596,6 @@ namespace SAFE.NetworkDrive
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Debugger Display")]
         [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-        string DebuggerDisplay => $"{nameof(CloudOperations)} drive={_drive} root={_root}".ToString(CultureInfo.CurrentCulture);
+        string DebuggerDisplay => $"{nameof(SAFEFSOperations)} drive={_drive} root={_root}".ToString(CultureInfo.CurrentCulture);
     }
 }

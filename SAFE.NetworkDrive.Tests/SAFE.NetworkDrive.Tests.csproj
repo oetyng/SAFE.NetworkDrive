@@ -5,6 +5,7 @@
     <LangVersion>8.0</LangVersion>
     <IsPackable>false</IsPackable>
     <Platforms>x64</Platforms>
+    <DefineConstants>TRACE;SAFE_APP_MOCK</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -26,6 +27,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SAFE.NetworkDrive.Dokan.Mounter\SAFE.NetworkDrive.Dokan.Mounter.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="SafeApp.MockAuthBindings">
+      <HintPath>..\..\..\..\.nuget\packages\maidsafe.safeapp\0.2.1\build\netcoreapp1.0\SafeApp.MockAuthBindings.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>

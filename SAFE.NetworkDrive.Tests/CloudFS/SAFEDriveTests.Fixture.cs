@@ -23,36 +23,33 @@ SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
 using Moq;
 using SAFE.NetworkDrive.Interface;
-using SAFE.NetworkDrive.Interface.Composition;
 using SAFE.NetworkDrive.Interface.IO;
 using SAFE.NetworkDrive.IO;
-using SAFE.NetworkDrive.Parameters;
 using SAFE.Filesystem.Interface.IO;
 
 namespace SAFE.NetworkDrive.Tests
 {
-    public sealed partial class CloudDriveTests
+    public sealed partial class SAFEDriveTests
     {
         internal class Fixture
         {
             public const string MOUNT_POINT = "Z";
             public const string SCHEMA = "mock";
-            public const string VOLUME_ID = "VOLUME_ID";
+            public const string VOLUME_ID = "00000000000000000000000000000000";
             public const long FREE_SPACE = 64 * 1 << 20;
             public const long USED_SPACE = 36 * 1 << 20;
 
-            readonly Mock<ICloudGateway> _gateway;
+            readonly Mock<ISAFEGateway> _gateway;
             readonly RootDirectoryInfoContract _root;
             readonly RootName _rootName = new RootName(SCHEMA, VOLUME_ID, MOUNT_POINT);
 
-            public ICloudGateway Gateway => _gateway.Object;
+            public ISAFEGateway Gateway => _gateway.Object;
             public readonly DirectoryInfoContract TargetDirectory = new DirectoryInfoContract(@"\SubDir", "SubDir", "2015-01-01 10:11:12".ToDateTime(), "2015-01-01 20:21:22".ToDateTime());
 
             public FileSystemInfoContract[] RootDirectoryItems { get; } = new FileSystemInfoContract[] {
@@ -67,43 +64,34 @@ namespace SAFE.NetworkDrive.Tests
 
             private Fixture()
             {
-                _gateway = new Mock<ICloudGateway>(MockBehavior.Strict);
+                _gateway = new Mock<ISAFEGateway>(MockBehavior.Strict);
                 _root = new RootDirectoryInfoContract(Path.DirectorySeparatorChar.ToString(), "2015-01-01 00:00:00".ToDateTime(), "2015-01-01 00:00:00".ToDateTime()) {
                     Drive = new DriveInfoContract(MOUNT_POINT, FREE_SPACE, USED_SPACE)
                 };
             }
 
-            public CloudDrive Create(string apiKey, string encryptionKey)
-                => new CloudDrive(new RootName(SCHEMA, VOLUME_ID, MOUNT_POINT), 
-                        _gateway.Object, 
-                        new CloudDriveParameters() { ApiKey = apiKey, EncryptionKey = encryptionKey });
+            public SAFEDrive Create()
+                => new SAFEDrive(new RootName(SCHEMA, VOLUME_ID, MOUNT_POINT), _gateway.Object);
 
-            public void SetupTryAuthenticate(string apiKey, IDictionary<string, string> parameters)
+            public void SetupGetDrive()
             {
                 _gateway
-                    .Setup(g => g.TryAuthenticate(_rootName, apiKey, parameters))
-                    .Returns(true);
-            }
-
-            public void SetupGetDrive(string apiKey, IDictionary<string, string> parameters)
-            {
-                _gateway
-                    .Setup(g => g.GetDrive(_rootName, apiKey, parameters))
+                    .Setup(g => g.GetDrive(_rootName))
                     .Returns(_root.Drive);
             }
 
-            public void SetupGetDriveThrows<TException>(string apiKey, IDictionary<string, string> parameters)
+            public void SetupGetDriveThrows<TException>()
                 where TException : Exception, new()
             {
                 _gateway
-                    .Setup(g => g.GetDrive(_rootName, apiKey, parameters))
+                    .Setup(g => g.GetDrive(_rootName))
                     .Throws(new AggregateException(Activator.CreateInstance<TException>()));
             }
 
-            public void SetupGetRoot(string apiKey, IDictionary<string, string> parameters)
+            public void SetupGetRoot()
             {
                 _gateway
-                    .Setup(g => g.GetRoot(_rootName, apiKey, parameters))
+                    .Setup(g => g.GetRoot(_rootName))
                     .Returns(_root);
             }
 
@@ -125,8 +113,6 @@ namespace SAFE.NetworkDrive.Tests
             {
                 // The first constructor does not expose the underlying stream. GetBuffer throws UnauthorizedAccessException.
                 var stream = new MemoryStream(content, 0, content.Length, false, publiclyVisible: true); // publiclyVisible: true to enable GetBuffer(), which returns the unsigned byte array from which the stream was created; otherwise, false.
-                //if (!string.IsNullOrEmpty(encryptionKey))
-                //    stream = Encryption.StreamCrypto.Encrypt(encryptionKey, stream);
                 if (!canSeek)
                     stream = new LinearReadMemoryStream(stream);
                 _gateway
@@ -134,18 +120,12 @@ namespace SAFE.NetworkDrive.Tests
                     .Returns(stream);
             }
 
-            public void SetupSetContent(FileInfoContract target, byte[] content, string encryptionKey)
+            public void SetupSetContent(FileInfoContract target, byte[] content)
             {
-                Func<Stream, bool> checkContent = stream => {
-                    //if (!string.IsNullOrEmpty(encryptionKey))
-                    //{
-                    //    var buffer = Encryption.StreamCrypto.Decrypt(encryptionKey, stream);
-                    //    return buffer.Contains(content);
-                    //}
-                    return stream.Contains(content);
-                };
+                Func<Stream, bool> checkContent = stream => stream.Contains(content);
                 _gateway
-                    .Setup(g => g.SetContent(_rootName, target.Id, It.Is<Stream>(s => checkContent(s)), It.IsAny<IProgress<ProgressValue>>()));
+                    .Setup(g => g.SetContent(_rootName, target.Id, It.Is<Stream>(s => checkContent(s)), It.IsAny<IProgress<ProgressValue>>(), It.IsAny<Func<FileSystemInfoLocator>>()))
+                    .Returns(true);
             }
 
             public void SetupMoveDirectoryOrFile(FileSystemInfoContract directoryOrFile, DirectoryInfoContract target)
@@ -157,8 +137,8 @@ namespace SAFE.NetworkDrive.Tests
             void SetupMoveItem(FileSystemInfoContract directoryOrFile, string name, DirectoryInfoContract target)
             {
                 _gateway
-                    .Setup(g => g.MoveItem(_rootName, directoryOrFile.Id, name, target.Id))
-                    .Returns((RootName _rootName, FileSystemId source, string movePath, DirectoryId destination) => {
+                    .Setup(g => g.MoveItem(_rootName, directoryOrFile.Id, name, target.Id, It.IsAny<Func<FileSystemInfoLocator>>()))
+                    .Returns((RootName _rootName, FileSystemId source, string movePath, DirectoryId destination, Func<FileSystemInfoLocator> resolver) => {
                         var directorySource = source as DirectoryId;
                         if (directorySource != null)
                             return new DirectoryInfoContract(source.Value, movePath, directoryOrFile.Created, directoryOrFile.Updated) { Parent = target };
@@ -176,25 +156,18 @@ namespace SAFE.NetworkDrive.Tests
                     .Returns(new DirectoryInfoContract(parent.Id + Path.DirectorySeparatorChar.ToString() + directoryName, directoryName, DateTimeOffset.Now, DateTimeOffset.Now));
             }
 
-            public void SetupNewFileItem(DirectoryInfoContract parent, string fileName, byte[] content, string encryptionKey)
+            public void SetupNewFileItem(DirectoryInfoContract parent, string fileName, byte[] content)
             {
-                Func<Stream, bool> checkContent = stream => {
-                    //if (!string.IsNullOrEmpty(encryptionKey)) {
-                    //    var buffer = Encryption.StreamCrypto.Decrypt(encryptionKey, stream);
-                    //    return buffer.Contains(content);
-                    //}
-                    return stream.Contains(content);
-                };
+                Func<Stream, bool> checkContent = stream => stream.Contains(content);
                 _gateway
                     .Setup(g => g.NewFileItem(_rootName, parent.Id, fileName, It.Is<Stream>(s => checkContent(s)), It.IsAny<IProgress<ProgressValue>>()))
                     .Returns(new FileInfoContract(parent.Id + Path.DirectorySeparatorChar.ToString() + fileName, fileName, DateTimeOffset.Now, DateTimeOffset.Now, (FileSize)content.Length, Encoding.Default.GetString(content).ToHash()));
             }
 
             public void SetupRemoveDirectoryOrFile(FileSystemInfoContract directoryOrFile, bool recurse)
-            {
-                _gateway
-                    .Setup(g => g.RemoveItem(_rootName, directoryOrFile.Id, recurse));
-            }
+                => _gateway
+                    .Setup(g => g.RemoveItem(_rootName, directoryOrFile.Id, recurse))
+                    .Returns(true);
 
             public void VerifyAll() => _gateway.VerifyAll();
         }

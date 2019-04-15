@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MaidSafe.SafeApp" Version="0.2.0" />
+    <PackageReference Include="MaidSafe.SafeApp" Version="0.2.1" />
   </ItemGroup>
 
   <ItemGroup>

@@ -63,7 +63,7 @@ namespace SAFE.NetworkDrive.Mounter.Config
             var volumeId = Scrambler.VolumeId(volumeNr, _password);
             var (locator, secret) = GetLocatorAndSecret(volumeId);
 
-            var dirPath = Path.DirectorySeparatorChar.ToString();
+            //var dirPath = Path.DirectorySeparatorChar.ToString();
             return new DriveConfig
             {
                 Locator = locator,
@@ -72,7 +72,7 @@ namespace SAFE.NetworkDrive.Mounter.Config
                 VolumeNr = volumeNr,
                 VolumeId = volumeId,
                 Schema = "safenetworkdrive_v1",
-                Parameters = $"root={dirPath}"
+                //Parameters = $"root={dirPath}"
             };
         }
 

@@ -23,10 +23,8 @@ SOFTWARE.
 */
 
 using SAFE.NetworkDrive.Interface;
-using SAFE.NetworkDrive.Interface.Composition;
 using SAFE.NetworkDrive.Tests.Gateway.Config;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace SAFE.NetworkDrive.Tests.Gateway
@@ -35,21 +33,19 @@ namespace SAFE.NetworkDrive.Tests.Gateway
     {
         class TestDirectoryFixture : IDisposable
         {
-            readonly ICloudGateway _gateway;
-
+            readonly Interfaces.IMemoryGateway _gateway;
             readonly RootName _root;
-
             readonly DirectoryInfoContract _directory;
 
             internal DirectoryId Id => _directory.Id;
 
-            private TestDirectoryFixture(ICloudGateway gateway, RootName root, string apiKey, IDictionary<string, string> parameters, string path)
+            TestDirectoryFixture(Interfaces.IMemoryGateway gateway, RootName root, string path)
             {
                 _gateway = gateway;
                 _root = root;
 
-                gateway.GetDrive(root, apiKey, parameters);
-                var rootDirectory = gateway.GetRoot(root, apiKey, parameters);
+                gateway.GetDrive(root);
+                var rootDirectory = gateway.GetRoot(root);
 
                 var residualDirectory = gateway.GetChildItem(root, rootDirectory.Id).SingleOrDefault(f => f.Name == path) as DirectoryInfoContract;
                 if (residualDirectory != null)
@@ -58,20 +54,14 @@ namespace SAFE.NetworkDrive.Tests.Gateway
                 _directory = gateway.NewDirectoryItem(root, rootDirectory.Id, path);
             }
 
-            internal static TestDirectoryFixture CreateTestDirectory(ICloudGateway gateway, GatewaySection config, GatewayTestsFixture fixture)
-            {
-                return new TestDirectoryFixture(gateway, fixture.GetRootName(config), config.ApiKey, fixture.GetParameters(config), config.TestDirectory);
-            }
+            internal static TestDirectoryFixture CreateTestDirectory(Interfaces.IMemoryGateway gateway, GatewaySection config, GatewayTestsFixture fixture)
+                => new TestDirectoryFixture(gateway, fixture.GetRootName(config), config.TestDirectory);
 
             internal DirectoryInfoContract ToContract()
-            {
-                return _directory;
-            }
+                => _directory;
 
             void IDisposable.Dispose()
-            {
-                _gateway.RemoveItem(_root, _directory.Id, true);
-            }
+                => _gateway.RemoveItem(_root, _directory.Id, true);
         }
     }
 }

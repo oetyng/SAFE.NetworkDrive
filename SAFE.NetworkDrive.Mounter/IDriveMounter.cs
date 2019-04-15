@@ -5,7 +5,7 @@ namespace SAFE.NetworkDrive.Mounter
 {
     public interface IDriveMounter
     {
-        Task Mount(ICloudDrive drive, ILogger logger, CancellationTokenSource cancellation);
+        Task Mount(ISAFEDrive drive, ILogger logger, CancellationTokenSource cancellation);
         bool Unmount();
     }
 }

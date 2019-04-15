@@ -44,45 +44,30 @@ namespace SAFE.NetworkDrive.Mounter
         {
             if (_session == null)
                 return;
-            
             try
-            {
-                _session.Unmount();
-            }
+            { _session.Unmount(); }
             catch (Exception ex)
-            {
-                _logger.Error($"{ex.GetType().Name}: {ex.Message}");
-            }
+            { _logger.Error($"{ex.GetType().Name}: {ex.Message}"); }
             finally
-            {
-                _session = null;
-            }
+            { _session = null; }
         }
 
         MountSession MountDrive()
         {
             var cancellation = new CancellationTokenSource();
-            var factory = new CloudDriveFactory();
-            var drive = factory.CreateCloudDrive(
+            var factory = new SAFEDriveFactory();
+            var drive = factory.CreateDrive(
                 _config.Schema,
                 _config.VolumeId,
                 _config.Root,
-                new CloudDriveParameters()
+                new SAFEDriveParameters()
                 {
-                    ApiKey = _config.Locator,
-                    EncryptionKey = _config.Secret,
+                    Locator = _config.Locator,
+                    Secret = _config.Secret,
                     Logger = _logger,
                     Cancellation = cancellation.Token,
-                    Parameters = _config.GetParameters()
                 }
             );
-
-            if (!drive.TryAuthenticate())
-            {
-                var displayRoot = drive.DisplayRoot;
-                drive.Dispose();
-                _logger.Warn($"Authentication failed for drive '{displayRoot}'");
-            }
 
             var runner = Task.Run(() => _mounter(_config).Mount(drive, _logger, cancellation));
 

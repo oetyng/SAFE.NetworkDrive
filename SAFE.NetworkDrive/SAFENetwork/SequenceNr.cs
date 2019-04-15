@@ -1,5 +1,5 @@
 ﻿
-using SAFE.AppendOnlyDb.Utils;
+using SAFE.Data.Utils;
 using System;
 using System.Threading.Tasks;
 
@@ -14,9 +14,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         public ulong Next => Value.HasValue ? (ulong)Value + 1 : 0;
 
         public void Set(ulong sequenceNr)
-        {
-            Value = sequenceNr;
-        }
+            => Value = sequenceNr;
 
         public bool IsValidSequence(ulong sequenceNr)
         {

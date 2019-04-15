@@ -10,13 +10,15 @@ namespace SAFE.NetworkDrive
     public class DokanMounter : IDriveMounter
     {
         readonly DriveConfig _config;
+        Action _driveDisposal = () => { };
 
         public DokanMounter(DriveConfig config)
             => _config = config;
 
-        public Task Mount(ICloudDrive drive, ILogger logger, CancellationTokenSource cancellation)
+        public Task Mount(ISAFEDrive drive, ILogger logger, CancellationTokenSource cancellation)
         {
-            var operations = new CloudOperations(drive, logger);
+            var operations = new SAFEFSOperations(drive, logger);
+            _driveDisposal = drive.Dispose;
 
             // HACK: handle non-unique parameter set of DokanOperations.Mount() by explicitely specifying AllocationUnitSize and SectorSize
             var runner = Task.Run(() => operations.Mount(_config.Root,
@@ -31,6 +33,13 @@ namespace SAFE.NetworkDrive
         }
 
         public bool Unmount()
-            => Dokan.Unmount(_config.Root[0]);
+        {
+            if (Dokan.Unmount(_config.Root[0]))
+            {
+                _driveDisposal();
+                return true;
+            }
+            else return false;
+        }
     }
 }

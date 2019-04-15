@@ -36,7 +36,6 @@ using DokanNet;
 using Moq;
 using SAFE.NetworkDrive.Interface;
 using SAFE.Filesystem.Interface.IO;
-using NLog;
 
 namespace SAFE.NetworkDrive.Tests
 {
@@ -288,7 +287,7 @@ namespace SAFE.NetworkDrive.Tests
             public const string MOUNT_POINT = "Z:";
             public const string VOLUME_LABEL = "SAFENetwork";
             public const string SCHEMA = "mock";
-            public const string VOLUME_ID = "VOLUME_ID";
+            public const string VOLUME_ID = "00000000000000000000000000000000";
 
             const long _freeSpace = 64 * 1 << 20;
             const long _usedSpace = 36 * 1 << 20;
@@ -304,7 +303,7 @@ namespace SAFE.NetworkDrive.Tests
             readonly Thread _mounterThread;
 
             string _currentTestName;
-            Mock<ICloudDrive> _drive;
+            Mock<ISAFEDrive> _drive;
 
             public FileSystemInfoContract[] RootDirectoryItems { get; } = new FileSystemInfoContract[] {
                 new DirectoryInfoContract(@"\SubDir", "SubDir", "2015-01-01 10:11:12".ToDateTime(), "2015-01-01 20:21:22".ToDateTime()),
@@ -366,8 +365,8 @@ namespace SAFE.NetworkDrive.Tests
             public void Reset(string currentTestName)
             {
                 _currentTestName = currentTestName;
-                _drive = new Mock<ICloudDrive>(MockBehavior.Strict);
-                _interceptor.RedirectInvocationsTo(new CloudOperations(_drive.Object, _logger));
+                _drive = new Mock<ISAFEDrive>(MockBehavior.Strict);
+                _interceptor.RedirectInvocationsTo(new SAFEFSOperations(_drive.Object, _logger));
 
                 foreach (var directory in RootDirectoryItems.OfType<DirectoryInfoContract>())
                     directory.Parent = _rootDirectory;
@@ -391,7 +390,7 @@ namespace SAFE.NetworkDrive.Tests
             {
                 var verifies = _drive
                     .SetupGet(d => d.DisplayRoot)
-                    .Returns(root ?? (new RootName(SCHEMA, VOLUME_ID, MOUNT_POINT)).Value);
+                    .Returns(root ?? new RootName(SCHEMA, VOLUME_ID, MOUNT_POINT).Value);
 
                 if (!string.IsNullOrEmpty(root))
                     verifies.Verifiable();

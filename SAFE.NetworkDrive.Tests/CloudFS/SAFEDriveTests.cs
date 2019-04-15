@@ -23,7 +23,6 @@ SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -34,143 +33,117 @@ using SAFE.NetworkDrive.Interface;
 namespace SAFE.NetworkDrive.Tests
 {
     [TestClass]
-    public sealed partial class AsyncCloudDriveTests
+    public sealed partial class SAFEDriveTests
     {
         Fixture _fixture;
-        const string _apiKey = "<MyApiKey>";
-        const string _encryptionKey = "<MyEncryptionKey>";
-        readonly IDictionary<string, string> _parameters;
 
         [ClassInitialize]
-        public static void ClassInitialize(TestContext testContext)
-        { }
+        public static void ClassInitialize(TestContext testContext) { }
 
         [TestInitialize]
-        public void Initialize()
-        {
-            _fixture = Fixture.Initialize();
-        }
+        public void Initialize() => _fixture = Fixture.Initialize();
 
         [TestMethod]
-        public void AsyncCloudDrive_Create_Succeeds()
+        public void SAFEDrive_Create_Succeeds()
         {
-            using (var result = _fixture.Create(_apiKey, _encryptionKey)) {
+            using (var result = _fixture.Create())
                 Assert.IsNotNull(result, "Missing result");
-            }
         }
 
         [TestMethod]
-        public void AsyncCloudDrive_TryAuthenticate_Succeeds()
+        public void SAFEDrive_GetFree_Succeeds()
         {
-            _fixture.SetupGetDriveAsync(_apiKey, _parameters);
-            _fixture.SetupTryAuthenticate(_apiKey, _parameters);
+            _fixture.SetupGetDrive();
 
-            using (var sut = _fixture.Create(_apiKey, _encryptionKey)) {
-                var result = sut.TryAuthenticate();
-
-                Assert.IsTrue(result, "Unexpected result");
-            }
-        }
-
-        [TestMethod]
-        public void AsyncCloudDrive_GetFree_Succeeds()
-        {
-            _fixture.SetupGetDriveAsync(_apiKey, _parameters);
-
-            using (var sut = _fixture.Create(_apiKey, _encryptionKey)) {
+            using (var sut = _fixture.Create()) {
                 var result = sut.Free;
-
                 Assert.AreEqual(Fixture.FREE_SPACE, result, "Unexpected Free value");
             }
         }
 
         [TestMethod]
-        public void AsyncCloudDrive_GetUsed_Succeeds()
+        public void SAFEDrive_GetUsed_Succeeds()
         {
-            _fixture.SetupGetDriveAsync(_apiKey, _parameters);
+            _fixture.SetupGetDrive();
 
-            using (var sut = _fixture.Create(_apiKey, _encryptionKey)) {
+            using (var sut = _fixture.Create()) {
                 var result = sut.Used;
-
                 Assert.AreEqual(Fixture.USED_SPACE, result, "Unexpected Used value");
             }
         }
 
         [TestMethod]
         [ExpectedException(typeof(ApplicationException))]
-        public void AsyncCloudDrive_GetFree_WhereGetDriveFails_Throws()
+        public void SAFEDrive_GetFree_WhereGetDriveFails_Throws()
         {
-            _fixture.SetupGetDriveAsyncThrows<ApplicationException>(_apiKey, _parameters);
+            _fixture.SetupGetDriveThrows<ApplicationException>();
 
-            using (var sut = _fixture.Create(_apiKey, _encryptionKey)) {
+            using (var sut = _fixture.Create())
+            {
                 var result = sut.Free;
             }
         }
 
         [TestMethod]
-        public void AsyncCloudDrive_GetRoot_Succeeds()
+        public void SAFEDrive_GetRoot_Succeeds()
         {
-            _fixture.SetupGetDriveAsync(_apiKey, _parameters);
-            _fixture.SetupGetRootAsync(_apiKey, _parameters);
+            _fixture.SetupGetDrive();
+            _fixture.SetupGetRoot();
 
-            using (var sut = _fixture.Create(_apiKey, _encryptionKey)) {
+            using (var sut = _fixture.Create()) {
                 var result = sut.GetRoot();
-
                 Assert.AreEqual($"{Fixture.SCHEMA}@{Fixture.VOLUME_ID}|{Fixture.MOUNT_POINT}{Path.VolumeSeparatorChar}{Path.DirectorySeparatorChar}".ToString(CultureInfo.CurrentCulture), result.FullName, "Unexpected root name");
             }
         }
 
         [TestMethod]
-        public void AsyncCloudDrive_GetDisplayRoot_Succeeds()
+        public void SAFEDrive_GetDisplayRoot_Succeeds()
         {
-            _fixture.SetupGetDriveAsync(_apiKey, _parameters);
-            _fixture.SetupGetRootAsync(_apiKey, _parameters);
+            _fixture.SetupGetDrive();
+            _fixture.SetupGetRoot();
 
-            using (var sut = _fixture.Create(_apiKey, _encryptionKey)) {
+            using (var sut = _fixture.Create()) {
                 var result = sut.DisplayRoot;
-
                 Assert.AreEqual($"{Fixture.SCHEMA}@{Fixture.VOLUME_ID}|{Fixture.MOUNT_POINT}".ToString(CultureInfo.CurrentCulture), result, "Unexpected DisplayRoot value");
             }
         }
 
         [TestMethod]
-        public void AsyncCloudDrive_GetChildItem_WhereEncryptionKeyIsEmpty_Succeeds()
+        public void SAFEDrive_GetChildItem_WhereEncryptionKeyIsEmpty_Succeeds()
         {
-            _fixture.SetupGetDriveAsync(_apiKey, _parameters);
-            _fixture.SetupGetRootAsync(_apiKey, _parameters);
-            _fixture.SetupGetRootDirectoryItemsAsync();
+            _fixture.SetupGetDrive();
+            _fixture.SetupGetRoot();
+            _fixture.SetupGetRootDirectoryItems();
 
-            using (var sut = _fixture.Create(_apiKey, string.Empty)) {
+            using (var sut = _fixture.Create()) {
                 var result = sut.GetChildItem(sut.GetRoot()).ToList();
-
                 CollectionAssert.AreEqual(_fixture.RootDirectoryItems, result, "Mismatched result");
             }
         }
 
         [TestMethod]
-        public void AsyncCloudDrive_GetChildItem_WhereEncryptionKeyIsSet_Succeeds()
+        public void SAFEDrive_GetChildItem_WhereEncryptionKeyIsSet_Succeeds()
         {
-            _fixture.SetupGetDriveAsync(_apiKey, _parameters);
-            _fixture.SetupGetRootAsync(_apiKey, _parameters);
-            _fixture.SetupGetRootDirectoryItemsAsync(_encryptionKey);
+            _fixture.SetupGetDrive();
+            _fixture.SetupGetRoot();
+            _fixture.SetupGetRootDirectoryItems();
 
-            using (var sut = _fixture.Create(_apiKey, _encryptionKey)) {
+            using (var sut = _fixture.Create()) {
                 var result = sut.GetChildItem(sut.GetRoot()).ToList();
-
                 CollectionAssert.AreEqual(_fixture.RootDirectoryItems, result, "Mismatched result");
             }
         }
 
         [TestMethod]
-        public void AsyncCloudDrive_GetContent_Succeeds()
+        public void SAFEDrive_GetContent_Succeeds()
         {
             var fileContent = Encoding.Default.GetBytes("Why did the chicken cross the road?");
             var sutContract = _fixture.RootDirectoryItems.OfType<FileInfoContract>().First();
 
-            _fixture.SetupGetContentAsync(sutContract, fileContent, _encryptionKey);
+            _fixture.SetupGetContent(sutContract, fileContent);
 
             var buffer = default(byte[]);
-            using (var sut = _fixture.Create(_apiKey, _encryptionKey))
+            using (var sut = _fixture.Create())
             using (var stream = sut.GetContent(sutContract)) {
                 buffer = new byte[stream.Length];
                 stream.Read(buffer, 0, buffer.Length);
@@ -183,15 +156,15 @@ namespace SAFE.NetworkDrive.Tests
         }
 
         [TestMethod]
-        public void AsyncCloudDrive_GetContent_WhereContentIsUnencrypted_Succeeds()
+        public void SAFEDrive_GetContent_WhereContentIsUnencrypted_Succeeds()
         {
             var fileContent = Encoding.Default.GetBytes("Why did the chicken cross the road?");
             var sutContract = _fixture.RootDirectoryItems.OfType<FileInfoContract>().First();
 
-            _fixture.SetupGetContentAsync(sutContract, fileContent);
+            _fixture.SetupGetContent(sutContract, fileContent);
 
             var buffer = default(byte[]);
-            using (var sut = _fixture.Create(_apiKey, _encryptionKey))
+            using (var sut = _fixture.Create())
             using (var stream = sut.GetContent(sutContract)) {
                 buffer = new byte[stream.Length];
                 stream.Read(buffer, 0, buffer.Length);
@@ -204,15 +177,15 @@ namespace SAFE.NetworkDrive.Tests
         }
 
         [TestMethod]
-        public void AsyncCloudDrive_GetContent_WhereContentIsNotSeekable_Succeeds()
+        public void SAFEDrive_GetContent_WhereContentIsNotSeekable_Succeeds()
         {
             var fileContent = Encoding.Default.GetBytes("Why did the chicken cross the road?");
             var sutContract = _fixture.RootDirectoryItems.OfType<FileInfoContract>().First();
 
-            _fixture.SetupGetContentAsync(sutContract, fileContent, _encryptionKey, false);
+            _fixture.SetupGetContent(sutContract, fileContent, canSeek: false);
 
             var buffer = default(byte[]);
-            using (var sut = _fixture.Create(_apiKey, _encryptionKey))
+            using (var sut = _fixture.Create())
             using (var stream = sut.GetContent(sutContract)) {
                 buffer = new byte[stream.Length];
                 stream.Read(buffer, 0, buffer.Length);
@@ -225,77 +198,72 @@ namespace SAFE.NetworkDrive.Tests
         }
 
         [TestMethod]
-        public void AsyncCloudDrive_MoveDirectoryItem_Succeeds()
+        public void SAFEDrive_MoveDirectoryItem_Succeeds()
         {
             var sutContract = _fixture.RootDirectoryItems.OfType<DirectoryInfoContract>().Last();
             var directory = _fixture.TargetDirectory;
 
-            _fixture.SetupMoveDirectoryOrFileAsync(sutContract, directory);
+            _fixture.SetupMoveDirectoryOrFile(sutContract, directory);
 
-            using (var sut = _fixture.Create(_apiKey, _encryptionKey)) {
+            using (var sut = _fixture.Create())
                 sut.MoveItem(sutContract, sutContract.Name, directory);
-            }
 
             _fixture.VerifyAll();
         }
 
         [TestMethod]
-        public void AsyncCloudDrive_MoveFileItem_Succeeds()
+        public void SAFEDrive_MoveFileItem_Succeeds()
         {
             var sutContract = _fixture.RootDirectoryItems.OfType<FileInfoContract>().Last();
             var directory = _fixture.TargetDirectory;
 
-            _fixture.SetupMoveDirectoryOrFileAsync(sutContract, directory);
+            _fixture.SetupMoveDirectoryOrFile(sutContract, directory);
 
-            using (var sut = _fixture.Create(_apiKey, _encryptionKey)) {
+            using (var sut = _fixture.Create())
                 sut.MoveItem(sutContract, sutContract.Name, directory);
-            }
 
             _fixture.VerifyAll();
         }
 
         [TestMethod]
-        public void AsyncCloudDrive_NewDirectoryItem_Succeeds()
+        public void SAFEDrive_NewDirectoryItem_Succeeds()
         {
             const string newName = "NewDirectory";
             var directory = _fixture.TargetDirectory;
 
-            _fixture.SetupNewDirectoryItemAsync(directory, newName);
+            _fixture.SetupNewDirectoryItem(directory, newName);
 
-            using (var sut = _fixture.Create(_apiKey, _encryptionKey)) {
+            using (var sut = _fixture.Create())
                 sut.NewDirectoryItem(directory, newName);
-            }
 
             _fixture.VerifyAll();
         }
 
         [TestMethod]
-        public void AsyncCloudDrive_NewFileItem_Succeeds()
+        public void SAFEDrive_NewFileItem_Succeeds()
         {
             const string newName = "NewFile.ext";
             var fileContent = Encoding.Default.GetBytes("Why did the chicken cross the road?");
             var directory = _fixture.TargetDirectory;
 
-            _fixture.SetupNewFileItemAsync(directory, newName, fileContent, _encryptionKey);
+            _fixture.SetupNewFileItem(directory, newName, fileContent);
 
-            using (var sut = _fixture.Create(_apiKey, _encryptionKey))
-            using (var stream = new MemoryStream(fileContent)) {
+            using (var sut = _fixture.Create())
+            using (var stream = new MemoryStream(fileContent))
                 sut.NewFileItem(directory, newName, stream);
-            }
 
             _fixture.VerifyAll();
         }
 
         [TestMethod]
-        public void AsyncCloudDrive_NewFileItem_WhereContentIsEmpty_Succeeds()
+        public void SAFEDrive_NewFileItem_WhereContentIsEmpty_Succeeds()
         {
             const string newName = "NewFile.ext";
             var directory = _fixture.TargetDirectory;
 
             FileInfoContract contract;
-            using (var sut = _fixture.Create(_apiKey, _encryptionKey)) {
+            using (var sut = _fixture.Create())
                 contract = sut.NewFileItem(directory, newName, Stream.Null);
-            }
 
             Assert.IsInstanceOfType(contract, typeof(ProxyFileInfoContract));
 
@@ -303,45 +271,42 @@ namespace SAFE.NetworkDrive.Tests
         }
 
         [TestMethod]
-        public void AsyncCloudDrive_RemoveDirectoryItem_Succeeds()
+        public void SAFEDrive_RemoveDirectoryItem_Succeeds()
         {
             var sutContract = _fixture.RootDirectoryItems.OfType<DirectoryInfoContract>().First();
 
-            _fixture.SetupRemoveDirectoryOrFileAsync(sutContract, true);
+            _fixture.SetupRemoveDirectoryOrFile(sutContract, true);
 
-            using (var sut = _fixture.Create(_apiKey, _encryptionKey)) {
+            using (var sut = _fixture.Create())
                 sut.RemoveItem(sutContract, true);
-            }
 
             _fixture.VerifyAll();
         }
 
         [TestMethod]
-        public void AsyncCloudDrive_RemoveFileItem_Succeeds()
+        public void SAFEDrive_RemoveFileItem_Succeeds()
         {
             var sutContract = _fixture.RootDirectoryItems.OfType<FileInfoContract>().First();
 
-            _fixture.SetupRemoveDirectoryOrFileAsync(sutContract, false);
+            _fixture.SetupRemoveDirectoryOrFile(sutContract, false);
 
-            using (var sut = _fixture.Create(_apiKey, _encryptionKey)) {
+            using (var sut = _fixture.Create())
                 sut.RemoveItem(sutContract, false);
-            }
 
             _fixture.VerifyAll();
         }
 
         [TestMethod]
-        public void AsyncCloudDrive_SetContent_Succeeds()
+        public void SAFEDrive_SetContent_Succeeds()
         {
             var fileContent = Encoding.Default.GetBytes("Why did the chicken cross the road?");
             var sutContract = _fixture.RootDirectoryItems.OfType<FileInfoContract>().First();
 
-            _fixture.SetupSetContentAsync(sutContract, fileContent, _encryptionKey);
+            _fixture.SetupSetContent(sutContract, fileContent);
 
-            using (var sut = _fixture.Create(_apiKey, _encryptionKey))
-            using (var stream = new MemoryStream(fileContent)) {
+            using (var sut = _fixture.Create())
+            using (var stream = new MemoryStream(fileContent))
                 sut.SetContent(sutContract, stream);
-            }
 
             _fixture.VerifyAll();
         }
