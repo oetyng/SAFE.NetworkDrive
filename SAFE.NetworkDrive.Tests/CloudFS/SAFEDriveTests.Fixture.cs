@@ -76,7 +76,7 @@ namespace SAFE.NetworkDrive.Tests
             public void SetupGetDrive()
             {
                 _gateway
-                    .Setup(g => g.GetDrive(_rootName))
+                    .Setup(g => g.GetDrive())
                     .Returns(_root.Drive);
             }
 
@@ -84,28 +84,28 @@ namespace SAFE.NetworkDrive.Tests
                 where TException : Exception, new()
             {
                 _gateway
-                    .Setup(g => g.GetDrive(_rootName))
+                    .Setup(g => g.GetDrive())
                     .Throws(new AggregateException(Activator.CreateInstance<TException>()));
             }
 
             public void SetupGetRoot()
             {
                 _gateway
-                    .Setup(g => g.GetRoot(_rootName))
+                    .Setup(g => g.GetRoot())
                     .Returns(_root);
             }
 
             public void SetupGetRootDirectoryItems(string encryptionKey = null)
             {
                 _gateway
-                    .Setup(g => g.GetChildItem(_rootName, new DirectoryId(Path.DirectorySeparatorChar.ToString())))
+                    .Setup(g => g.GetChildItem(new DirectoryId(Path.DirectorySeparatorChar.ToString())))
                     .Returns(RootDirectoryItems);
 
                 if (!string.IsNullOrEmpty(encryptionKey))
                     foreach (var fileInfo in RootDirectoryItems.OfType<FileInfoContract>())
                         using (var rawStream = new MemoryStream(Enumerable.Repeat<byte>(0, (int)fileInfo.Size).ToArray()))
                             _gateway
-                                .SetupSequence(g => g.GetContent(_rootName, fileInfo.Id))
+                                .SetupSequence(g => g.GetContent(fileInfo.Id))
                                 .Returns(rawStream.EncryptOrPass(encryptionKey));
             }
 
@@ -116,7 +116,7 @@ namespace SAFE.NetworkDrive.Tests
                 if (!canSeek)
                     stream = new LinearReadMemoryStream(stream);
                 _gateway
-                    .Setup(g => g.GetContent(_rootName, source.Id))
+                    .Setup(g => g.GetContent(source.Id))
                     .Returns(stream);
             }
 
@@ -124,7 +124,7 @@ namespace SAFE.NetworkDrive.Tests
             {
                 Func<Stream, bool> checkContent = stream => stream.Contains(content);
                 _gateway
-                    .Setup(g => g.SetContent(_rootName, target.Id, It.Is<Stream>(s => checkContent(s)), It.IsAny<IProgress<ProgressValue>>(), It.IsAny<Func<FileSystemInfoLocator>>()))
+                    .Setup(g => g.SetContent(target.Id, It.Is<Stream>(s => checkContent(s)), It.IsAny<IProgress<ProgressValue>>()))
                     .Returns(true);
             }
 
@@ -137,7 +137,7 @@ namespace SAFE.NetworkDrive.Tests
             void SetupMoveItem(FileSystemInfoContract directoryOrFile, string name, DirectoryInfoContract target)
             {
                 _gateway
-                    .Setup(g => g.MoveItem(_rootName, directoryOrFile.Id, name, target.Id, It.IsAny<Func<FileSystemInfoLocator>>()))
+                    .Setup(g => g.MoveItem(directoryOrFile.Id, name, target.Id))
                     .Returns((RootName _rootName, FileSystemId source, string movePath, DirectoryId destination, Func<FileSystemInfoLocator> resolver) => {
                         var directorySource = source as DirectoryId;
                         if (directorySource != null)
@@ -152,7 +152,7 @@ namespace SAFE.NetworkDrive.Tests
             public void SetupNewDirectoryItem(DirectoryInfoContract parent, string directoryName)
             {
                 _gateway
-                    .Setup(g => g.NewDirectoryItem(_rootName, parent.Id, directoryName))
+                    .Setup(g => g.NewDirectoryItem(parent.Id, directoryName))
                     .Returns(new DirectoryInfoContract(parent.Id + Path.DirectorySeparatorChar.ToString() + directoryName, directoryName, DateTimeOffset.Now, DateTimeOffset.Now));
             }
 
@@ -160,13 +160,13 @@ namespace SAFE.NetworkDrive.Tests
             {
                 Func<Stream, bool> checkContent = stream => stream.Contains(content);
                 _gateway
-                    .Setup(g => g.NewFileItem(_rootName, parent.Id, fileName, It.Is<Stream>(s => checkContent(s)), It.IsAny<IProgress<ProgressValue>>()))
+                    .Setup(g => g.NewFileItem(parent.Id, fileName, It.Is<Stream>(s => checkContent(s)), It.IsAny<IProgress<ProgressValue>>()))
                     .Returns(new FileInfoContract(parent.Id + Path.DirectorySeparatorChar.ToString() + fileName, fileName, DateTimeOffset.Now, DateTimeOffset.Now, (FileSize)content.Length, Encoding.Default.GetString(content).ToHash()));
             }
 
             public void SetupRemoveDirectoryOrFile(FileSystemInfoContract directoryOrFile, bool recurse)
                 => _gateway
-                    .Setup(g => g.RemoveItem(_rootName, directoryOrFile.Id, recurse))
+                    .Setup(g => g.RemoveItem(directoryOrFile.Id, recurse))
                     .Returns(true);
 
             public void VerifyAll() => _gateway.VerifyAll();

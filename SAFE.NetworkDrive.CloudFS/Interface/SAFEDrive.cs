@@ -24,7 +24,7 @@ namespace SAFE.NetworkDrive
             {
                 if (_drive == null)
                 {
-                    _drive = _gateway.GetDrive(_rootName);
+                    _drive = _gateway.GetDrive();
                     _drive.Name = DisplayRoot + Path.VolumeSeparatorChar;
                 }
                 return _drive;
@@ -39,19 +39,19 @@ namespace SAFE.NetworkDrive
         {
             return ExecuteInSemaphore(() => {
                 GetDrive();
-                var root = _gateway.GetRoot(_rootName);
+                var root = _gateway.GetRoot();
                 root.Drive = _drive;
                 return root;
             });
         }
 
         public IEnumerable<FileSystemInfoContract> GetChildItem(DirectoryInfoContract parent)
-            => ExecuteInSemaphore(() => _gateway.GetChildItem(_rootName, parent.Id));
+            => ExecuteInSemaphore(() => _gateway.GetChildItem(parent.Id));
 
         public Stream GetContent(FileInfoContract source)
         {
             return ExecuteInSemaphore(() => {
-                var content = _gateway.GetContent(_rootName, source.Id).ToSeekableStream();
+                var content = _gateway.GetContent(source.Id).ToSeekableStream();
                 source.Size = (FileSize)content.Length;
                 return content;
             });
@@ -61,8 +61,7 @@ namespace SAFE.NetworkDrive
         {
             ExecuteInSemaphore(() => {
                 target.Size = (FileSize)content.Length;
-                FileSystemInfoLocator locator() => new FileSystemInfoLocator(target);
-                _gateway.SetContent(_rootName, target.Id, content, null, locator);
+                _gateway.SetContent(target.Id, content, null);
             }, true);
         }
 
@@ -73,20 +72,19 @@ namespace SAFE.NetworkDrive
                 if (proxySource != null)
                     return new ProxyFileInfoContract(movePath);
 
-                FileSystemInfoLocator locator() => new FileSystemInfoLocator(source);
-                return _gateway.MoveItem(_rootName, source.Id, movePath, destination.Id, locator);
+                return _gateway.MoveItem(source.Id, movePath, destination.Id);
             }, true);
         }
 
         public DirectoryInfoContract NewDirectoryItem(DirectoryInfoContract parent, string name)
-            => ExecuteInSemaphore(() => _gateway.NewDirectoryItem(_rootName, parent.Id, name), true);
+            => ExecuteInSemaphore(() => _gateway.NewDirectoryItem(parent.Id, name), true);
 
         public FileInfoContract NewFileItem(DirectoryInfoContract parent, string name, Stream content)
         {
             return ExecuteInSemaphore(() => {
                 if (content.Length == 0)
                     return new ProxyFileInfoContract(name);
-                var result = _gateway.NewFileItem(_rootName, parent.Id, name, content, null);
+                var result = _gateway.NewFileItem(parent.Id, name, content, null);
                 result.Size = (FileSize)content.Length;
                 return result;
             }, true);
@@ -96,7 +94,7 @@ namespace SAFE.NetworkDrive
         {
             ExecuteInSemaphore(() => {
                 if (!(target is ProxyFileInfoContract))
-                    _gateway.RemoveItem(_rootName, target.Id, recurse);
+                    _gateway.RemoveItem(target.Id, recurse);
             }, true);
         }
 

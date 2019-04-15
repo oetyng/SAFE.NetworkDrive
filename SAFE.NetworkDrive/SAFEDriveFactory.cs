@@ -20,22 +20,22 @@ namespace SAFE.NetworkDrive
             var dbFactory = new DbFactory(parameters);
             var (stream, store) = await dbFactory.GetDriveDbsAsync(root.VolumeId, null);
 
-            var localState = new Gateways.Memory.MemoryGateway();
+            var localState = new Gateways.Memory.MemoryGateway(root);
             var driveCache = new Gateways.Memory.SAFENetworkDriveCache(store, localState);
             var network = new SAFENetworkEventService(stream, store, parameters.Secret);
 
             var sequenceNr = new SequenceNr();
 
-            var materializer = new DriveMaterializer(root, localState, sequenceNr);
+            var materializer = new DriveMaterializer(localState, sequenceNr);
             var conflictHandler = new VersionConflictHandler(network, materializer);
-            var driveWriter = new DriveWriter(root, driveCache, sequenceNr);
+            var driveWriter = new DriveWriter(driveCache, sequenceNr);
 
             var dbName = Gateways.Utils.Scrambler.ShortCode(root.VolumeId, parameters.Secret);
             var transactor = new EventTransactor(driveWriter,
                 new DiskWALTransactor(dbName, conflictHandler.Upload), parameters.Secret);
             var context = new SAFENetworkContext(transactor, new DriveReader(driveCache), sequenceNr);
 
-            var _ = driveCache.GetDrive(root); // needs to be loaded
+            var _ = driveCache.GetDrive(); // needs to be loaded
 
             // We need to wait for all events in local WAL to have been persisted to network
             // before we materialize new events from network.

@@ -11,25 +11,27 @@ namespace SAFE.NetworkDrive.Gateways.Memory
     [System.Diagnostics.DebuggerDisplay("{DebuggerDisplay(),nq}")]
     public sealed class MemoryGateway : Interfaces.IMemoryGateway
     {
-        readonly MemoryFolder _root = new MemoryFolder(null, string.Empty);
+        readonly RootName _root;
+        readonly MemoryFolder _rootFolder = new MemoryFolder(null, string.Empty);
 
         public const string PARAMETER_ROOT = "root";
         const string PATH_NOT_FOUND = "Path '{0}' does not exist";
         const string DUPLICATE_PATH = "'{0}' is already present";
         string _rootPath;
 
-        public DriveInfoContract GetDrive(RootName root)
+        public MemoryGateway(RootName root)
+            => _root = root ?? throw new ArgumentNullException(nameof(root));
+
+        public DriveInfoContract GetDrive()
         {
-            if (root == null)
-                throw new ArgumentNullException(nameof(root));
             _rootPath = System.IO.Path.DirectorySeparatorChar.ToString();
             //if (parameters?.TryGetValue(PARAMETER_ROOT, out _rootPath) != true)
             //    throw new ArgumentException($"Required {PARAMETER_ROOT} missing in {nameof(parameters)}".ToString(CultureInfo.CurrentCulture));
             if (string.IsNullOrEmpty(_rootPath))
                 throw new ArgumentException($"{PARAMETER_ROOT} cannot be empty".ToString(CultureInfo.CurrentCulture));
 
-            var drive = new MemDrive(_root);
-            return new DriveInfoContract(root.Value,
+            var drive = new MemDrive(_rootFolder);
+            return new DriveInfoContract(_root.Value,
                 drive.AvailableFreeSpace,
                 drive.TotalSize - drive.AvailableFreeSpace);
         }
@@ -45,16 +47,14 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             public long AvailableFreeSpace => System.Diagnostics.Process.GetCurrentProcess().VirtualMemorySize64; //long.MaxValue;//TotalSize - (long)_root.UsedSize;
         }
 
-        public RootDirectoryInfoContract GetRoot(RootName root)
+        public RootDirectoryInfoContract GetRoot()
         {
-            if (root == null)
-                throw new ArgumentNullException(nameof(root));
             if (string.IsNullOrEmpty(_rootPath))
                 throw new InvalidOperationException($"{nameof(_rootPath)} not initialized".ToString(CultureInfo.CurrentCulture));
 
             var id = System.IO.Path.DirectorySeparatorChar.ToString();
 
-            return new RootDirectoryInfoContract(id, _root.CreationTime, _root.LastWriteTime);
+            return new RootDirectoryInfoContract(id, _rootFolder.CreationTime, _rootFolder.LastWriteTime);
         }
 
         static string GetFullPath(string rootPath, string path)
@@ -72,10 +72,8 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             return path.TrimEnd(System.IO.Path.DirectorySeparatorChar);
         }
 
-        public IEnumerable<FileSystemInfoContract> GetChildItem(RootName root, DirectoryId parent)
+        public IEnumerable<FileSystemInfoContract> GetChildItem(DirectoryId parent)
         {
-            if (root == null)
-                throw new ArgumentNullException(nameof(root));
             if (parent == null)
                 throw new ArgumentNullException(nameof(parent));
             if (string.IsNullOrEmpty(_rootPath))
@@ -83,7 +81,7 @@ namespace SAFE.NetworkDrive.Gateways.Memory
 
             var effectivePath = GetFullPath(_rootPath, parent.Value);
 
-            var directory = _root.GetFolderByPath(effectivePath);
+            var directory = _rootFolder.GetFolderByPath(effectivePath);
 
             if (directory.Exists())
                 return directory.EnumerateDirectories()
@@ -105,10 +103,8 @@ namespace SAFE.NetworkDrive.Gateways.Memory
                 return Array.Empty<FileSystemInfoContract>();
         }
 
-        public void ClearContent(RootName root, FileId target)
+        public void ClearContent(FileId target)
         {
-            if (root == null)
-                throw new ArgumentNullException(nameof(root));
             if (target == null)
                 throw new ArgumentNullException(nameof(target));
             if (string.IsNullOrEmpty(_rootPath))
@@ -130,14 +126,12 @@ namespace SAFE.NetworkDrive.Gateways.Memory
         MemoryFile TryGetFile(FileId fileId)
         {
             var effectivePath = GetFullPath(_rootPath, fileId.Value);
-            var directory = _root.GetFolderByPath(effectivePath.GetPathPart());
+            var directory = _rootFolder.GetFolderByPath(effectivePath.GetPathPart());
             return directory.FetchFile(fileId.Value.GetFilenamePart());
         }
 
-        public System.IO.Stream GetContent(RootName root, FileId source)
+        public System.IO.Stream GetContent(FileId source)
         {
-            if (root == null)
-                throw new ArgumentNullException(nameof(root));
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
             if (string.IsNullOrEmpty(_rootPath))
@@ -148,10 +142,8 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             return new System.IO.BufferedStream(file.OpenRead());
         }
 
-        public void SetContent(RootName root, FileId target, System.IO.Stream content, IProgress<ProgressValue> progress)
+        public void SetContent(FileId target, System.IO.Stream content, IProgress<ProgressValue> progress)
         {
-            if (root == null)
-                throw new ArgumentNullException(nameof(root));
             if (target == null)
                 throw new ArgumentNullException(nameof(target));
             if (content == null)
@@ -163,10 +155,8 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             file.SetContent(content);
         }
 
-        public FileSystemInfoContract CopyItem(RootName root, FileSystemId source, string copyName, DirectoryId destination, bool recurse)
+        public FileSystemInfoContract CopyItem(FileSystemId source, string copyName, DirectoryId destination, bool recurse)
         {
-            if (root == null)
-                throw new ArgumentNullException(nameof(root));
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
             if (string.IsNullOrEmpty(copyName))
@@ -182,14 +172,14 @@ namespace SAFE.NetworkDrive.Gateways.Memory
                 destinationPath = destinationPath.Remove(0, System.IO.Path.GetPathRoot(destinationPath).Length);
             var effectiveCopyPath = GetFullPath(_rootPath, System.IO.Path.Combine(destinationPath, copyName));
 
-            var directory = _root.GetFolderByPath(effectivePath);
+            var directory = _rootFolder.GetFolderByPath(effectivePath);
             if (directory.Exists())
             {
-                var directoryCopy = _root.GetFolderByPath(effectiveCopyPath);
+                var directoryCopy = _rootFolder.GetFolderByPath(effectiveCopyPath);
                 if (!directoryCopy.Exists())
                 {
-                    _root.CreatePath(effectiveCopyPath);
-                    directoryCopy = _root.GetFolderByPath(effectiveCopyPath);
+                    _rootFolder.CreatePath(effectiveCopyPath);
+                    directoryCopy = _rootFolder.GetFolderByPath(effectiveCopyPath);
                 }
                 directory.CopyTo(directoryCopy, recurse);
                 return new DirectoryInfoContract(
@@ -203,11 +193,11 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             if (file.Exists())
             {
                 var parentFolderPath = effectiveCopyPath.GetPathPart();
-                var parentFolder = _root.GetFolderByPath(parentFolderPath); // destinationPath
+                var parentFolder = _rootFolder.GetFolderByPath(parentFolderPath); // destinationPath
                 if (!parentFolder.Exists())
                 {
-                    _root.CreatePath(parentFolderPath); // destinationPath
-                    parentFolder = _root.GetFolderByPath(parentFolderPath); // destinationPath
+                    _rootFolder.CreatePath(parentFolderPath); // destinationPath
+                    parentFolder = _rootFolder.GetFolderByPath(parentFolderPath); // destinationPath
                 }
                 var fileCopy = file.CopyTo(parentFolder, copyName);
                 return new FileInfoContract(GetRelativePath(_rootPath, fileCopy.FullName),
@@ -220,10 +210,8 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             throw new NotSupportedException(string.Format(CultureInfo.CurrentCulture, PATH_NOT_FOUND, source.Value));
         }
 
-        public FileSystemInfoContract MoveItem(RootName root, FileSystemId source, string moveName, DirectoryId destination)
+        public FileSystemInfoContract MoveItem(FileSystemId source, string moveName, DirectoryId destination)
         {
-            if (root == null)
-                throw new ArgumentNullException(nameof(root));
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
             if (string.IsNullOrEmpty(moveName))
@@ -240,11 +228,11 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             var effectiveMovePath = GetFullPath(_rootPath, System.IO.Path.Combine(destinationPath, moveName));
 
             var parentPath = effectiveMovePath.GetPathPart();
-            MemoryFolder newParent = _root.GetFolderByPath(parentPath);
+            MemoryFolder newParent = _rootFolder.GetFolderByPath(parentPath);
             if (!newParent.Exists())
                 throw new System.IO.DirectoryNotFoundException($"Directory does not exist: {parentPath}");
 
-            var directory = _root.GetFolderByPath(effectiveSourcePath);
+            var directory = _rootFolder.GetFolderByPath(effectiveSourcePath);
             if (directory.Exists())
             {
                 directory.MoveTo(newParent, moveName);
@@ -268,10 +256,8 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             throw new NotSupportedException(string.Format(CultureInfo.CurrentCulture, PATH_NOT_FOUND, source.Value));
         }
 
-        public DirectoryInfoContract NewDirectoryItem(RootName root, DirectoryId parent, string name)
+        public DirectoryInfoContract NewDirectoryItem(DirectoryId parent, string name)
         {
-            if (root == null)
-                throw new ArgumentNullException(nameof(root));
             if (parent == null)
                 throw new ArgumentNullException(nameof(parent));
             if (string.IsNullOrEmpty(name))
@@ -281,12 +267,12 @@ namespace SAFE.NetworkDrive.Gateways.Memory
 
             var effectivePath = GetFullPath(_rootPath, System.IO.Path.Combine(parent.Value, name));
 
-            var directory = _root.GetFolderByPath(effectivePath);
+            var directory = _rootFolder.GetFolderByPath(effectivePath);
             if (directory.Exists())
                 throw new NotSupportedException(string.Format(CultureInfo.CurrentCulture, DUPLICATE_PATH, effectivePath));
 
-            _root.CreatePath(effectivePath);
-            directory = _root.GetFolderByPath(effectivePath);
+            _rootFolder.CreatePath(effectivePath);
+            directory = _rootFolder.GetFolderByPath(effectivePath);
 
             return new DirectoryInfoContract(GetRelativePath(_rootPath, directory.FullName),
                 directory.Name,
@@ -294,11 +280,9 @@ namespace SAFE.NetworkDrive.Gateways.Memory
                 directory.LastWriteTime);
         }
 
-        public FileInfoContract NewFileItem(RootName root, DirectoryId parent,
+        public FileInfoContract NewFileItem(DirectoryId parent,
             string name, System.IO.Stream content, IProgress<ProgressValue> progress)
         {
-            if (root == null)
-                throw new ArgumentNullException(nameof(root));
             if (parent == null)
                 throw new ArgumentNullException(nameof(parent));
             if (string.IsNullOrEmpty(name))
@@ -312,7 +296,7 @@ namespace SAFE.NetworkDrive.Gateways.Memory
 
             // var parentPath = parent.Value; 
             var parentPath = GetFullPath(_rootPath, parent.Value);
-            var parentDir = _root.GetFolderByPath(parentPath);
+            var parentDir = _rootFolder.GetFolderByPath(parentPath);
             file = MemoryFile.New(parentDir, name);
 
             if (content != null)
@@ -325,10 +309,8 @@ namespace SAFE.NetworkDrive.Gateways.Memory
                 (FileSize)file.Size, null);
         }
 
-        public void RemoveItem(RootName root, FileSystemId target, bool recurse)
+        public void RemoveItem(FileSystemId target, bool recurse)
         {
-            if (root == null)
-                throw new ArgumentNullException(nameof(root));
             if (target == null)
                 throw new ArgumentNullException(nameof(target));
             if (string.IsNullOrEmpty(_rootPath))
@@ -336,7 +318,7 @@ namespace SAFE.NetworkDrive.Gateways.Memory
 
             var effectivePath = GetFullPath(_rootPath, target.Value);
 
-            var directory = _root.GetFolderByPath(effectivePath);
+            var directory = _rootFolder.GetFolderByPath(effectivePath);
             if (directory.Exists())
             {
                 //directory.Delete(recurse);
@@ -354,10 +336,8 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             throw new NotSupportedException(string.Format(CultureInfo.CurrentCulture, PATH_NOT_FOUND, target.Value));
         }
 
-        public FileSystemInfoContract RenameItem(RootName root, FileSystemId target, string newName)
+        public FileSystemInfoContract RenameItem(FileSystemId target, string newName)
         {
-            if (root == null)
-                throw new ArgumentNullException(nameof(root));
             if (target == null)
                 throw new ArgumentNullException(nameof(target));
             if (string.IsNullOrEmpty(newName))
@@ -368,9 +348,9 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             var effectivePath = GetFullPath(_rootPath, target.Value);
             var newPath = GetFullPath(_rootPath, System.IO.Path.Combine(System.IO.Path.GetDirectoryName(target.Value), newName));
 
-            var destination = _root.GetFolderByPath(newPath.GetPathPart());
+            var destination = _rootFolder.GetFolderByPath(newPath.GetPathPart());
 
-            var directory = _root.GetFolderByPath(effectivePath);
+            var directory = _rootFolder.GetFolderByPath(effectivePath);
             if (directory.Exists())
             {
                 directory.MoveTo(destination, newName);

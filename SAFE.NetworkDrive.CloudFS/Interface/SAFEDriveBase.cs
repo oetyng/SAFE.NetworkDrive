@@ -6,7 +6,6 @@ namespace SAFE.NetworkDrive
 {
     internal abstract class SAFEDriveBase : IDisposable
     {
-        protected readonly RootName _rootName;
         protected DriveInfoContract _drive;
 
         SemaphoreSlim _semaphore = new SemaphoreSlim(1);
@@ -16,12 +15,8 @@ namespace SAFE.NetworkDrive
         public long? Free => ExecuteInSemaphore(() => GetDrive().FreeSpace);
         public long? Used => ExecuteInSemaphore(() => GetDrive().UsedSpace);
 
-        protected SAFEDriveBase(RootName rootName)
-        {
-            _rootName = rootName;
-            DisplayRoot = rootName.Value;
-            //DisplayRoot = DisplayRoot.Insert(0, "*");
-        }
+        protected SAFEDriveBase(RootName root)
+            => DisplayRoot = root.Value;
 
         protected void ExecuteInSemaphore(Action action, bool invalidateDrive = false)
         {

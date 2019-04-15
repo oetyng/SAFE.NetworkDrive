@@ -44,14 +44,14 @@ namespace SAFE.NetworkDrive.Tests.Gateway
                 _gateway = gateway;
                 _root = root;
 
-                gateway.GetDrive(root);
-                var rootDirectory = gateway.GetRoot(root);
+                gateway.GetDrive();
+                var rootDirectory = gateway.GetRoot();
 
-                var residualDirectory = gateway.GetChildItem(root, rootDirectory.Id).SingleOrDefault(f => f.Name == path) as DirectoryInfoContract;
+                var residualDirectory = gateway.GetChildItem(rootDirectory.Id).SingleOrDefault(f => f.Name == path) as DirectoryInfoContract;
                 if (residualDirectory != null)
-                    gateway.RemoveItem(root, residualDirectory.Id, true);
+                    gateway.RemoveItem(residualDirectory.Id, true);
 
-                _directory = gateway.NewDirectoryItem(root, rootDirectory.Id, path);
+                _directory = gateway.NewDirectoryItem(rootDirectory.Id, path);
             }
 
             internal static TestDirectoryFixture CreateTestDirectory(Interfaces.IMemoryGateway gateway, GatewaySection config, GatewayTestsFixture fixture)
@@ -61,7 +61,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
                 => _directory;
 
             void IDisposable.Dispose()
-                => _gateway.RemoveItem(_root, _directory.Id, true);
+                => _gateway.RemoveItem(_directory.Id, true);
         }
     }
 }

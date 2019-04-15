@@ -18,14 +18,12 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
     // that fits in the NetworkEvents. Instead, larger content is downloaded on demand.
     class DriveMaterializer
     {
-        readonly RootName _root;
         readonly MemoryGateway _localState;
         readonly ConcurrentDictionary<Type, Func<NetworkEvent, object>> _apply;
         readonly SequenceNr _sequenceNr;
 
-        public DriveMaterializer(RootName root, MemoryGateway localState, SequenceNr sequenceNr)
+        public DriveMaterializer(MemoryGateway localState, SequenceNr sequenceNr)
         {
-            _root = root;
             _localState = localState;
             _sequenceNr = sequenceNr;
             _apply = new ConcurrentDictionary<Type, Func<NetworkEvent, object>>();
@@ -73,7 +71,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                 MapOrContent = e.MapOrContent
             };
             var stream = new MemoryStream(locator.GetBytes());
-            return _localState.NewFileItem(_root, new DirectoryId(e.ParentDirId), e.Name, stream, null);
+            return _localState.NewFileItem(new DirectoryId(e.ParentDirId), e.Name, stream, null);
         }
 
         object Apply(NetworkFileContentSet e)
@@ -85,13 +83,13 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                 MapOrContent = e.MapOrContent
             };
             var stream = new MemoryStream(locator.GetBytes());
-            _localState.SetContent(_root, new FileId(e.FileId), stream, null);
+            _localState.SetContent(new FileId(e.FileId), stream, null);
             return new object();
         }
 
         object Apply(NetworkFileContentCleared e)
         {
-            _localState.ClearContent(_root, new FileId(e.FileId));
+            _localState.ClearContent(new FileId(e.FileId));
             return new object();
         }
 
@@ -110,7 +108,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                     throw new ArgumentOutOfRangeException(nameof(e.FSType));
             }
 
-            var item = _localState.CopyItem(_root, fileSystemId, e.CopyName, new DirectoryId(e.DestDirId), true);
+            var item = _localState.CopyItem(fileSystemId, e.CopyName, new DirectoryId(e.DestDirId), true);
             return item;
         }
 
@@ -129,12 +127,12 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                     throw new ArgumentOutOfRangeException(nameof(e.FSType));
             }
 
-            var item = _localState.MoveItem(_root, fileSystemId, e.MoveName, new DirectoryId(e.DestDirId));
+            var item = _localState.MoveItem(fileSystemId, e.MoveName, new DirectoryId(e.DestDirId));
             return item;
         }
 
         object Apply(NetworkDirectoryItemCreated e)
-            => _localState.NewDirectoryItem(_root, new DirectoryId(e.ParentDirId), e.Name);
+            => _localState.NewDirectoryItem(new DirectoryId(e.ParentDirId), e.Name);
 
         object Apply(NetworkItemRemoved e)
         {
@@ -150,7 +148,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                 default:
                     throw new ArgumentOutOfRangeException(nameof(e.FSType));
             }
-            _localState.RemoveItem(_root, fileSystemId, e.Recursive);
+            _localState.RemoveItem(fileSystemId, e.Recursive);
             return new object();
         }
 
@@ -168,7 +166,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                 default:
                     throw new ArgumentOutOfRangeException(nameof(e.FSType));
             }
-            var item = _localState.RenameItem(_root, fileSystemId, e.NewName);
+            var item = _localState.RenameItem(fileSystemId, e.NewName);
             return item;
         }
     }

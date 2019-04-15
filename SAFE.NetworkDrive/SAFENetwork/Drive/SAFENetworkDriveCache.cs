@@ -24,23 +24,23 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             _contentCache = new ConcurrentDictionary<FileId, byte[]>();
         }
 
-        public DriveInfoContract GetDrive(RootName root)
-            => _localState.GetDrive(root);
+        public DriveInfoContract GetDrive()
+            => _localState.GetDrive();
 
-        public RootDirectoryInfoContract GetRoot(RootName root)
-            => _localState.GetRoot(root);
+        public RootDirectoryInfoContract GetRoot()
+            => _localState.GetRoot();
 
-        public IEnumerable<FileSystemInfoContract> GetChildItem(RootName root, DirectoryId parent)
-            => _localState.GetChildItem(root, parent);
+        public IEnumerable<FileSystemInfoContract> GetChildItem(DirectoryId parent)
+            => _localState.GetChildItem(parent);
 
-        public void ClearContent(RootName root, FileId target)
-            => _localState.ClearContent(root, target);
+        public void ClearContent(FileId target)
+            => _localState.ClearContent(target);
 
-        public System.IO.Stream GetContent(RootName root, FileId source)
+        public System.IO.Stream GetContent(FileId source)
         {
             if (!_contentCache.ContainsKey(source))
             {
-                var data = _localState.GetContent(root, source);
+                var data = _localState.GetContent(source);
                 var evt = NetworkContentLocator.FromBytes(data.ReadFully());
                 var content = evt.MapOrContent;
                 if (evt.IsMap)
@@ -59,50 +59,50 @@ namespace SAFE.NetworkDrive.Gateways.Memory
             return new System.IO.BufferedStream(ms);
         }
 
-        public void SetContent(RootName root, FileId target, System.IO.Stream content, IProgress<ProgressValue> progress)
+        public void SetContent(FileId target, System.IO.Stream content, IProgress<ProgressValue> progress)
         {
-            _localState.SetContent(root, target, content, progress);
+            _localState.SetContent(target, content, progress);
             _contentCache[target] = content.ReadFully();
         }
 
-        public FileSystemInfoContract CopyItem(RootName root, FileSystemId source, string copyName, DirectoryId destination, bool recurse)
+        public FileSystemInfoContract CopyItem(FileSystemId source, string copyName, DirectoryId destination, bool recurse)
         {
-            var contract = _localState.CopyItem(root, source, copyName, destination, recurse);
+            var contract = _localState.CopyItem(source, copyName, destination, recurse);
             var fileId = new FileId(source.Value);
             if (_contentCache.ContainsKey(fileId))
                 _contentCache[new FileId(contract.Id.Value)] = _contentCache[fileId];
             return contract;
         }
 
-        public FileSystemInfoContract MoveItem(RootName root, FileSystemId source, string moveName, DirectoryId destination)
+        public FileSystemInfoContract MoveItem(FileSystemId source, string moveName, DirectoryId destination)
         {
-            var contract = _localState.MoveItem(root, source, moveName, destination);
+            var contract = _localState.MoveItem(source, moveName, destination);
             TryReplace(source, contract.Id);
             return contract;
         }
 
-        public DirectoryInfoContract NewDirectoryItem(RootName root, DirectoryId parent, string name)
-            => _localState.NewDirectoryItem(root, parent, name);
+        public DirectoryInfoContract NewDirectoryItem(DirectoryId parent, string name)
+            => _localState.NewDirectoryItem(parent, name);
 
-        public FileInfoContract NewFileItem(RootName root, DirectoryId parent, 
+        public FileInfoContract NewFileItem(DirectoryId parent, 
             string name, System.IO.Stream content, IProgress<ProgressValue> progress)
         {
-            var contract = _localState.NewFileItem(root, parent, name, content, progress);
+            var contract = _localState.NewFileItem(parent, name, content, progress);
             _contentCache[contract.Id] = content.ReadFully();
             return contract;
         }
 
-        public void RemoveItem(RootName root, FileSystemId target, bool recurse)
+        public void RemoveItem(FileSystemId target, bool recurse)
         {
-            _localState.RemoveItem(root, target, recurse);
+            _localState.RemoveItem(target, recurse);
             var fileId = new FileId(target.Value);
             if (_contentCache.ContainsKey(fileId))
                 _contentCache.Remove(fileId, out _);
         }
 
-        public FileSystemInfoContract RenameItem(RootName root, FileSystemId target, string newName)
+        public FileSystemInfoContract RenameItem(FileSystemId target, string newName)
         {
-            var contract = _localState.RenameItem(root, target, newName);
+            var contract = _localState.RenameItem(target, newName);
             TryReplace(target, contract.Id);
             return contract;
         }

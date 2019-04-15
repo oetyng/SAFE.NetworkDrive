@@ -12,14 +12,12 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 {
     class DriveWriter
     {
-        readonly RootName _root;
         readonly SAFENetworkDriveCache _localState;
         readonly SequenceNr _sequenceNr;
         readonly ConcurrentDictionary<Type, Func<LocalEvent, object>> _apply;
 
-        public DriveWriter(RootName root, SAFENetworkDriveCache gateway, SequenceNr sequenceNr)
+        public DriveWriter(SAFENetworkDriveCache gateway, SequenceNr sequenceNr)
         {
-            _root = root;
             _localState = gateway;
             _sequenceNr = sequenceNr;
             _apply = new ConcurrentDictionary<Type, Func<LocalEvent, object>>();
@@ -56,17 +54,17 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         }
 
         object Apply(LocalFileItemCreated e)
-            => _localState.NewFileItem(_root, new DirectoryId(e.ParentDirId), e.Name, new MemoryStream(e.Content), null);
+            => _localState.NewFileItem(new DirectoryId(e.ParentDirId), e.Name, new MemoryStream(e.Content), null);
 
         object Apply(LocalFileContentSet e)
         {
-            _localState.SetContent(_root, new FileId(e.FileId), new MemoryStream(e.Content), null);
+            _localState.SetContent(new FileId(e.FileId), new MemoryStream(e.Content), null);
             return new object();
         }
 
         object Apply(LocalFileContentCleared e)
         {
-            _localState.ClearContent(_root, new FileId(e.FileId));
+            _localState.ClearContent(new FileId(e.FileId));
             return new object();
         }
 
@@ -85,7 +83,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                     throw new ArgumentOutOfRangeException(nameof(e.FSType));
             }
 
-            var item = _localState.CopyItem(_root, fileSystemId, e.CopyName, new DirectoryId(e.DestDirId), true);
+            var item = _localState.CopyItem(fileSystemId, e.CopyName, new DirectoryId(e.DestDirId), true);
             return item;
         }
 
@@ -104,12 +102,12 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                     throw new ArgumentOutOfRangeException(nameof(e.FSType));
             }
 
-            var item = _localState.MoveItem(_root, fileSystemId, e.MoveName, new DirectoryId(e.DestDirId));
+            var item = _localState.MoveItem(fileSystemId, e.MoveName, new DirectoryId(e.DestDirId));
             return item;
         }
 
         object Apply(LocalDirectoryItemCreated e)
-            => _localState.NewDirectoryItem(_root, new DirectoryId(e.ParentDirId), e.Name);
+            => _localState.NewDirectoryItem(new DirectoryId(e.ParentDirId), e.Name);
 
         object Apply(LocalItemRemoved e)
         {
@@ -125,7 +123,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                 default:
                     throw new ArgumentOutOfRangeException(nameof(e.FSType));
             }
-            _localState.RemoveItem(_root, fileSystemId, e.Recursive);
+            _localState.RemoveItem(fileSystemId, e.Recursive);
             return new object();
         }
 
@@ -143,7 +141,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                 default:
                     throw new ArgumentOutOfRangeException(nameof(e.FSType));
             }
-            var item = _localState.RenameItem(_root, fileSystemId, e.NewName);
+            var item = _localState.RenameItem(fileSystemId, e.NewName);
             return item;
         }
     }
