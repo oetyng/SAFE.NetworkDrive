@@ -36,17 +36,18 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
             }
         }
 
-        readonly IDictionary<RootName, SAFENetworkContext> _contextCache = new Dictionary<RootName, SAFENetworkContext>();
         readonly CancellationToken _cancellation;
         readonly string _secretKey;
-        SequenceNr _sequenceNr;
-
-        IDictionary<string, string> _parameters;
+        readonly SequenceNr _sequenceNr;
         
+        IDictionary<string, string> _parameters;
+        SAFENetworkContext _context;
+
         public SAFENetworkGateway(string secretKey, CancellationToken cancellation)
         { 
             _secretKey = secretKey;
             _cancellation = cancellation;
+            _sequenceNr = new SequenceNr();
         }
 
         async Task<SAFENetworkContext> RequireContextAsync(RootName root, string apiKey = null)
@@ -54,10 +55,9 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
             if (root == null)
                 throw new ArgumentNullException(nameof(root));
 
-            if (!_contextCache.TryGetValue(root, out SAFENetworkContext result))
+            if (_context == null)
             {
                 var (stream, store) = await DbFactory.GetDriveDbsAsync(root.VolumeId, apiKey, _secretKey);
-                _sequenceNr = new SequenceNr();
 
                 var localState = new Memory.MemoryGateway();
                 var driveCache = new Memory.SAFENetworkDriveCache(store, localState);
@@ -70,7 +70,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                 var dbName = Utils.Scrambler.ShortCode(root.VolumeId, _secretKey);
                 var transactor = new EventTransactor(driveWriter,
                     new DiskWALTransactor(dbName, conflictHandler.Upload), _secretKey);
-                _contextCache.Add(root, result = new SAFENetworkContext(transactor, new DriveReader(driveCache)));
+                _context = new SAFENetworkContext(transactor, new DriveReader(driveCache));
 
                 var _ = driveCache.GetDrive(root, apiKey, _parameters); // needs to be loaded
 
@@ -87,7 +87,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                     throw new InvalidDataException("Could not materialize network filesystem!");
             }
 
-            return result;
+            return _context;
         }
 
         public async Task<bool> TryAuthenticateAsync(RootName root, string apiKey, IDictionary<string, string> parameters)
