@@ -1,6 +1,8 @@
 ﻿using SAFE.NetworkDrive.Gateways.AsyncEvents;
+using SAFE.NetworkDrive.Gateways.Memory;
 using SAFE.NetworkDrive.Interface;
 using SAFE.NetworkDrive.Parameters;
+using SAFE.NetworkDrive.Snapshots;
 using System.Threading.Tasks;
 
 namespace SAFE.NetworkDrive
@@ -17,14 +19,17 @@ namespace SAFE.NetworkDrive
 
         async Task<SAFENetworkContext> GetContextAsync(RootName root, SAFEDriveParameters parameters)
         {
+            var snapshotter = new DriveSnapshotFactory(root);
             var dbFactory = new DbFactory(parameters);
-            var (stream, store) = await dbFactory.GetDriveDbsAsync(root.VolumeId, null);
-
-            var localState = new Gateways.Memory.MemoryGateway(root);
-            var driveCache = new Gateways.Memory.SAFENetworkDriveCache(store, localState);
+            var (stream, store) = await dbFactory.GetDriveDbsAsync(root.VolumeId, snapshotter.GetSnapshotter);
             var network = new SAFENetworkEventService(stream, store, parameters.Secret);
 
-            var sequenceNr = new SequenceNr();
+            // loads snapshot + all events since, and materializes into current state, to be built on locally
+            // events from network that are materialized, could be from this machine or any machine writing to same stream
+            // thus there is a risk of conclict (read more further down)
+            var (localState, sequenceNr) = await network.LoadStateAsync(snapshotter.ReadFromSnapshotAsync);
+            //var eventCount = await network.LoadAsync(fromVersion: 0).CountAsync();
+            var driveCache = new SAFENetworkDriveCache(store, localState);
 
             var materializer = new DriveMaterializer(localState, sequenceNr);
             var conflictHandler = new VersionConflictHandler(network, materializer);
@@ -33,21 +38,18 @@ namespace SAFE.NetworkDrive
             var dbName = Gateways.Utils.Scrambler.ShortCode(root.VolumeId, parameters.Secret);
             var transactor = new EventTransactor(driveWriter,
                 new DiskWALTransactor(dbName, conflictHandler.Upload), parameters.Secret);
-            var context = new SAFENetworkContext(transactor, new DriveReader(driveCache), sequenceNr);
 
-            var _ = driveCache.GetDrive(); // needs to be loaded
+            //var _ = driveCache.GetDrive(); // needs to be loaded
 
-            // We need to wait for all events in local WAL to have been persisted to network
-            // before we materialize new events from network.
+            // All events in local WAL gets persisted to network
+            // after we materialize events from network.
+            // The version conflict handler will try to resolve the conflicts. 
+            // Beware: Currently (as it is not implemented) there is no merging done, only naively appending, which could lead to corrupt state.
             transactor.Start(parameters.Cancellation); // start uploading to network
             while (DiskWALTransactor.AnyInQueue(dbName)) // wait until queue is empty
-                await Task.Delay(500); // beware, this will - currently - spin eternally if there is an unresolved version conflict
+                await Task.Delay(500); // Beware: this will - currently - spin eternally if there is an unresolved version conflict
 
-            // (todo: should load snapshot + all events since)
-            var allEvents = network.LoadAsync(fromVersion: 0); // load all events from network (since we don't store it locally)
-            var isMaterialized = await materializer.Materialize(allEvents); // recreate the filesystem locally in memory
-            if (!isMaterialized)
-                throw new System.IO.InvalidDataException("Could not materialize network filesystem!");
+            var context = new SAFENetworkContext(transactor, new DriveReader(driveCache), sequenceNr);
             return context;
         }
     }

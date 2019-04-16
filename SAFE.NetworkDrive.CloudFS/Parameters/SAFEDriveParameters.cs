@@ -9,5 +9,6 @@ namespace SAFE.NetworkDrive.Parameters
         public ILogger Logger { get; set; }
         public CancellationToken Cancellation { get; set; }
         public bool Live { get; set; }
+        public bool InMem { get; set; }
     }
 }

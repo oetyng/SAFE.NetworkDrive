@@ -111,7 +111,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                             .FirstOrDefault();
                         if (data == null && HighSpeed())
                             SetDelay(1 + _currentWorkDelay.Ticks * 2);
-                        else if (await _onDequeued(data))
+                        else if (data != null && await _onDequeued(data))
                         {
                             data.Persisted = true;
                             db.RunTransaction(() => db.Save(data));

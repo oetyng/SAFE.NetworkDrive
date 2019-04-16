@@ -1,7 +1,10 @@
 ﻿using SAFE.AppendOnlyDb;
+using SAFE.AppendOnlyDb.Snapshots;
 using SAFE.Data;
 using SAFE.Data.Client;
+using SAFE.Data.Utils;
 using SAFE.NetworkDrive.Replication.Events;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -33,7 +36,9 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
             return (networkEvt, result);
         }
 
-        // Event => json => bytes => compressed => Encrypted => byte[]
+        public Task<(Memory.MemoryGateway, SequenceNr)> LoadStateAsync(Func<IStreamAD, IImDStore, Task<(Memory.MemoryGateway, SequenceNr)>> restoration)
+            => restoration(_stream, _imdStore);
+
         public IAsyncEnumerable<NetworkEvent> LoadAsync(ulong fromVersion)
         {
             var data = _stream.ReadForwardFromAsync(fromVersion);

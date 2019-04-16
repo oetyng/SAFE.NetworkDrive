@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 {
-    class SequenceNr
+    public class SequenceNr
     {
         readonly Guid _id = Guid.NewGuid();
         readonly AsyncDuplicateLock _asyncLock = new AsyncDuplicateLock();
