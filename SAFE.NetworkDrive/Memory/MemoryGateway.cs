@@ -20,15 +20,17 @@ namespace SAFE.NetworkDrive.Gateways.Memory
         string _rootPath;
 
         public MemoryGateway(RootName root)
-            => _root = root ?? throw new ArgumentNullException(nameof(root));
+        { 
+            _root = root ?? throw new ArgumentNullException(nameof(root));
+            _rootPath = System.IO.Path.DirectorySeparatorChar.ToString();
+        }
 
         public DriveInfoContract GetDrive()
         {
-            _rootPath = System.IO.Path.DirectorySeparatorChar.ToString();
             //if (parameters?.TryGetValue(PARAMETER_ROOT, out _rootPath) != true)
             //    throw new ArgumentException($"Required {PARAMETER_ROOT} missing in {nameof(parameters)}".ToString(CultureInfo.CurrentCulture));
-            if (string.IsNullOrEmpty(_rootPath))
-                throw new ArgumentException($"{PARAMETER_ROOT} cannot be empty".ToString(CultureInfo.CurrentCulture));
+            //if (string.IsNullOrEmpty(_rootPath))
+            //    throw new ArgumentException($"{PARAMETER_ROOT} cannot be empty".ToString(CultureInfo.CurrentCulture));
 
             var drive = new MemDrive(_rootFolder);
             return new DriveInfoContract(_root.Value,

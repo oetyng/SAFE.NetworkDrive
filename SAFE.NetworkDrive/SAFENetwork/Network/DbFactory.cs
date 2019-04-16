@@ -39,7 +39,8 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         async Task InitMockSession(Func<IImDStore, Snapshotter> snapShotterFactory)
         {
             var mockClient = new CredentialAuth(APP_ID, _parameters.InMem);
-            var session = (await mockClient.AuthenticateAsync()).Value;
+            var credentials = new MockAuthClient.Credentials(_parameters.Locator, _parameters.Secret);
+            var session = (await mockClient.AuthenticateAsync(credentials)).Value;
             Set(snapShotterFactory, session);
         }
 

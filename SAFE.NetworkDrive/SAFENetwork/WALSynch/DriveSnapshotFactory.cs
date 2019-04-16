@@ -23,8 +23,13 @@ namespace SAFE.NetworkDrive.Snapshots
             if (!snapshotReading.HasValue)
                 return (new MemoryGateway(_root), new SequenceNr());
 
-            var snapshot = await snapshotter.GetSnapshotAsync(snapshotReading.Value.SnapshotMap);
-            var currentState = await MaterializeAsync(snapshot, snapshotReading.Value.NewEvents.Select(c => c.Item2.Parse<NetworkEvent>()));
+            Snapshot snapshot = default;
+            IAsyncEnumerable<NetworkEvent> events = snapshotReading.Value.NewEvents.Select(c => c.Item2.Parse<NetworkEvent>());
+            
+            if (snapshotReading.Value.SnapshotMap != null) // load all events from network (since we don't store it locally)
+                snapshot = await snapshotter.GetSnapshotAsync(snapshotReading.Value.SnapshotMap);
+
+            var currentState = await MaterializeAsync(snapshot, events);
             return currentState;
         }
 
@@ -50,7 +55,9 @@ namespace SAFE.NetworkDrive.Snapshots
 
             var materializer = new DriveMaterializer(currentState, sequenceNr);
 
-            await materializer.Materialize(changes);
+            var isMaterialized = await materializer.Materialize(changes);
+            if (!isMaterialized)
+                throw new System.IO.InvalidDataException("Could not materialize network filesystem!");
 
             return (currentState, sequenceNr);
         }
