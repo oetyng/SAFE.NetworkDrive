@@ -80,7 +80,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
                     //    Gateways[config.Schema] = new Gateways.File.FileGateway();
                     //    break;
                     case "memory":
-                        Gateways[config.Schema] = new Gateways.Memory.MemoryGateway(new RootName(config.Mount));
+                        Gateways[config.Schema] = new Gateways.Memory.MemoryGateway(new RootName(config.Schema, config.VolumeId, config.Mount));
                         break;
                 }
             }

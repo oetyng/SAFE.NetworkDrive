@@ -56,7 +56,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 
         void Set(Func<IImDStore, Snapshotter> snapShotterFactory, Session session)
         {
-            _networkDataOps = default;// new NetworkDataOps(session);
+            _networkDataOps = new NetworkDataOps(session);
             var snapshotter = snapShotterFactory == null ? null : snapShotterFactory(GetImdStore());
             _streamDbFactory = new StreamDbFactory(_networkDataOps, snapshotter);
         }

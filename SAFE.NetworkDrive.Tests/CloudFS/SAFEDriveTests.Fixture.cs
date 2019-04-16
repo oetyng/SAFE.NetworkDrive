@@ -138,7 +138,7 @@ namespace SAFE.NetworkDrive.Tests
             {
                 _gateway
                     .Setup(g => g.MoveItem(directoryOrFile.Id, name, target.Id))
-                    .Returns((RootName _rootName, FileSystemId source, string movePath, DirectoryId destination, Func<FileSystemInfoLocator> resolver) => {
+                    .Returns((FileSystemId source, string movePath, DirectoryId destination) => {
                         var directorySource = source as DirectoryId;
                         if (directorySource != null)
                             return new DirectoryInfoContract(source.Value, movePath, directoryOrFile.Created, directoryOrFile.Updated) { Parent = target };
