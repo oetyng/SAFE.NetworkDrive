@@ -47,13 +47,6 @@ namespace SAFE.NetworkDrive.Interface
         public abstract string FullName { get; }
 
         /// <summary>
-        /// Gets the mode of the directory or file.
-        /// </summary>
-        /// <value>The <see cref="string" /> containing the mode.</value>
-        [Obsolete("Unused property will be removed in a future version of this library.")]
-        public abstract string Mode { get; }
-
-        /// <summary>
         /// Gets the creation time of the current file or directory.
         /// </summary>
         /// <value>The creation <see cref="DateTimeOffset" /> of the current <see cref="FileSystemInfoContract"/> object.</value>

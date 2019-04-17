@@ -26,9 +26,6 @@ namespace SAFE.NetworkDrive.Tests
                 { }
 
                 public override string FullName => Name;
-
-                [Obsolete("Unused property will be removed in a future version.")]
-                public override string Mode => "t----";
             }
 
             sealed class TestFileSystemId : FileSystemId

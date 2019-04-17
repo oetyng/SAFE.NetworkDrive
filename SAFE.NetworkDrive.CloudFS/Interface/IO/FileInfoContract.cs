@@ -50,13 +50,6 @@ namespace SAFE.NetworkDrive.Interface
         public override string FullName => (Directory?.FullName ?? string.Empty) + Name;
 
         /// <summary>
-        /// Gets the mode of the file.
-        /// </summary>
-        /// <value>The <see cref="string" /> containing the mode.</value>
-        [Obsolete("Unused property will be removed in a future version of this library.")]
-        public override string Mode => "-----";
-
-        /// <summary>
         /// Gets or sets the size, in bytes, of the current file.
         /// </summary>
         /// <value>The size of the current file in bytes.</value>

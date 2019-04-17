@@ -28,7 +28,6 @@ namespace SAFE.NetworkDrive
             // events from network that are materialized, could be from this machine or any machine writing to same stream
             // thus there is a risk of conclict (read more further down)
             var (localState, sequenceNr) = await network.LoadStateAsync(snapshotter.ReadFromSnapshotAsync);
-            //var eventCount = await network.LoadAsync(fromVersion: 0).CountAsync();
             var driveCache = new SAFENetworkDriveCache(store, localState);
 
             var materializer = new DriveMaterializer(localState, sequenceNr);
@@ -38,8 +37,6 @@ namespace SAFE.NetworkDrive
             var dbName = Gateways.Utils.Scrambler.ShortCode(root.VolumeId, parameters.Secret);
             var transactor = new EventTransactor(driveWriter,
                 new DiskWALTransactor(dbName, conflictHandler.Upload), parameters.Secret);
-
-            //var _ = driveCache.GetDrive(); // needs to be loaded
 
             // All events in local WAL gets persisted to network
             // after we materialize events from network.
