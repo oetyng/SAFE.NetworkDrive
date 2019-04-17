@@ -62,5 +62,50 @@ namespace SAFE.NetworkDrive.SerializableFS
             file.Read(0, mapped.ContentOrMap);
             return mapped;
         }
+
+        // ----------------------------------------------------------------
+
+        internal static MemoryFolder DeserializeFS(SerializableFolder root)
+        {
+            var mapped = new MemoryFolder(null, root.Name);
+            var subDirectories = root.SubDirectories
+                //.AsParallel()
+                .Select(c => Map(mapped, c))
+                .ToList();
+            var files = root.Files
+                //.AsParallel()
+                .Select(c => Map(mapped, c))
+                .ToList();
+
+            mapped.Children = subDirectories.Cast<MemoryItem>().ToList();
+            mapped.Children.AddRange(files);
+
+            return mapped;
+        }
+
+        static MemoryFolder Map(MemoryFolder parent, SerializableFolder folder)
+        {
+            var mapped = new MemoryFolder(parent, folder.Name);
+            var subDirectories = folder.SubDirectories
+                //.AsParallel()
+                .Select(c => Map(mapped, c))
+                .ToList();
+            var files = folder.Files
+                //.AsParallel()
+                .Select(c => Map(mapped, c))
+                .ToList();
+
+            mapped.Children = subDirectories.Cast<MemoryItem>().ToList();
+            mapped.Children.AddRange(files);
+
+            return mapped;
+        }
+
+        static MemoryStreamFile Map(MemoryFolder parent, SerializableFile file)
+        {
+            var mapped = new MemoryStreamFile(parent, file.Name);
+            mapped.Write(0, file.ContentOrMap);
+            return mapped;
+        }
     }
 }

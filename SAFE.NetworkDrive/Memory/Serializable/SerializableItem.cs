@@ -16,8 +16,8 @@ namespace SAFE.NetworkDrive.SerializableFS
 
         protected SerializableItem(SerializableFolder parent, string name)
         {
-            ParentName = parent.Name;
-            FullName = parent.FullName + "\\" + name;
+            ParentFullName = parent?.FullName;
+            //FullName = parent?.FullName + "\\" + name;
             Name = name;
 
             CreationTime = DateTime.Now;
@@ -26,9 +26,9 @@ namespace SAFE.NetworkDrive.SerializableFS
         }
 
         /// <summary>
-        /// This is a reference to the parent-folder, where this item is located in
+        /// This is the full path of the parent-folder, where this item is located in
         /// </summary>
-        public string ParentName { get; set; }
+        public string ParentFullName { get; set; }
 
         /// <summary>
         /// This is the name of the item (file or folder), without a path
@@ -48,9 +48,10 @@ namespace SAFE.NetworkDrive.SerializableFS
         public DateTime CreationTime { get; set; }
 
         /// <summary>
-        /// Returns the full path to the memory-item
+        /// The full path to the memory-item
         /// </summary>
-        public string FullName { get; set; }
+        [JsonIgnore]
+        public string FullName => Name == string.Empty ? Name : ParentFullName + "\\" + Name;
 
         public T Deserialize<T>(string data, string type) where T : SerializableItem
             => (T)data.Parse(type);
