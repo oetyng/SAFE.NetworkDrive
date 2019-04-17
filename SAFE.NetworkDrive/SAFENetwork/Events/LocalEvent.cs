@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
+using SAFE.Data.Utils;
 using SAFE.NetworkDrive.Encryption;
-using SAFE.NetworkDrive.Gateways.Utils;
 using System;
 using System.Text;
 

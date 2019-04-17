@@ -1,5 +1,5 @@
 ﻿
-namespace SAFE.NetworkDrive.Gateways.Memory
+namespace SAFE.NetworkDrive.MemoryFS
 {
     internal abstract class MemoryFile : MemoryItem
     {

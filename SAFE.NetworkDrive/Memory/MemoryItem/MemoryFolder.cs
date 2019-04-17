@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace SAFE.NetworkDrive.Gateways.Memory
+namespace SAFE.NetworkDrive.MemoryFS
 {
     /// <summary>
     /// Represents a directory in Memory; may have othe files or folders as

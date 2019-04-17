@@ -50,13 +50,6 @@ namespace SAFE.NetworkDrive.Interface
         public override string FullName => (Parent?.FullName ?? string.Empty) + Name + Path.DirectorySeparatorChar;
 
         /// <summary>
-        /// Gets the mode of the directory.
-        /// </summary>
-        /// <value>The <see cref="string" /> containing the mode.</value>
-        [Obsolete("Unused property will be removed in a future version of this library.")]
-        public override string Mode => "d----";
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="DirectoryInfoContract"/> class.
         /// </summary>
         /// <param name="id">The unique identifier.</param>

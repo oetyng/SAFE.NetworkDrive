@@ -1,6 +1,6 @@
 ﻿using SAFE.AppendOnlyDb.Snapshots;
 using SAFE.NetworkDrive.Gateways.AsyncEvents;
-using SAFE.NetworkDrive.Gateways.Memory;
+using SAFE.NetworkDrive.MemoryFS;
 using SAFE.NetworkDrive.Interface;
 using SAFE.NetworkDrive.Replication.Events;
 using System.Collections.Generic;

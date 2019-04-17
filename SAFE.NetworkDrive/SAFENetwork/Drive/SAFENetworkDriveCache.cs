@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using SAFE.Data.Client;
 
-namespace SAFE.NetworkDrive.Gateways.Memory
+namespace SAFE.NetworkDrive.MemoryFS
 {
     [System.Diagnostics.DebuggerDisplay("{DebuggerDisplay(),nq}")]
     public sealed class SAFENetworkDriveCache

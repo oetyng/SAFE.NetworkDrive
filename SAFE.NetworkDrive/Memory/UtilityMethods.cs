@@ -2,7 +2,7 @@
 using System.IO;
 using System;
 
-namespace SAFE.NetworkDrive.Gateways.Memory
+namespace SAFE.NetworkDrive.MemoryFS
 {
     internal static class UtilityMethods
     {

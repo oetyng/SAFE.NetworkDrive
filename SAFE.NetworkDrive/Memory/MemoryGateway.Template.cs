@@ -2,7 +2,7 @@
 //using System;
 //using System.Collections.Generic;
 
-//namespace SAFE.NetworkDrive.Gateways.Memory
+//namespace SAFE.NetworkDrive.MemoryFS
 //{
 //    class MemoryGateway
 //    {

@@ -1,5 +1,5 @@
 ﻿using SAFE.NetworkDrive.Replication.Events;
-using SAFE.NetworkDrive.Gateways.Memory;
+using SAFE.NetworkDrive.MemoryFS;
 using SAFE.NetworkDrive.Interface;
 using System;
 using System.Collections.Concurrent;

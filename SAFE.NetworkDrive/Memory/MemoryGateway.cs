@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 
-namespace SAFE.NetworkDrive.Gateways.Memory
+namespace SAFE.NetworkDrive.MemoryFS
 {
     [System.Diagnostics.DebuggerDisplay("{DebuggerDisplay(),nq}")]
     public sealed class MemoryGateway : Interfaces.IMemoryGateway

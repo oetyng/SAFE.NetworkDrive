@@ -3,6 +3,7 @@ using SAFE.AppendOnlyDb.Snapshots;
 using SAFE.Data;
 using SAFE.Data.Client;
 using SAFE.Data.Utils;
+using SAFE.NetworkDrive.MemoryFS;
 using SAFE.NetworkDrive.Replication.Events;
 using System;
 using System.Collections.Generic;
@@ -36,7 +37,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
             return (networkEvt, result);
         }
 
-        public Task<(Memory.MemoryGateway, SequenceNr)> LoadStateAsync(Func<IStreamAD, IImDStore, Task<(Memory.MemoryGateway, SequenceNr)>> restoration)
+        public Task<(MemoryGateway, SequenceNr)> LoadStateAsync(Func<IStreamAD, IImDStore, Task<(MemoryGateway, SequenceNr)>> restoration)
             => restoration(_stream, _imdStore);
 
         public IAsyncEnumerable<NetworkEvent> LoadAsync(ulong fromVersion)
@@ -63,7 +64,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                     var (isMap_1, data_1) = await GetMapOrContent(ev.Content);
                     return new NetworkFileItemCreated(ev.SequenceNr, ev.ParentDirId, ev.Name, data_1, isMap_1);
                 case null:
-                    throw new System.ArgumentNullException(nameof(e));
+                    throw new ArgumentNullException(nameof(e));
                 default:
                     return e.ToNetworkEvent();
             }

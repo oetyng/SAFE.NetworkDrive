@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace SAFE.NetworkDrive.Gateways.Memory
+namespace SAFE.NetworkDrive.MemoryFS
 {
     /// <summary>
     /// Represents a file in memory, based on MemoryStreams

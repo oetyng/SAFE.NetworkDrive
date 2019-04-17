@@ -1,4 +1,4 @@
-﻿using SAFE.NetworkDrive.Gateways.Memory;
+﻿using SAFE.NetworkDrive.MemoryFS;
 using SAFE.NetworkDrive.Interface;
 using System.Collections.Generic;
 using System.IO;

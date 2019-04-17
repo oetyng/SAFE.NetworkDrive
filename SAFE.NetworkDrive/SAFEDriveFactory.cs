@@ -1,5 +1,5 @@
 ﻿using SAFE.NetworkDrive.Gateways.AsyncEvents;
-using SAFE.NetworkDrive.Gateways.Memory;
+using SAFE.NetworkDrive.MemoryFS;
 using SAFE.NetworkDrive.Interface;
 using SAFE.NetworkDrive.Parameters;
 using SAFE.NetworkDrive.Snapshots;
