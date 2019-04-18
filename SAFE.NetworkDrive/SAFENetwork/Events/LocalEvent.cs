@@ -72,7 +72,7 @@ namespace SAFE.NetworkDrive.Replication.Events
         public string FileId { get; }
 
         public override NetworkEvent ToNetworkEvent()
-            => new NetworkFileContentCleared(SequenceNr, FileId);
+            => new NetworkFileContentCleared(SequenceNr, FileId, TimeStamp);
     }
 
     class LocalItemCopied : LocalEvent
@@ -95,7 +95,7 @@ namespace SAFE.NetworkDrive.Replication.Events
         public bool Recursive { get; }
 
         public override NetworkEvent ToNetworkEvent()
-            => new NetworkItemCopied(SequenceNr, FileSystemId, FSType, CopyName, DestDirId, Recursive);
+            => new NetworkItemCopied(SequenceNr, FileSystemId, FSType, CopyName, DestDirId, Recursive, TimeStamp);
     }
     
     public enum FSType
@@ -121,7 +121,7 @@ namespace SAFE.NetworkDrive.Replication.Events
         public string DestDirId { get; }
 
         public override NetworkEvent ToNetworkEvent()
-            => new NetworkItemMoved(SequenceNr, FileSystemId, FSType, MoveName, DestDirId);
+            => new NetworkItemMoved(SequenceNr, FileSystemId, FSType, MoveName, DestDirId, TimeStamp);
     }
 
     class LocalDirectoryItemCreated : LocalEvent
@@ -137,7 +137,7 @@ namespace SAFE.NetworkDrive.Replication.Events
         public string Name { get; }
 
         public override NetworkEvent ToNetworkEvent()
-            => new NetworkDirectoryItemCreated(SequenceNr, ParentDirId, Name);
+            => new NetworkDirectoryItemCreated(SequenceNr, ParentDirId, Name, TimeStamp);
     }
 
     class LocalItemRemoved : LocalEvent
@@ -155,7 +155,7 @@ namespace SAFE.NetworkDrive.Replication.Events
         public bool Recursive { get; }
 
         public override NetworkEvent ToNetworkEvent()
-            => new NetworkItemRemoved(SequenceNr, FileSystemId, FSType, Recursive);
+            => new NetworkItemRemoved(SequenceNr, FileSystemId, FSType, Recursive, TimeStamp);
     }
 
     class LocalItemRenamed : LocalEvent
@@ -173,7 +173,7 @@ namespace SAFE.NetworkDrive.Replication.Events
         public string NewName { get; }
 
         public override NetworkEvent ToNetworkEvent()
-            => new NetworkItemRenamed(SequenceNr, FileSystemId, FSType, NewName);
+            => new NetworkItemRenamed(SequenceNr, FileSystemId, FSType, NewName, TimeStamp);
     }
 
 

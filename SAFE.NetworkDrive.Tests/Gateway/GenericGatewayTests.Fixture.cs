@@ -51,7 +51,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
                 if (residualDirectory != null)
                     gateway.RemoveItem(residualDirectory.Id, true);
 
-                _directory = gateway.NewDirectoryItem(rootDirectory.Id, path);
+                _directory = gateway.NewDirectoryItem(rootDirectory.Id, path, DateTime.Now);
             }
 
             internal static TestDirectoryFixture CreateTestDirectory(Interfaces.IMemoryGateway gateway, GatewaySection config, GatewayTestsFixture fixture)

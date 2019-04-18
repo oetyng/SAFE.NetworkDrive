@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using SAFE.Data.Utils;
 using System;
 using System.IO;
 
@@ -14,15 +13,11 @@ namespace SAFE.NetworkDrive.SerializableFS
         [JsonConstructor]
         protected SerializableItem() { }
 
-        protected SerializableItem(SerializableFolder parent, string name)
+        protected SerializableItem(SerializableFolder parent, string name, TimeComponent time)
         {
             ParentFullName = parent?.FullName;
-            //FullName = parent?.FullName + "\\" + name;
-            Name = name;
-
-            CreationTime = DateTime.Now;
-            LastAccessTime = DateTime.Now;
-            LastWriteTime = DateTime.Now;
+            Name = name ?? throw new ArgumentNullException(nameof(name));
+            TimeComponent = time;
         }
 
         /// <summary>
@@ -43,17 +38,12 @@ namespace SAFE.NetworkDrive.SerializableFS
 
         //
         // These represent the filedates;        
-        public DateTime LastAccessTime { get; set; }
-        public DateTime LastWriteTime { get; set; }
-        public DateTime CreationTime { get; set; }
+        public TimeComponent TimeComponent { get; set; }
 
         /// <summary>
         /// The full path to the memory-item
         /// </summary>
         [JsonIgnore]
         public string FullName => Name == string.Empty ? Name : ParentFullName + "\\" + Name;
-
-        public T Deserialize<T>(string data, string type) where T : SerializableItem
-            => (T)data.Parse(type);
     }
 }

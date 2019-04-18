@@ -14,14 +14,11 @@ namespace SAFE.NetworkDrive.MemoryFS
 
         MemoryItem() => throw new NotSupportedException();
 
-        protected MemoryItem(MemoryFolder parent, string name)
+        protected MemoryItem(MemoryFolder parent, string name, TimeComponent time)
         {
             Parent = parent;
             Name = name;
-
-            CreationTime = DateTime.Now;
-            LastAccessTime = DateTime.Now;
-            LastWriteTime = DateTime.Now;
+            TimeComponent = time;
         }
 
         /// <summary>
@@ -53,11 +50,11 @@ namespace SAFE.NetworkDrive.MemoryFS
         /// </summary>
         public FileAttributes Attributes { get; set; }
 
-        //
-        // These represent the filedates;        
-        public DateTime LastAccessTime { get; set; }
-        public DateTime LastWriteTime { get; set; }
-        public DateTime CreationTime { get; set; }
+        // This represents the filedates;        
+        public TimeComponent TimeComponent { get; set; }
+        public DateTime CreationTime => TimeComponent.CreationTime;
+        public DateTime LastAccessTime => TimeComponent.LastAccessTime;
+        public DateTime LastWriteTime => TimeComponent.LastWriteTime;
 
         /// <summary>
         /// Returns the full path to the memory-item

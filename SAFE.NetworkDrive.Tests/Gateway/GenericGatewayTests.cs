@@ -93,8 +93,8 @@ namespace SAFE.NetworkDrive.Tests.Gateway
                 {
                     gateway.GetDrive();
 
-                    gateway.NewDirectoryItem(testDirectory.Id, "DirectoryContent");
-                    gateway.NewFileItem(testDirectory.Id, "File.ext", new MemoryStream(new byte[100]), _fixture.GetProgressReporter());
+                    gateway.NewDirectoryItem(testDirectory.Id, "DirectoryContent", DateTime.Now);
+                    gateway.NewFileItem(testDirectory.Id, "File.ext", new MemoryStream(new byte[100]), DateTime.Now, _fixture.GetProgressReporter());
 
                     _fixture.OnCondition(config, GatewayCapabilities.GetChildItem, () =>
                     {
@@ -116,7 +116,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
                 {
                     gateway.GetDrive();
 
-                    var testFile = gateway.NewFileItem(testDirectory.Id, "File.ext", new MemoryStream(new byte[100]), _fixture.GetProgressReporter());
+                    var testFile = gateway.NewFileItem(testDirectory.Id, "File.ext", new MemoryStream(new byte[100]), DateTime.Now, _fixture.GetProgressReporter());
                     testFile.Directory = testDirectory.ToContract();
 
                     _fixture.OnCondition(config, GatewayCapabilities.ClearContent, () =>
@@ -141,7 +141,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
                 {
                     gateway.GetDrive();
 
-                    var testFile = gateway.NewFileItem(testDirectory.Id, "File.ext", _smallContent.ToStream(), _fixture.GetProgressReporter());
+                    var testFile = gateway.NewFileItem(testDirectory.Id, "File.ext", _smallContent.ToStream(), DateTime.Now, _fixture.GetProgressReporter());
 
                     _fixture.OnCondition(config, GatewayCapabilities.GetContent, () =>
                     {
@@ -163,12 +163,12 @@ namespace SAFE.NetworkDrive.Tests.Gateway
                 {
                     gateway.GetDrive();
 
-                    var testFile = gateway.NewFileItem(testDirectory.Id, "File.ext", new MemoryStream(new byte[100]), _fixture.GetProgressReporter());
+                    var testFile = gateway.NewFileItem(testDirectory.Id, "File.ext", new MemoryStream(new byte[100]), DateTime.Now, _fixture.GetProgressReporter());
                     testFile.Directory = testDirectory.ToContract();
 
                     _fixture.OnCondition(config, GatewayCapabilities.SetContent, () =>
                     {
-                        gateway.SetContent(testFile.Id, _smallContent.ToStream(), _fixture.GetProgressReporter());
+                        gateway.SetContent(testFile.Id, _smallContent.ToStream(), DateTime.Now, _fixture.GetProgressReporter());
 
                         using (var result = gateway.GetContent(testFile.Id))
                         using (var streamReader = new StreamReader(result))
@@ -188,7 +188,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
                 {
                     gateway.GetDrive();
 
-                    var testFile = gateway.NewFileItem(testDirectory.Id, "File.ext", _smallContent.ToStream(), _fixture.GetProgressReporter());
+                    var testFile = gateway.NewFileItem(testDirectory.Id, "File.ext", _smallContent.ToStream(), DateTime.Now, _fixture.GetProgressReporter());
                     testFile.Directory = testDirectory.ToContract();
 
                     _fixture.OnCondition(config, GatewayCapabilities.SetContent, () =>
@@ -200,7 +200,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
                         }
 
                         var changedContent = new string(_smallContent.Reverse().ToArray());
-                        gateway.SetContent(testFile.Id, changedContent.ToStream(), _fixture.GetProgressReporter());
+                        gateway.SetContent(testFile.Id, changedContent.ToStream(), DateTime.Now, _fixture.GetProgressReporter());
 
                         using (var result = gateway.GetContent(testFile.Id))
                         using (var streamReader = new StreamReader(result))
@@ -220,12 +220,12 @@ namespace SAFE.NetworkDrive.Tests.Gateway
                 {
                     gateway.GetDrive();
 
-                    var testFile = gateway.NewFileItem(testDirectory.Id, "File.ext", new MemoryStream(new byte[100]), _fixture.GetProgressReporter());
+                    var testFile = gateway.NewFileItem(testDirectory.Id, "File.ext", new MemoryStream(new byte[100]), DateTime.Now, _fixture.GetProgressReporter());
                     testFile.Directory = testDirectory.ToContract();
 
                     _fixture.OnCondition(config, GatewayCapabilities.SetContent, () =>
                     {
-                        gateway.SetContent(testFile.Id, new MemoryStream(_largeContent), _fixture.GetProgressReporter());
+                        gateway.SetContent(testFile.Id, new MemoryStream(_largeContent), DateTime.Now, _fixture.GetProgressReporter());
 
                         using (var result = gateway.GetContent(testFile.Id))
                         {
@@ -252,12 +252,12 @@ namespace SAFE.NetworkDrive.Tests.Gateway
                 {
                     gateway.GetDrive();
 
-                    var directoryOriginal = gateway.NewDirectoryItem(testDirectory.Id, "Directory");
-                    var fileOriginal = gateway.NewFileItem(directoryOriginal.Id, "File.ext", _smallContent.ToStream(), _fixture.GetProgressReporter());
+                    var directoryOriginal = gateway.NewDirectoryItem(testDirectory.Id, "Directory", DateTime.Now);
+                    var fileOriginal = gateway.NewFileItem(directoryOriginal.Id, "File.ext", _smallContent.ToStream(), DateTime.Now, _fixture.GetProgressReporter());
 
                     _fixture.OnCondition(config, GatewayCapabilities.CopyDirectoryItem, () =>
                     {
-                        var directoryCopy = (DirectoryInfoContract)gateway.CopyItem(directoryOriginal.Id, "Directory-Copy", testDirectory.Id, true);
+                        var directoryCopy = (DirectoryInfoContract)gateway.CopyItem(directoryOriginal.Id, "Directory-Copy", testDirectory.Id, DateTime.Now, true);
 
                         var items = gateway.GetChildItem(testDirectory.Id);
                         Assert.AreEqual(items.Single(i => i.Name == "Directory-Copy").Id, directoryCopy.Id, "Mismatched copied directory Id");
@@ -283,13 +283,13 @@ namespace SAFE.NetworkDrive.Tests.Gateway
                 {
                     gateway.GetDrive();
 
-                    var directoryOriginal = gateway.NewDirectoryItem(testDirectory.Id, "Directory");
-                    var fileOriginal = gateway.NewFileItem(directoryOriginal.Id, "File.ext", _smallContent.ToStream(), _fixture.GetProgressReporter());
-                    var directoryTarget = gateway.NewDirectoryItem(testDirectory.Id, "Target");
+                    var directoryOriginal = gateway.NewDirectoryItem(testDirectory.Id, "Directory", DateTime.Now);
+                    var fileOriginal = gateway.NewFileItem(directoryOriginal.Id, "File.ext", _smallContent.ToStream(), DateTime.Now, _fixture.GetProgressReporter());
+                    var directoryTarget = gateway.NewDirectoryItem(testDirectory.Id, "Target", DateTime.Now);
 
                     _fixture.OnCondition(config, GatewayCapabilities.CopyDirectoryItem, () =>
                     {
-                        var directoryCopy = (DirectoryInfoContract)gateway.CopyItem(directoryOriginal.Id, "Directory-Copy", directoryTarget.Id, true);
+                        var directoryCopy = (DirectoryInfoContract)gateway.CopyItem(directoryOriginal.Id, "Directory-Copy", directoryTarget.Id, DateTime.Now, true);
 
                         var items = gateway.GetChildItem(testDirectory.Id);
                         var targetItems = gateway.GetChildItem(directoryTarget.Id);
@@ -316,11 +316,11 @@ namespace SAFE.NetworkDrive.Tests.Gateway
                 {
                     gateway.GetDrive();
 
-                    var fileOriginal = gateway.NewFileItem(testDirectory.Id, "File.ext", _smallContent.ToStream(), _fixture.GetProgressReporter());
+                    var fileOriginal = gateway.NewFileItem(testDirectory.Id, "File.ext", _smallContent.ToStream(), DateTime.Now, _fixture.GetProgressReporter());
 
                     _fixture.OnCondition(config, GatewayCapabilities.CopyFileItem, () =>
                     {
-                        var fileCopy = (FileInfoContract)gateway.CopyItem(fileOriginal.Id, "File-Copy.ext", testDirectory.Id, false);
+                        var fileCopy = (FileInfoContract)gateway.CopyItem(fileOriginal.Id, "File-Copy.ext", testDirectory.Id, DateTime.Now, false);
 
                         var items = gateway.GetChildItem(testDirectory.Id);
                         Assert.AreEqual(items.Single(i => i.Name == "File-Copy.ext").Id, fileCopy.Id, "Mismatched copied file Id");
@@ -343,12 +343,12 @@ namespace SAFE.NetworkDrive.Tests.Gateway
                 {
                     gateway.GetDrive();
 
-                    var fileOriginal = gateway.NewFileItem(testDirectory.Id, "File.ext", _smallContent.ToStream(), _fixture.GetProgressReporter());
-                    var directoryTarget = gateway.NewDirectoryItem(testDirectory.Id, "Target");
+                    var fileOriginal = gateway.NewFileItem(testDirectory.Id, "File.ext", _smallContent.ToStream(), DateTime.Now, _fixture.GetProgressReporter());
+                    var directoryTarget = gateway.NewDirectoryItem(testDirectory.Id, "Target", DateTime.Now);
 
                     _fixture.OnCondition(config, GatewayCapabilities.CopyFileItem, () =>
                     {
-                        var fileCopy = (FileInfoContract)gateway.CopyItem(fileOriginal.Id, "File-Copy.ext", directoryTarget.Id, false);
+                        var fileCopy = (FileInfoContract)gateway.CopyItem(fileOriginal.Id, "File-Copy.ext", directoryTarget.Id, DateTime.Now, false);
 
                         var items = gateway.GetChildItem(testDirectory.Id);
                         var targetItems = gateway.GetChildItem(directoryTarget.Id);
@@ -372,10 +372,10 @@ namespace SAFE.NetworkDrive.Tests.Gateway
                 {
                     gateway.GetDrive();
 
-                    var directoryOriginal = gateway.NewDirectoryItem(testDirectory.Id, "Directory");
+                    var directoryOriginal = gateway.NewDirectoryItem(testDirectory.Id, "Directory", DateTime.Now);
                     directoryOriginal.Parent = testDirectory.ToContract();
-                    var directoryTarget = gateway.NewDirectoryItem(testDirectory.Id, "DirectoryTarget");
-                    var fileOriginal = gateway.NewFileItem(directoryOriginal.Id, "File.ext", _smallContent.ToStream(), _fixture.GetProgressReporter());
+                    var directoryTarget = gateway.NewDirectoryItem(testDirectory.Id, "DirectoryTarget", DateTime.Now);
+                    var fileOriginal = gateway.NewFileItem(directoryOriginal.Id, "File.ext", _smallContent.ToStream(), DateTime.Now, _fixture.GetProgressReporter());
 
                     _fixture.OnCondition(config, GatewayCapabilities.MoveDirectoryItem, () =>
                     {
@@ -410,9 +410,9 @@ namespace SAFE.NetworkDrive.Tests.Gateway
                 {
                     gateway.GetDrive();
 
-                    var directoryTarget = gateway.NewDirectoryItem(testDirectory.Id, "DirectoryTarget");
+                    var directoryTarget = gateway.NewDirectoryItem(testDirectory.Id, "DirectoryTarget", DateTime.Now);
                     directoryTarget.Parent = testDirectory.ToContract();
-                    var fileOriginal = gateway.NewFileItem(testDirectory.Id, "File.ext", _smallContent.ToStream(), _fixture.GetProgressReporter());
+                    var fileOriginal = gateway.NewFileItem(testDirectory.Id, "File.ext", _smallContent.ToStream(), DateTime.Now, _fixture.GetProgressReporter());
 
                     _fixture.OnCondition(config, GatewayCapabilities.MoveFileItem, () =>
                     {
@@ -444,7 +444,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
 
                     _fixture.OnCondition(config, GatewayCapabilities.NewDirectoryItem, () =>
                     {
-                        var newDirectory = gateway.NewDirectoryItem(testDirectory.Id, "Directory");
+                        var newDirectory = gateway.NewDirectoryItem(testDirectory.Id, "Directory", DateTime.Now);
 
                         var items = gateway.GetChildItem(testDirectory.Id);
                         Assert.AreEqual(1, items.Count(i => i.Name == "Directory"), "Expected directory is missing");
@@ -464,7 +464,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
 
                     _fixture.OnCondition(config, GatewayCapabilities.NewFileItem, () =>
                     {
-                        var newFile = gateway.NewFileItem(testDirectory.Id, "File.ext", _smallContent.ToStream(), _fixture.GetProgressReporter());
+                        var newFile = gateway.NewFileItem(testDirectory.Id, "File.ext", _smallContent.ToStream(), DateTime.Now, _fixture.GetProgressReporter());
 
                         var items = gateway.GetChildItem(testDirectory.Id);
                         Assert.AreEqual(1, items.Count(i => i.Name == "File.ext"), "Expected file is missing");
@@ -489,7 +489,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
 
                     _fixture.OnCondition(config, GatewayCapabilities.NewFileItem, () =>
                     {
-                        var newFile = gateway.NewFileItem(testDirectory.Id, "File.ext", new MemoryStream(_largeContent), _fixture.GetProgressReporter());
+                        var newFile = gateway.NewFileItem(testDirectory.Id, "File.ext", new MemoryStream(_largeContent), DateTime.Now, _fixture.GetProgressReporter());
 
                         var items = gateway.GetChildItem(testDirectory.Id);
                         Assert.AreEqual(1, items.Count(i => i.Name == "File.ext"), "Expected file is missing");
@@ -519,8 +519,8 @@ namespace SAFE.NetworkDrive.Tests.Gateway
                 {
                     gateway.GetDrive();
 
-                    var directory = gateway.NewDirectoryItem(testDirectory.Id, "Directory");
-                    gateway.NewFileItem(directory.Id, "File.ext", _smallContent.ToStream(), _fixture.GetProgressReporter());
+                    var directory = gateway.NewDirectoryItem(testDirectory.Id, "Directory", DateTime.Now);
+                    gateway.NewFileItem(directory.Id, "File.ext", _smallContent.ToStream(), DateTime.Now, _fixture.GetProgressReporter());
 
                     _fixture.OnCondition(config, GatewayCapabilities.RemoveItem, () =>
                     {
@@ -541,7 +541,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
                 {
                     gateway.GetDrive();
 
-                    var file = gateway.NewFileItem(testDirectory.Id, "File.ext", _smallContent.ToStream(), _fixture.GetProgressReporter());
+                    var file = gateway.NewFileItem(testDirectory.Id, "File.ext", _smallContent.ToStream(), DateTime.Now, _fixture.GetProgressReporter());
 
                     _fixture.OnCondition(config, GatewayCapabilities.RemoveItem, () =>
                     {
@@ -562,7 +562,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
                 {
                     gateway.GetDrive();
 
-                    var directory = gateway.NewDirectoryItem(testDirectory.Id, "Directory");
+                    var directory = gateway.NewDirectoryItem(testDirectory.Id, "Directory", DateTime.Now);
                     directory.Parent = testDirectory.ToContract();
 
                     _fixture.OnCondition(config, GatewayCapabilities.RenameDirectoryItem, () =>
@@ -585,7 +585,7 @@ namespace SAFE.NetworkDrive.Tests.Gateway
                 {
                     gateway.GetDrive();
 
-                    var file = gateway.NewFileItem(testDirectory.Id, "File.ext", _smallContent.ToStream(), _fixture.GetProgressReporter());
+                    var file = gateway.NewFileItem(testDirectory.Id, "File.ext", _smallContent.ToStream(), DateTime.Now, _fixture.GetProgressReporter());
                     file.Directory = testDirectory.ToContract();
 
                     _fixture.OnCondition(config, GatewayCapabilities.RenameFileItem, () =>

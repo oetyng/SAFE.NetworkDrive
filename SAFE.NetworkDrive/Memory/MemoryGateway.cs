@@ -12,7 +12,7 @@ namespace SAFE.NetworkDrive.MemoryFS
     public sealed class MemoryGateway : Interfaces.IMemoryGateway
     {
         readonly RootName _root;
-        readonly MemoryFolder _rootFolder = new MemoryFolder(null, string.Empty);
+        MemoryFolder _rootFolder = new MemoryFolder(null, string.Empty, TimeComponent.Now);
 
         public const string PARAMETER_ROOT = "root";
         const string PATH_NOT_FOUND = "Path '{0}' does not exist";
@@ -25,13 +25,11 @@ namespace SAFE.NetworkDrive.MemoryFS
             _rootPath = System.IO.Path.DirectorySeparatorChar.ToString();
         }
 
+        public void InitRoot(TimeComponent time)
+            => _rootFolder = new MemoryFolder(null, string.Empty, time);
+
         public DriveInfoContract GetDrive()
         {
-            //if (parameters?.TryGetValue(PARAMETER_ROOT, out _rootPath) != true)
-            //    throw new ArgumentException($"Required {PARAMETER_ROOT} missing in {nameof(parameters)}".ToString(CultureInfo.CurrentCulture));
-            //if (string.IsNullOrEmpty(_rootPath))
-            //    throw new ArgumentException($"{PARAMETER_ROOT} cannot be empty".ToString(CultureInfo.CurrentCulture));
-
             var drive = new MemDrive(_rootFolder);
             return new DriveInfoContract(_root.Value,
                 drive.AvailableFreeSpace,
@@ -144,7 +142,7 @@ namespace SAFE.NetworkDrive.MemoryFS
             return new System.IO.BufferedStream(file.OpenRead());
         }
 
-        public void SetContent(FileId target, System.IO.Stream content, IProgress<ProgressValue> progress)
+        public void SetContent(FileId target, System.IO.Stream content, DateTime timestamp, IProgress<ProgressValue> progress)
         {
             if (target == null)
                 throw new ArgumentNullException(nameof(target));
@@ -154,10 +152,10 @@ namespace SAFE.NetworkDrive.MemoryFS
                 throw new InvalidOperationException($"{nameof(_rootPath)} not initialized".ToString(CultureInfo.CurrentCulture));
 
             var file = GetFile(target);
-            file.SetContent(content);
+            file.SetContent(content, timestamp);
         }
 
-        public FileSystemInfoContract CopyItem(FileSystemId source, string copyName, DirectoryId destination, bool recurse)
+        public FileSystemInfoContract CopyItem(FileSystemId source, string copyName, DirectoryId destination, DateTime timestamp, bool recurse)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
@@ -180,10 +178,10 @@ namespace SAFE.NetworkDrive.MemoryFS
                 var directoryCopy = _rootFolder.GetFolderByPath(effectiveCopyPath);
                 if (!directoryCopy.Exists())
                 {
-                    _rootFolder.CreatePath(effectiveCopyPath);
+                    _rootFolder.CreatePath(effectiveCopyPath, directory.TimeComponent.CloneForCopy(timestamp));
                     directoryCopy = _rootFolder.GetFolderByPath(effectiveCopyPath);
                 }
-                directory.CopyTo(directoryCopy, recurse);
+                directory.CopyTo(directoryCopy, recurse, timestamp);
                 return new DirectoryInfoContract(
                     GetRelativePath(_rootPath, directoryCopy.FullName),
                     directoryCopy.Name,
@@ -198,10 +196,10 @@ namespace SAFE.NetworkDrive.MemoryFS
                 var parentFolder = _rootFolder.GetFolderByPath(parentFolderPath); // destinationPath
                 if (!parentFolder.Exists())
                 {
-                    _rootFolder.CreatePath(parentFolderPath); // destinationPath
+                    _rootFolder.CreatePath(parentFolderPath, file.TimeComponent.CloneForCopy(timestamp)); // destinationPath
                     parentFolder = _rootFolder.GetFolderByPath(parentFolderPath); // destinationPath
                 }
-                var fileCopy = file.CopyTo(parentFolder, copyName);
+                var fileCopy = file.CopyTo(parentFolder, copyName, timestamp);
                 return new FileInfoContract(GetRelativePath(_rootPath, fileCopy.FullName),
                     fileCopy.Name,
                     fileCopy.CreationTime,
@@ -258,7 +256,7 @@ namespace SAFE.NetworkDrive.MemoryFS
             throw new NotSupportedException(string.Format(CultureInfo.CurrentCulture, PATH_NOT_FOUND, source.Value));
         }
 
-        public DirectoryInfoContract NewDirectoryItem(DirectoryId parent, string name)
+        public DirectoryInfoContract NewDirectoryItem(DirectoryId parent, string name, DateTime timestamp)
         {
             if (parent == null)
                 throw new ArgumentNullException(nameof(parent));
@@ -273,7 +271,7 @@ namespace SAFE.NetworkDrive.MemoryFS
             if (directory.Exists())
                 throw new NotSupportedException(string.Format(CultureInfo.CurrentCulture, DUPLICATE_PATH, effectivePath));
 
-            _rootFolder.CreatePath(effectivePath);
+            _rootFolder.CreatePath(effectivePath, TimeComponent.From(timestamp));
             directory = _rootFolder.GetFolderByPath(effectivePath);
 
             return new DirectoryInfoContract(GetRelativePath(_rootPath, directory.FullName),
@@ -283,7 +281,7 @@ namespace SAFE.NetworkDrive.MemoryFS
         }
 
         public FileInfoContract NewFileItem(DirectoryId parent,
-            string name, System.IO.Stream content, IProgress<ProgressValue> progress)
+            string name, System.IO.Stream content, DateTime timestamp, IProgress<ProgressValue> progress)
         {
             if (parent == null)
                 throw new ArgumentNullException(nameof(parent));
@@ -296,10 +294,9 @@ namespace SAFE.NetworkDrive.MemoryFS
             if (file.Exists())
                 throw new NotSupportedException(string.Format(CultureInfo.CurrentCulture, DUPLICATE_PATH, parent.Value));
 
-            // var parentPath = parent.Value; 
             var parentPath = GetFullPath(_rootPath, parent.Value);
             var parentDir = _rootFolder.GetFolderByPath(parentPath);
-            file = MemoryFile.New(parentDir, name);
+            file = MemoryFile.New(parentDir, name, TimeComponent.From(timestamp));
 
             if (content != null)
                 content.CopyTo(file);
@@ -323,7 +320,6 @@ namespace SAFE.NetworkDrive.MemoryFS
             var directory = _rootFolder.GetFolderByPath(effectivePath);
             if (directory.Exists())
             {
-                //directory.Delete(recurse);
                 directory.Parent.Children.Remove(directory);
                 return;
             }

@@ -8,8 +8,8 @@ namespace SAFE.NetworkDrive.SerializableFS
         [JsonConstructor]
         SerializableFile() { }
 
-        public SerializableFile(SerializableFolder parent, string name)
-            : base(parent, name)
+        public SerializableFile(SerializableFolder parent, string name, TimeComponent time)
+            : base(parent, name, time)
         { }
 
         public byte[] ContentOrMap { get; set; } = new byte[0];

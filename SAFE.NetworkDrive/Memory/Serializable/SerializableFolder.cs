@@ -10,8 +10,8 @@ namespace SAFE.NetworkDrive.SerializableFS
         [JsonConstructor]
         SerializableFolder() { }
 
-        public SerializableFolder(SerializableFolder parent, string name)
-            : base(parent, name)
+        public SerializableFolder(SerializableFolder parent, string name, TimeComponent time)
+            : base(parent, name, time)
             => Attributes = FileAttributes.Directory;
 
         public List<SerializableFolder> SubDirectories { get; set; } = new List<SerializableFolder>();

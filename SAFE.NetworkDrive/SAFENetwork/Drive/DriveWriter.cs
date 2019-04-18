@@ -54,11 +54,15 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         }
 
         object Apply(LocalFileItemCreated e)
-            => _localState.NewFileItem(new DirectoryId(e.ParentDirId), e.Name, new MemoryStream(e.Content), null);
+            => _localState.NewFileItem(new DirectoryId(e.ParentDirId), 
+                    e.Name, 
+                    new MemoryStream(e.Content),
+                    e.TimeStamp,
+                    null);
 
         object Apply(LocalFileContentSet e)
         {
-            _localState.SetContent(new FileId(e.FileId), new MemoryStream(e.Content), null);
+            _localState.SetContent(new FileId(e.FileId), new MemoryStream(e.Content), e.TimeStamp, null);
             return new object();
         }
 
@@ -83,7 +87,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                     throw new ArgumentOutOfRangeException(nameof(e.FSType));
             }
 
-            var item = _localState.CopyItem(fileSystemId, e.CopyName, new DirectoryId(e.DestDirId), true);
+            var item = _localState.CopyItem(fileSystemId, e.CopyName, new DirectoryId(e.DestDirId), e.TimeStamp, true);
             return item;
         }
 
@@ -107,7 +111,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         }
 
         object Apply(LocalDirectoryItemCreated e)
-            => _localState.NewDirectoryItem(new DirectoryId(e.ParentDirId), e.Name);
+            => _localState.NewDirectoryItem(new DirectoryId(e.ParentDirId), e.Name, e.TimeStamp);
 
         object Apply(LocalItemRemoved e)
         {

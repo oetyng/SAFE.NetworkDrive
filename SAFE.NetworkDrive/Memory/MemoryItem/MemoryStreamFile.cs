@@ -12,8 +12,8 @@ namespace SAFE.NetworkDrive.MemoryFS
     {
         readonly MemoryStream _content;
 
-        internal MemoryStreamFile(MemoryFolder parent, string name)
-            : base(parent, name)
+        internal MemoryStreamFile(MemoryFolder parent, string name, TimeComponent time)
+            : base(parent, name, time)
         {
         	_content = new MemoryStream();
         	
@@ -64,18 +64,17 @@ namespace SAFE.NetworkDrive.MemoryFS
             _content.SetLength(0);
         }
 
-        internal override void SetContent(Stream content)
+        internal override void SetContent(Stream content, DateTime timestamp)
         {
             Clear();
             content.CopyTo(_content);
+            TimeComponent = TimeComponent.CloneForWrite(timestamp);
         }
 
-        internal override MemoryFile CopyTo(MemoryFolder parent, string copyName)
+        internal override MemoryFile CopyTo(MemoryFolder parent, string copyName, DateTime timestamp)
         {
-            var copyFile = New(parent, copyName);
-            copyFile.CreationTime = CreationTime;
-            copyFile.LastAccessTime = DateTime.Now;
-            copyFile.LastWriteTime = DateTime.Now;
+            var time = TimeComponent.CloneForCopy(timestamp);
+            var copyFile = New(parent, copyName, time);
             copyFile.Attributes = Attributes;
             var buffer = new byte[Size];
             Read(0, buffer);

@@ -5,7 +5,6 @@ using SAFE.NetworkDrive.Replication.Events;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Globalization;
 using SAFE.Data.Client;
 
 namespace SAFE.NetworkDrive.MemoryFS
@@ -59,15 +58,15 @@ namespace SAFE.NetworkDrive.MemoryFS
             return new System.IO.BufferedStream(ms);
         }
 
-        public void SetContent(FileId target, System.IO.Stream content, IProgress<ProgressValue> progress)
+        public void SetContent(FileId target, System.IO.Stream content, DateTime timestamp, IProgress<ProgressValue> progress)
         {
-            _localState.SetContent(target, content, progress);
+            _localState.SetContent(target, content, timestamp, progress);
             _contentCache[target] = content.ReadFully();
         }
 
-        public FileSystemInfoContract CopyItem(FileSystemId source, string copyName, DirectoryId destination, bool recurse)
+        public FileSystemInfoContract CopyItem(FileSystemId source, string copyName, DirectoryId destination, DateTime timestamp, bool recurse)
         {
-            var contract = _localState.CopyItem(source, copyName, destination, recurse);
+            var contract = _localState.CopyItem(source, copyName, destination, timestamp, recurse);
             var fileId = new FileId(source.Value);
             if (_contentCache.ContainsKey(fileId))
                 _contentCache[new FileId(contract.Id.Value)] = _contentCache[fileId];
@@ -81,13 +80,13 @@ namespace SAFE.NetworkDrive.MemoryFS
             return contract;
         }
 
-        public DirectoryInfoContract NewDirectoryItem(DirectoryId parent, string name)
-            => _localState.NewDirectoryItem(parent, name);
+        public DirectoryInfoContract NewDirectoryItem(DirectoryId parent, string name, DateTime timestamp)
+            => _localState.NewDirectoryItem(parent, name, timestamp);
 
         public FileInfoContract NewFileItem(DirectoryId parent, 
-            string name, System.IO.Stream content, IProgress<ProgressValue> progress)
+            string name, System.IO.Stream content, DateTime timestamp, IProgress<ProgressValue> progress)
         {
-            var contract = _localState.NewFileItem(parent, name, content, progress);
+            var contract = _localState.NewFileItem(parent, name, content, timestamp, progress);
             _contentCache[contract.Id] = content.ReadFully();
             return contract;
         }

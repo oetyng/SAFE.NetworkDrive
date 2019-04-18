@@ -21,8 +21,6 @@ namespace SAFE.NetworkDrive.MemoryFS
             content.Seek(0, SeekOrigin.Begin);
             content.CopyTo(ms);
             file.Write(0, ms.ToArray());
-            file.LastAccessTime = DateTime.Now;
-            file.LastWriteTime = DateTime.Now;
         }
 
         /// <summary>

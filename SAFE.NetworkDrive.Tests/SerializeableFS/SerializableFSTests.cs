@@ -33,18 +33,17 @@ namespace SAFE.NetworkDrive.Tests
 
         MemoryFS.MemoryFolder BuildFileSystem(int levels, int foldersPerLevel, int filesPerFolder)
         {
+            // Arrange
             var fileCount = levels * foldersPerLevel * filesPerFolder;
-            var folderCount = (levels * foldersPerLevel) + 2 + Math.Max(0, levels - foldersPerLevel);
+            var folderCount = 2 + (levels * foldersPerLevel) + Math.Max(0, levels - foldersPerLevel);
 
+            // Act
             var root = _fixture.BuildFileSystem(levels, foldersPerLevel, filesPerFolder);
 
+            // Assert
+            var files = _fixture.GetAllFiles(root).ToList();
             var folders = _fixture.GetAllFolders(root).ToList();
-
             Assert.AreEqual(folderCount, folders.Count, $"Folder fail at levels: {levels}, foldersPerLevel: {foldersPerLevel}, filesPerFolder: {filesPerFolder}");
-
-            var files = _fixture.GetAllFiles(root)
-                .ToList();
-
             Assert.AreEqual(fileCount, files.Count, $"File fail at levels: {levels}, foldersPerLevel: {foldersPerLevel}, filesPerFolder: {filesPerFolder}");
 
             return root;
@@ -72,22 +71,19 @@ namespace SAFE.NetworkDrive.Tests
 
         MemoryFS.MemoryFolder SerializeFileSystem(MemoryFS.MemoryFolder originalRoot)
         {
-            var serialized = FSSerializer.SerializeFS(originalRoot);
-            var compressed = serialized.Data.Compress();
+            var serializable = FSSerializer.Map(originalRoot);
+            var serialized = new SerializedFS(serializable);
+            // var compressed = serialized.Data.Compress(); // ~10x compression
             var deserialized = serialized.Deserialize();
-            var newRoot = FSSerializer.DeserializeFS(deserialized);
+            var newRoot = FSSerializer.Map(deserialized);
 
+            var originalFiles = _fixture.GetAllFiles(originalRoot).ToList();
             var originalFolders = _fixture.GetAllFolders(originalRoot).ToList();
+            var newFiles = _fixture.GetAllFiles(newRoot).ToList();
             var newFolders = _fixture.GetAllFolders(newRoot).ToList();
 
-            Assert.AreEqual(originalFolders.Count, newFolders.Count, $"Folder count failed.");
-
-            var originalFiles = _fixture.GetAllFiles(originalRoot)
-                .ToList();
-            var newFiles = _fixture.GetAllFiles(newRoot)
-                .ToList();
-
             Assert.AreEqual(originalFiles.Count, newFiles.Count, $"File count failed.");
+            Assert.AreEqual(originalFolders.Count, newFolders.Count, $"Folder count failed.");
 
             Parallel.ForEach(originalFiles, original =>
             {
@@ -100,9 +96,9 @@ namespace SAFE.NetworkDrive.Tests
                     Assert.AreEqual(original.Parent?.FullName, original.Parent?.FullName);
 
                     Assert.AreEqual(original.Attributes, newfile.Attributes);
-                    //Assert.AreEqual(original.LastAccessTime, newfile.LastAccessTime);
-                    //Assert.AreEqual(original.LastWriteTime, newfile.LastWriteTime);
-                    //Assert.AreEqual(original.CreationTime, newfile.CreationTime);
+                    Assert.AreEqual(original.LastAccessTime, newfile.LastAccessTime);
+                    Assert.AreEqual(original.LastWriteTime, newfile.LastWriteTime);
+                    Assert.AreEqual(original.CreationTime, newfile.CreationTime);
 
                     var originalData = new byte[original.Size];
                     original.Read(0, originalData);
@@ -129,9 +125,9 @@ namespace SAFE.NetworkDrive.Tests
                     Assert.AreEqual(original.Parent?.FullName, original.Parent?.FullName);
 
                     Assert.AreEqual(original.Attributes, newFolder.Attributes);
-                    //Assert.AreEqual(original.LastAccessTime, newFolder.LastAccessTime);
-                    //Assert.AreEqual(original.LastWriteTime, newFolder.LastWriteTime);
-                    //Assert.AreEqual(original.CreationTime, newFolder.CreationTime);
+                    Assert.AreEqual(original.LastAccessTime, newFolder.LastAccessTime);
+                    Assert.AreEqual(original.LastWriteTime, newFolder.LastWriteTime);
+                    Assert.AreEqual(original.CreationTime, newFolder.CreationTime);
                 //}
                 //catch (Exception ex)
                 //{

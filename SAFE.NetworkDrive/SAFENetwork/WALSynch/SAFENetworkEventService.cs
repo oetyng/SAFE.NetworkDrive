@@ -59,10 +59,10 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                 // upload content
                 case LocalFileContentSet ev:
                     var (isMap_0, data_0) = await GetMapOrContent(ev.Content);
-                    return new NetworkFileContentSet(ev.SequenceNr, ev.FileId, data_0, isMap_0);
+                    return new NetworkFileContentSet(ev.SequenceNr, ev.FileId, data_0, isMap_0, e.TimeStamp);
                 case LocalFileItemCreated ev:
                     var (isMap_1, data_1) = await GetMapOrContent(ev.Content);
-                    return new NetworkFileItemCreated(ev.SequenceNr, ev.ParentDirId, ev.Name, data_1, isMap_1);
+                    return new NetworkFileItemCreated(ev.SequenceNr, ev.ParentDirId, ev.Name, data_1, isMap_1, e.TimeStamp);
                 case null:
                     throw new ArgumentNullException(nameof(e));
                 default:

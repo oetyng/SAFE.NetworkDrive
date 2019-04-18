@@ -7,9 +7,9 @@ namespace SAFE.NetworkDrive.Replication.Events
 {
     public abstract class NetworkEvent
     {
-        protected NetworkEvent(ulong sequenceNr)
+        protected NetworkEvent(ulong sequenceNr, DateTime timestamp)
         {
-            TimeStamp = DateTime.UtcNow;
+            TimeStamp = timestamp;
             SequenceNr = sequenceNr;
         }
 
@@ -39,8 +39,8 @@ namespace SAFE.NetworkDrive.Replication.Events
 
     public class NetworkFileContentSet : NetworkEvent
     {
-        public NetworkFileContentSet(ulong sequenceNr, string fileId, byte[] mapOrContent, bool isMap)
-            : base(sequenceNr)
+        public NetworkFileContentSet(ulong sequenceNr, string fileId, byte[] mapOrContent, bool isMap, DateTime timestamp)
+            : base(sequenceNr, timestamp)
         {
             FileId = fileId;
             MapOrContent = mapOrContent;
@@ -54,8 +54,8 @@ namespace SAFE.NetworkDrive.Replication.Events
 
     class NetworkFileItemCreated : NetworkEvent
     {
-        public NetworkFileItemCreated(ulong sequenceNr, string parentDirId, string name, byte[] mapOrContent, bool isMap)
-            : base(sequenceNr)
+        public NetworkFileItemCreated(ulong sequenceNr, string parentDirId, string name, byte[] mapOrContent, bool isMap, DateTime timestamp)
+            : base(sequenceNr, timestamp)
         {
             ParentDirId = parentDirId;
             Name = name;
@@ -71,8 +71,8 @@ namespace SAFE.NetworkDrive.Replication.Events
 
     class NetworkFileContentCleared : NetworkEvent
     {
-        public NetworkFileContentCleared(ulong sequenceNr, string fileId)
-            : base(sequenceNr)
+        public NetworkFileContentCleared(ulong sequenceNr, string fileId, DateTime timestamp)
+            : base(sequenceNr, timestamp)
         {
             FileId = fileId;
         }
@@ -83,8 +83,8 @@ namespace SAFE.NetworkDrive.Replication.Events
     class NetworkItemCopied : NetworkEvent
     {
         public NetworkItemCopied(ulong sequenceNr, string fileSystemId, FSType fSType, 
-            string copyName, string destDirId, bool recursive)
-            : base(sequenceNr)
+            string copyName, string destDirId, bool recursive, DateTime timestamp)
+            : base(sequenceNr, timestamp)
         {
             FileSystemId = fileSystemId;
             FSType = fSType;
@@ -102,8 +102,8 @@ namespace SAFE.NetworkDrive.Replication.Events
     
     class NetworkItemMoved : NetworkEvent
     {
-        public NetworkItemMoved(ulong sequenceNr, string fileSystemId, FSType fSType, string moveName, string destDirId)
-            : base(sequenceNr)
+        public NetworkItemMoved(ulong sequenceNr, string fileSystemId, FSType fSType, string moveName, string destDirId, DateTime timestamp)
+            : base(sequenceNr, timestamp)
         {
             FileSystemId = fileSystemId;
             FSType = fSType;
@@ -119,8 +119,8 @@ namespace SAFE.NetworkDrive.Replication.Events
 
     class NetworkDirectoryItemCreated : NetworkEvent
     {
-        public NetworkDirectoryItemCreated(ulong sequenceNr, string parentDirId, string name)
-            : base(sequenceNr)
+        public NetworkDirectoryItemCreated(ulong sequenceNr, string parentDirId, string name, DateTime timestamp)
+            : base(sequenceNr, timestamp)
         {
             ParentDirId = parentDirId;
             Name = name;
@@ -132,8 +132,8 @@ namespace SAFE.NetworkDrive.Replication.Events
 
     class NetworkItemRemoved : NetworkEvent
     {
-        public NetworkItemRemoved(ulong sequenceNr, string fileSystemId, FSType fSType, bool recursive)
-            : base(sequenceNr)
+        public NetworkItemRemoved(ulong sequenceNr, string fileSystemId, FSType fSType, bool recursive, DateTime timestamp)
+            : base(sequenceNr, timestamp)
         {
             FileSystemId = fileSystemId;
             FSType = fSType;
@@ -147,8 +147,8 @@ namespace SAFE.NetworkDrive.Replication.Events
 
     class NetworkItemRenamed : NetworkEvent
     {
-        public NetworkItemRenamed(ulong sequenceNr, string fileSystemId, FSType fSType, string newName)
-            : base(sequenceNr)
+        public NetworkItemRenamed(ulong sequenceNr, string fileSystemId, FSType fSType, string newName, DateTime timestamp)
+            : base(sequenceNr, timestamp)
         {
             FileSystemId = fileSystemId;
             FSType = fSType;

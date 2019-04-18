@@ -13,8 +13,8 @@ namespace SAFE.NetworkDrive.MemoryFS
     {
         List<MemoryItem> _children = new List<MemoryItem>();
 
-        internal MemoryFolder(MemoryFolder parent, string name)
-            : base(parent, name)
+        internal MemoryFolder(MemoryFolder parent, string name, TimeComponent time)
+            : base(parent, name, time)
             => Attributes = FileAttributes.Directory;
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace SAFE.NetworkDrive.MemoryFS
         /// Creates a folder (and subfolders) in this MemoryFolder
         /// </summary>
         /// <param name="path">the path to be created</param>
-        internal void CreatePath(string path)
+        internal void CreatePath(string path, TimeComponent time)
         {
             string[] pathParts = path.Split(new char[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
             if (pathParts.Length > 0)
@@ -69,13 +69,13 @@ namespace SAFE.NetworkDrive.MemoryFS
                 if (searchResult.Count() > 0) 
                     newFolder = searchResult.First();
                 else
-                    newFolder = new MemoryFolder(this, pathParts[0]);
+                    newFolder = new MemoryFolder(this, pathParts[0], time);
 
                 // Create more?
                 if (pathParts.Length > 1)
                 {
                     string subPath = path.Remove(0, pathParts[0].Length + 1);
-                    newFolder.CreatePath(subPath);
+                    newFolder.CreatePath(subPath, time);
                 }
             }
         }
@@ -137,14 +137,11 @@ namespace SAFE.NetworkDrive.MemoryFS
                 .Cast<MemoryFile>();
         }
 
-        public void CopyTo(MemoryFolder copyFolder, bool recurse)
+        public void CopyTo(MemoryFolder copyFolder, bool recurse, DateTime timestamp)
         {
             foreach (var f in EnumerateFiles())
             {
-                var copyFile = MemoryFile.New(copyFolder, f.Name);
-                copyFile.CreationTime = f.CreationTime;
-                copyFile.LastAccessTime = DateTime.Now;
-                copyFile.LastWriteTime = DateTime.Now;
+                var copyFile = MemoryFile.New(copyFolder, f.Name, f.TimeComponent.CloneForCopy(timestamp));
                 var buffer = new byte[f.Size];
                 f.Read(0, buffer);
                 copyFile.Write(0, buffer);
@@ -153,9 +150,9 @@ namespace SAFE.NetworkDrive.MemoryFS
             {
                 foreach (var d in EnumerateDirectories())
                 {
-                    copyFolder.CreatePath(d.Name);
+                    copyFolder.CreatePath(d.Name, d.TimeComponent.CloneForCopy(timestamp));
                     var nextFolder = copyFolder.GetFolderByPath(Path.Combine(copyFolder.FullName, d.Name));
-                    d.CopyTo(nextFolder, recurse);
+                    d.CopyTo(nextFolder, recurse, timestamp);
                 }
             }
         }
