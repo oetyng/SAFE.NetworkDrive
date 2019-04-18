@@ -11,27 +11,28 @@ namespace SAFE.NetworkDrive.MemoryFS
     [System.Diagnostics.DebuggerDisplay("{DebuggerDisplay(),nq}")]
     public sealed class MemoryGateway : Interfaces.IMemoryGateway
     {
-        readonly RootName _root;
-        MemoryFolder _rootFolder = new MemoryFolder(null, string.Empty, TimeComponent.Now);
+        readonly RootName _rootName;
+        readonly MemoryFolder _rootFolder;
 
         public const string PARAMETER_ROOT = "root";
         const string PATH_NOT_FOUND = "Path '{0}' does not exist";
         const string DUPLICATE_PATH = "'{0}' is already present";
         string _rootPath;
 
-        public MemoryGateway(RootName root)
+        internal MemoryGateway(RootName rootName, MemoryFolder rootFolder)
         { 
-            _root = root ?? throw new ArgumentNullException(nameof(root));
+            _rootName = rootName ?? throw new ArgumentNullException(nameof(rootName));
+            _rootFolder = rootFolder ?? throw new ArgumentNullException(nameof(rootFolder));
             _rootPath = System.IO.Path.DirectorySeparatorChar.ToString();
         }
 
-        public void InitRoot(TimeComponent time)
-            => _rootFolder = new MemoryFolder(null, string.Empty, time);
+        public SerializableFS.SerializableFolder AsSerializable() 
+            => SerializableFS.FSSerializer.Map(_rootFolder);
 
         public DriveInfoContract GetDrive()
         {
             var drive = new MemDrive(_rootFolder);
-            return new DriveInfoContract(_root.Value,
+            return new DriveInfoContract(_rootName.Value,
                 drive.AvailableFreeSpace,
                 drive.TotalSize - drive.AvailableFreeSpace);
         }

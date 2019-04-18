@@ -13,6 +13,8 @@ namespace SAFE.NetworkDrive.MemoryFS
     {
         List<MemoryItem> _children = new List<MemoryItem>();
 
+        internal static MemoryFolder New => new MemoryFolder(null, string.Empty, TimeComponent.Now);
+
         internal MemoryFolder(MemoryFolder parent, string name, TimeComponent time)
             : base(parent, name, time)
             => Attributes = FileAttributes.Directory;

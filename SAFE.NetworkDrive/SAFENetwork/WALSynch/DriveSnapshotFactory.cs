@@ -6,6 +6,7 @@ using SAFE.NetworkDrive.Replication.Events;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using SAFE.NetworkDrive.SerializableFS;
 
 namespace SAFE.NetworkDrive.Snapshots
 {
@@ -21,7 +22,7 @@ namespace SAFE.NetworkDrive.Snapshots
             var snapshotter = GetSnapshotter(imdStore);
             var snapshotReading = await stream.ReadFromSnapshot();
             if (!snapshotReading.HasValue)
-                return (new MemoryGateway(_root), new SequenceNr());
+                return (new MemoryGateway(_root, MemoryFolder.New), new SequenceNr());
 
             Snapshot snapshot = default;
             IAsyncEnumerable<NetworkEvent> events = snapshotReading.Value.NewEvents.Select(c => c.Item2.Parse<NetworkEvent>());
@@ -38,28 +39,35 @@ namespace SAFE.NetworkDrive.Snapshots
 
         async Task<Snapshot> SnapshotFunc(Snapshot previousSnapshot, IAsyncEnumerable<NetworkEvent> changes)
         {
-            var currentState = await MaterializeAsync(previousSnapshot, changes);
-            var snapshot = new Snapshot(currentState);
+            var (currentState, sequenceNr) = await MaterializeAsync(previousSnapshot, changes);
+            var serializable = currentState.AsSerializable();
+            var snapshot = new Snapshot((serializable, sequenceNr));
             return snapshot;
         }
 
         async Task<(MemoryGateway, SequenceNr)> MaterializeAsync(Snapshot previousSnapshot, IAsyncEnumerable<NetworkEvent> changes)
         {
-            var currentState = new MemoryGateway(_root);
+            var currentState = MemoryFolder.New;
+            var sequenceNr = new SequenceNr();
 
             if (previousSnapshot != null)
-                currentState = previousSnapshot.GetState<MemoryGateway>();
+            {
+                var (serializedState, sequence) = previousSnapshot.GetState<(SerializableFolder, SequenceNr)>();
+                currentState = FSSerializer.Map(serializedState);
+                sequenceNr = sequence;
+            }
 
-            var sequenceNr = new SequenceNr();
-            sequenceNr.Set((await changes.FirstAsync()).SequenceNr - 1);
+            if (await changes.AnyAsync())
+                sequenceNr.Set((await changes.FirstAsync()).SequenceNr - 1);
 
-            var materializer = new DriveMaterializer(currentState, sequenceNr);
+            var gateway = new MemoryGateway(_root, currentState);
+            var materializer = new DriveMaterializer(gateway, sequenceNr);
 
             var isMaterialized = await materializer.Materialize(changes);
             if (!isMaterialized)
                 throw new System.IO.InvalidDataException("Could not materialize network filesystem!");
 
-            return (currentState, sequenceNr);
+            return (gateway, sequenceNr);
         }
     }
 }
