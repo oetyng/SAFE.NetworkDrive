@@ -1,5 +1,4 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SAFE.Data.Utils;
 using SAFE.NetworkDrive.SerializableFS;
 using System;
 using System.Linq;
@@ -87,53 +86,37 @@ namespace SAFE.NetworkDrive.Tests
 
             Parallel.ForEach(originalFiles, original =>
             {
-                //try
-                //{
-                    var newfile = newFiles.Single(c => c.FullName == original.FullName);
-                    Assert.AreEqual(original.Name, newfile.Name);
-                    Assert.AreEqual(original.FullName, newfile.FullName);
-                    Assert.AreEqual(original.Size, newfile.Size);
-                    Assert.AreEqual(original.Parent?.FullName, original.Parent?.FullName);
+                var newfile = newFiles.Single(c => c.FullName == original.FullName);
+                Assert.AreEqual(original.Name, newfile.Name);
+                Assert.AreEqual(original.FullName, newfile.FullName);
+                Assert.AreEqual(original.Size, newfile.Size);
+                Assert.AreEqual(original.Parent?.FullName, original.Parent?.FullName);
 
-                    Assert.AreEqual(original.Attributes, newfile.Attributes);
-                    Assert.AreEqual(original.LastAccessTime, newfile.LastAccessTime);
-                    Assert.AreEqual(original.LastWriteTime, newfile.LastWriteTime);
-                    Assert.AreEqual(original.CreationTime, newfile.CreationTime);
+                Assert.AreEqual(original.Attributes, newfile.Attributes);
+                Assert.AreEqual(original.LastAccessTime, newfile.LastAccessTime);
+                Assert.AreEqual(original.LastWriteTime, newfile.LastWriteTime);
+                Assert.AreEqual(original.CreationTime, newfile.CreationTime);
 
-                    var originalData = new byte[original.Size];
-                    original.Read(0, originalData);
+                var originalData = new byte[original.Size];
+                original.Read(0, originalData);
 
-                    var newData = new byte[newfile.Size];
-                    newfile.Read(0, newData);
+                var newData = new byte[newfile.Size];
+                newfile.Read(0, newData);
 
-                    Assert.IsTrue(Enumerable.SequenceEqual(originalData, newData));
-                //}
-                //catch (Exception ex)
-                //{
-                //    //throw;
-                //    //return null;
-                //}
+                Assert.IsTrue(Enumerable.SequenceEqual(originalData, newData));
             });
 
             Parallel.ForEach(originalFolders, original =>
             {
-                //try
-                //{
-                    var newFolder = newFolders.Single(c => c.FullName == original.FullName);
-                    Assert.AreEqual(original.Name, newFolder.Name);
-                    Assert.AreEqual(original.FullName, newFolder.FullName);
-                    Assert.AreEqual(original.Parent?.FullName, original.Parent?.FullName);
+                var newFolder = newFolders.Single(c => c.FullName == original.FullName);
+                Assert.AreEqual(original.Name, newFolder.Name);
+                Assert.AreEqual(original.FullName, newFolder.FullName);
+                Assert.AreEqual(original.Parent?.FullName, original.Parent?.FullName);
 
-                    Assert.AreEqual(original.Attributes, newFolder.Attributes);
-                    Assert.AreEqual(original.LastAccessTime, newFolder.LastAccessTime);
-                    Assert.AreEqual(original.LastWriteTime, newFolder.LastWriteTime);
-                    Assert.AreEqual(original.CreationTime, newFolder.CreationTime);
-                //}
-                //catch (Exception ex)
-                //{
-                //    //throw;
-                //    //return null;
-                //}
+                Assert.AreEqual(original.Attributes, newFolder.Attributes);
+                Assert.AreEqual(original.LastAccessTime, newFolder.LastAccessTime);
+                Assert.AreEqual(original.LastWriteTime, newFolder.LastWriteTime);
+                Assert.AreEqual(original.CreationTime, newFolder.CreationTime);
             });
 
             return newRoot;

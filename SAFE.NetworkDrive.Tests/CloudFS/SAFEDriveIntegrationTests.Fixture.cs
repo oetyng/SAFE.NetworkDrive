@@ -3,7 +3,7 @@ using SAFE.NetworkDrive.Parameters;
 
 namespace SAFE.NetworkDrive.Tests
 {
-    public sealed partial class SAFEDriveFactoryTests
+    public sealed partial class SAFEDriveIntegrationTests
     {
         internal class Fixture
         {
@@ -17,6 +17,7 @@ namespace SAFE.NetworkDrive.Tests
                 {
                     Locator = "Locator",
                     Secret = "Secret",
+                    InMem = true
                 };
             }
         }

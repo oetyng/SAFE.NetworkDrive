@@ -3,6 +3,7 @@ using SAFE.Data;
 using SAFE.NetworkDrive.Replication.Events;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -28,6 +29,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                 case VersionMismatch<Pointer> mismatch:
                     return await TryMergeAsync(e, walContent);
                 case var r when r.HasValue:
+                    Debug.WriteLine($"Uploaded version {e.SequenceNr} at {DateTime.Now.ToLongTimeString()}");
                     return r.HasValue;
                 default:
                     return result.HasValue;

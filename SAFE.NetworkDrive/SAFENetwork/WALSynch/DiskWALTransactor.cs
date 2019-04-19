@@ -20,10 +20,11 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         bool _isRunning;
         readonly Mutex _mutex;
         readonly string _dbName;
-        readonly Stopwatch _sw = new Stopwatch();
         readonly Func<WALContent, Task<bool>> _onDequeued;
         readonly TimeSpan _minWorkDelay = TimeSpan.FromSeconds(MIN_DELAY_SECONDS);
         TimeSpan _currentWorkDelay = TimeSpan.FromSeconds(MIN_DELAY_SECONDS);
+
+        DateTime _lastEnqueue;
 
         /// <summary>
         /// Only one instance per machine can be created.
@@ -37,7 +38,6 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                 throw new ApplicationException("Only one instance of log synch can be running.");
             _dbName = dbName;
             _onDequeued = onDequeued;
-            _sw.Start();
         }
 
         public static bool AnyInQueue(string dbName)
@@ -64,21 +64,24 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
         /// </param>
         public (bool, T) Enqueue<T>(WALContent data, Func<(bool Succeeded, object Data)> onEnqueued)
         {
-            _sw.Reset();
+            _lastEnqueue = DateTime.Now;
 
             using (var db = new SqlNado.SQLiteDatabase($"{_dbName}.db"))
             {
                 try
                 {
-                    db.BeginTransaction();
-                    db.Save(data);
-                    var res = onEnqueued();
-                    if (res.Succeeded) db.Commit();
-                    else db.Rollback();
-                    return (res.Succeeded, (T)res.Data);
+                    lock (_mutex)
+                    {
+                        db.BeginTransaction();
+                        db.Save(data);
+                        var res = onEnqueued();
+                        if (res.Succeeded) { db.Commit(); Debug.WriteLine($"Enqueued version {data.SequenceNr} at {DateTime.Now.ToLongTimeString()}"); }
+                        else db.Rollback();
+                        return (res.Succeeded, (T)res.Data);
+                    }
                 }
                 catch { db.Rollback(); throw; }
-                finally { _sw.Restart(); }
+                finally { _lastEnqueue = DateTime.Now; }
             }
         }
 
@@ -100,7 +103,7 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
             {
                 try
                 {
-                    if (await EnqueueingIsActive(cancellation))
+                    if (EnqueueingIsActive())
                         continue;
                     using (var db = new SqlNado.SQLiteDatabase($"{_dbName}.db"))
                     {
@@ -114,7 +117,10 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                         else if (data != null && await _onDequeued(data))
                         {
                             data.Persisted = true;
-                            db.RunTransaction(() => db.Save(data));
+                            lock (_mutex)
+                            {
+                                db.RunTransaction(() => db.Save(data));
+                            }
                             if (_currentWorkDelay.Ticks > 0) // more than MIN_DELAY_SECONDS since last access
                                 SetDelay(_currentWorkDelay.Ticks / 2); // synch again in half previous wait time
                         }
@@ -158,14 +164,14 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
 
         // Only start synching if enqueueing has been inactive for MIN_DELAY_SECONDS
         // Then synch faster and faster, dividing wait time by two for every time.
-        async Task<bool> EnqueueingIsActive(CancellationToken cancellation)
+        bool EnqueueingIsActive()
         {
-            if (_minWorkDelay > _sw.Elapsed) // less than MIN_DELAY_SECONDS since last access
+            var elapsed = DateTime.Now - _lastEnqueue;
+            if (_minWorkDelay > elapsed) // less than MIN_DELAY_SECONDS since last access
             {
                 _currentWorkDelay = _minWorkDelay; // reset delay time to MIN_DELAY_SECONDS
                 return true; // enqueueing is active
             }
-            
             return false; // enqueueing is not active
         }
 
