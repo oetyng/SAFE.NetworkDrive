@@ -38,14 +38,17 @@ namespace SAFE.NetworkDrive.Gateways.AsyncEvents
                 throw new ApplicationException("Only one instance of log synch can be running.");
             _dbName = dbName;
             _onDequeued = onDequeued;
+            using (var db = new SqlNado.SQLiteDatabase($"{dbName}.db"))
+            {
+                if (!db.TableExists<WALContent>())
+                    db.SynchronizeSchema<WALContent>();
+            }
         }
 
         public static bool AnyInQueue(string dbName)
         {
             using (var db = new SqlNado.SQLiteDatabase($"{dbName}.db"))
             {
-                if (!db.TableExists<WALContent>())
-                    db.SynchronizeSchema<WALContent>();
                 return db.Query<WALContent>()
                     .Where(c => !c.Persisted)
                     .Take(1)

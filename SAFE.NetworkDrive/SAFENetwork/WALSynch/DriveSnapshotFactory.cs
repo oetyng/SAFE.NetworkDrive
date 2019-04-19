@@ -57,9 +57,6 @@ namespace SAFE.NetworkDrive.Snapshots
                 sequenceNr = sequence;
             }
 
-            if (await changes.AnyAsync())
-                sequenceNr.Set((await changes.FirstAsync()).SequenceNr - 1);
-
             var gateway = new MemoryGateway(_root, currentState);
             var materializer = new DriveMaterializer(gateway, sequenceNr);
 
